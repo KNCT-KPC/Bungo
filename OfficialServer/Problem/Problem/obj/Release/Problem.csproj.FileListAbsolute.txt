@@ -1,0 +1,5 @@
+C:\Users\Yuusuke\Documents\ptest\newnew\OfficialServer\Problem\Problem\bin\Release\Problem.dll
+C:\Users\Yuusuke\Documents\ptest\newnew\OfficialServer\Problem\Problem\bin\Release\Problem.pdb
+C:\Users\Yuusuke\Documents\ptest\newnew\OfficialServer\Problem\Problem\obj\Release\Problem.dll
+C:\Users\Yuusuke\Documents\ptest\newnew\OfficialServer\Problem\Problem\obj\Release\Problem.pdb
+C:\Users\Yuusuke\Documents\ptest\newnew\OfficialServer\Problem\Problem\obj\Release\Problem.csprojResolveAssemblyReference.cache

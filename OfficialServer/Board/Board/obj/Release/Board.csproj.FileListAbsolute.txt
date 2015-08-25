@@ -1,0 +1,7 @@
+C:\Users\Yuusuke\Documents\ptest\newnew\OfficialServer\Board\Board\bin\Release\Board.dll
+C:\Users\Yuusuke\Documents\ptest\newnew\OfficialServer\Board\Board\bin\Release\Board.pdb
+C:\Users\Yuusuke\Documents\ptest\newnew\OfficialServer\Board\Board\obj\Release\Board.csprojResolveAssemblyReference.cache
+C:\Users\Yuusuke\Documents\ptest\newnew\OfficialServer\Board\Board\obj\Release\Board.dll
+C:\Users\Yuusuke\Documents\ptest\newnew\OfficialServer\Board\Board\obj\Release\Board.pdb
+C:\Users\Yuusuke\Documents\ptest\newnew\OfficialServer\Board\Board\obj\Release\Board.Board.resources
+C:\Users\Yuusuke\Documents\ptest\newnew\OfficialServer\Board\Board\obj\Release\Board.csproj.GenerateResource.Cache

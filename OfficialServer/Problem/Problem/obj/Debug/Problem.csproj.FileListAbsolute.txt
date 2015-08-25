@@ -1,0 +1,4 @@
+C:\Users\Yuusuke\Documents\ptest\newnew\KpcServer\Problem\Problem\bin\Debug\Problem.dll
+C:\Users\Yuusuke\Documents\ptest\newnew\KpcServer\Problem\Problem\bin\Debug\Problem.pdb
+C:\Users\Yuusuke\Documents\ptest\newnew\KpcServer\Problem\Problem\obj\Debug\Problem.dll
+C:\Users\Yuusuke\Documents\ptest\newnew\KpcServer\Problem\Problem\obj\Debug\Problem.pdb

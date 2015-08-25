@@ -1,0 +1,14 @@
+C:\Users\Yuusuke\Documents\ptest\Hikari\Hikari\Hikari\bin\Debug\Hikari.exe.config
+C:\Users\Yuusuke\Documents\ptest\newnew\KpcServer\Hikari\Hikari\bin\Debug\Hikari.exe.config
+C:\Users\Yuusuke\Documents\ptest\newnew\KpcServer\Hikari\Hikari\bin\Debug\Hikari.exe
+C:\Users\Yuusuke\Documents\ptest\newnew\KpcServer\Hikari\Hikari\bin\Debug\Hikari.pdb
+C:\Users\Yuusuke\Documents\ptest\newnew\KpcServer\Hikari\Hikari\bin\Debug\Board.dll
+C:\Users\Yuusuke\Documents\ptest\newnew\KpcServer\Hikari\Hikari\bin\Debug\Problem.dll
+C:\Users\Yuusuke\Documents\ptest\newnew\KpcServer\Hikari\Hikari\bin\Debug\Board.pdb
+C:\Users\Yuusuke\Documents\ptest\newnew\KpcServer\Hikari\Hikari\bin\Debug\Problem.pdb
+C:\Users\Yuusuke\Documents\ptest\newnew\KpcServer\Hikari\Hikari\obj\Debug\Hikari.csprojResolveAssemblyReference.cache
+C:\Users\Yuusuke\Documents\ptest\newnew\KpcServer\Hikari\Hikari\obj\Debug\Hikari.Form.resources
+C:\Users\Yuusuke\Documents\ptest\newnew\KpcServer\Hikari\Hikari\obj\Debug\Hikari.Properties.Resources.resources
+C:\Users\Yuusuke\Documents\ptest\newnew\KpcServer\Hikari\Hikari\obj\Debug\Hikari.csproj.GenerateResource.Cache
+C:\Users\Yuusuke\Documents\ptest\newnew\KpcServer\Hikari\Hikari\obj\Debug\Hikari.exe
+C:\Users\Yuusuke\Documents\ptest\newnew\KpcServer\Hikari\Hikari\obj\Debug\Hikari.pdb

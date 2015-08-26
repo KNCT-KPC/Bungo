@@ -16,8 +16,8 @@ namespace Board
         private int[] nowmap = new int[1024];
         private int maxid = 1;
         private bool pass = false;
-        private int time = 0;
         private string name = null;
+        private TimeSpan time;
 
         public Board()
         {
@@ -30,6 +30,7 @@ namespace Board
             set
             {
                 this.basemap = value;
+                reset();
                 Invalidate();
             }
         }
@@ -49,7 +50,7 @@ namespace Board
             }
         }
 
-        public int Time
+        public TimeSpan Time
         {
             set { this.time = value; }
         }
@@ -71,7 +72,7 @@ namespace Board
                 }
 
                 // Score, Stone, Time
-                return new int[3] { score, this.maxid - 1, this.time };
+                return new int[3] { score, this.maxid - 1, (int)this.time.TotalMilliseconds };
             }
         }
 
@@ -80,7 +81,7 @@ namespace Board
             this.Pass = false;
             Array.Copy(this.basemap, this.nowmap, 1024);
             this.maxid = 1;
-            this.time = 0;
+            this.time = TimeSpan.FromMilliseconds(0);
         }
 
         public bool place(int[] original_stone, bool front, int angle, int x, int y)
@@ -88,12 +89,12 @@ namespace Board
             int[] stone = new int[64];
 
             // 表裏
-            for (int i = 0; i < 8; i++) // x
+            for (int i = 0; i < 8; i++) // y
             {
-                for (int j = 0; j < 8; j++) // y
+                for (int j = 0; j < 8; j++) // x
                 {
-                    int src = j * 8 + i;
-                    int dst = j * 8 + (front ? i : (7 - i));
+                    int src = i * 8 + j;
+                    int dst = i * 8 + (front ? j : (7 - j));
                     stone[dst] = original_stone[src];
                 }
             }
@@ -111,8 +112,8 @@ namespace Board
                 {
                     for (int k = 0; k < 8; k++)
                     {
-                        int src = k * 8 + j;
-                        int dst = j * 8 + (7 - k);
+                        int src = j * 8 + k;
+                        int dst = k * 8 + (7 - j);
                         tmp[dst] = stone[src];
                     }
                 }
@@ -126,13 +127,19 @@ namespace Board
             {
                 for (int j = 0; j < 8; j++)
                 {
-                    int src = j * 8 + i;
+                    int src = i * 8 + j;
                     if (stone[src] == 0)
                         continue;
 
-                    int dst = (y + j) * 32 + (x + i);
-                    if (!(0 <= dst && dst <= 1024))
+                    int x1 = x + j;
+                    int y1 = y + i;
+
+                    if (!(0 <= x1 && x1 <= 32))
                         return false;
+                    if (!(0 <= y1 && y1 <= 32))
+                        return false;
+
+                    int dst = y1 * 32 + x1;
 
                     if (this.nowmap[dst] != 0)
                         return false;
@@ -151,7 +158,7 @@ namespace Board
             base.OnPaint(e);
 
             Graphics g = e.Graphics;
-            Pen p = new Pen(Color.Gray);
+            Pen p = new Pen(Color.LightGray);
             int bias = resultlabel.Size.Height + 5;
             double cw = (this.Width - 1) / 32.0;
             double ch = ((this.Height - bias) - 1) / 32.0;
@@ -175,7 +182,7 @@ namespace Board
             p.Dispose();
 
             int[] scores = this.Scores;
-            resultlabel.Text = scores[0] + "[zk], " + scores[1] + "[stones], " + scores[2] + "[s]";
+            resultlabel.Text = scores[0] + "[zk], " + scores[1] + "[stones], " + scores[2] + "[ms]";
             namelabel.Text = (this.name == null) ? "" : this.name;
         }
 
@@ -208,12 +215,12 @@ namespace Board
             {
                 for (int j = 0; j < 32; j++)
                 {
-                    int idx = j * 8 + i;
+                    int idx = i * 8 + j;
                     if (this.nowmap[idx] < 2)
                         continue;
 
-                    x = i;
-                    y = j;
+                    x = j;
+                    y = i;
                 }
             }
 
@@ -223,6 +230,7 @@ namespace Board
             return (Array.IndexOf(map, 2) != -1);
         }
 
+        // GitHub Identicons
         private Color getColor(int x, int y)
         {
             int[] map = this.pass ? this.nowmap : this.basemap;
@@ -230,13 +238,13 @@ namespace Board
             if (block == 0)
                 return Color.White;
             if (block == 1)
-                return Color.LightGray;
+                return Color.Gainsboro;
 
             double r, g, b;
             Random rand = new Random(block);
             int h = rand.Next(360 + 1);
-            int s = rand.Next(100 + 1);
-            int l = rand.Next(100 + 1);
+            int s = 65 - rand.Next(20 + 1);
+            int l = 75 - rand.Next(20 + 1);
 
             double tmp = ((l < 50) ? l : (100 - l)) * (s * 0.01);
             double max = 2.55 * (l + tmp);

@@ -18,6 +18,7 @@ namespace Akane
         private Timer timer = null;
         private int default_sec = 600;
         private bool playing = false;
+        private DateTime stime;
 
         public Form()
         {
@@ -112,7 +113,7 @@ namespace Akane
                 return false;
 
             board.reset();
-            bool flg = true;
+            bool flg = ((answers.Length -1 )== stones.Length);
             for (int i = 0; (i < stones.Length && flg); i++)
             {
                 if (String.IsNullOrEmpty(answers[i]))
@@ -121,6 +122,7 @@ namespace Akane
                 string[] info = answers[i].Split(' ');
                 if (info[2] == "H" || info[2] == "T")
                 {
+                    Console.WriteLine("OKUYO");
                     flg = board.place(stones[i], info[2] == "H", int.Parse(info[3]), int.Parse(info[0]), int.Parse(info[1]));
                 }
                 else
@@ -129,7 +131,7 @@ namespace Akane
                 }
             }
 
-            //printLog(token + "の回答..." + (flg ? "受理" : "拒否"));
+            board.Time = DateTime.Now - this.stime;
             board.Pass = flg;
             return flg;
         }
@@ -154,6 +156,7 @@ namespace Akane
             {
                 printLog("試合終了");
                 button3.Text = "開始";
+                textBox1.AllowDrop = true;
                 this.playing = false;
                 numericUpDown2.Value = this.default_sec;
                 server.gameStop();
@@ -162,6 +165,8 @@ namespace Akane
             }
 
             printLog("試合開始");
+            this.stime = DateTime.Now;
+            textBox1.AllowDrop = false;
             button3.Text = "終了";
             this.playing = true;
             string[] tokens = new string[4];

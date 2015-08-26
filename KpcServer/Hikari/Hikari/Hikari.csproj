@@ -33,10 +33,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Board">
-      <HintPath>..\..\..\OfficialServer\Board\Board\bin\Release\Board.dll</HintPath>
+      <HintPath>..\..\..\OfficialServer\Board\Board\obj\Debug\Board.dll</HintPath>
     </Reference>
     <Reference Include="Problem">
-      <HintPath>..\..\..\OfficialServer\Problem\Problem\bin\Release\Problem.dll</HintPath>
+      <HintPath>..\..\..\OfficialServer\Problem\Problem\bin\Debug\Problem.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

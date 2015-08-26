@@ -1,15 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 using System.Net;
 using System.Net.Sockets;
-using System.Timers;
+using System.Windows.Forms;
 
 namespace Hikari
 {
@@ -18,8 +11,8 @@ namespace Hikari
         private Server server;
         private List<Client> clients = new List<Client>();
         private Problem.Problem problem;
-        private System.Timers.Timer timer;
-        private int time;
+        private bool playing = false;
+        private DateTime stime;
 
         public Form()
         {
@@ -27,7 +20,6 @@ namespace Hikari
 
             printIPaddr();
             initServer();
-            timerInit();
         }
 
 
@@ -94,14 +86,6 @@ namespace Hikari
         
 
         /* 試合 */
-        private void timerInit()
-        {
-            timer = new System.Timers.Timer();
-            timer.Elapsed += new ElapsedEventHandler(timerHandler);
-            timer.Interval = 1000;
-            timer.SynchronizingObject = this;
-        }
-
         private void button1_Click(object sender, EventArgs e)
         {
             string url = textBox2.Text;
@@ -117,7 +101,7 @@ namespace Hikari
                 return;
             }
 
-            if (!timer.Enabled)
+            if (!this.playing)
             {
                 gameStart();
             }
@@ -127,22 +111,13 @@ namespace Hikari
             }
         }
 
-        private void timerHandler(object sender, ElapsedEventArgs e)
-        {
-            numericUpDown2.DownButton();
-            if (numericUpDown2.Value != 0)
-                return;
-            button1.PerformClick();
-            this.time++;
-        }
-
         private void gameStart()
         {
-            timer.Start();
+            this.playing = true;
             string[] tmp = new string[3] { "おいやっちまおうぜ！", "やっちゃいますか！？", "やっちゃいましょうよ！" };
             textBox8.AppendText("[SYSTEM]\t" + tmp[(new Random()).Next(3)] + "\r\n");
             button1.Text = "終了";
-            this.time = 0;
+            this.stime = DateTime.Now;
 
             foreach (Client client in clients)
             {
@@ -154,15 +129,14 @@ namespace Hikari
 
         private void gameEnd()
         {
-            timer.Stop();
-            textBox8.AppendText("[SYSTEM]\t終わり！閉廷！");
+            this.playing = false;
+            textBox8.AppendText("[SYSTEM]\t終わり！閉廷！\r\n");
             button1.Text = "開始";
-            numericUpDown2.Value = 60;
         }
 
         private void onReady(Client client)
         {
-            if (!timer.Enabled)
+            if (!this.playing)
                 return;
             client.sendMsg(this.problem.KpcFormat());
             client.NowState = Client.State.Wait;
@@ -172,7 +146,7 @@ namespace Hikari
         private void onAnswer(Client client)
         {
             string[] kpc = client.flush();
-            if (!timer.Enabled)
+            if (!this.playing)
             {
                 client.sendMsg("X\n");  // DAMEDESU
                 client.NowState = Client.State.Neet;
@@ -201,6 +175,7 @@ namespace Hikari
                 return;
             }
 
+            client.Board.Time = DateTime.Now - this.stime;
             client.Board.Pass = true;
             clientEvent("バァン！(回答)", client.Name);
 
@@ -234,6 +209,21 @@ namespace Hikari
 
 
         /* 表示まわり */
+        private void textBox2_DragEnter(object sender, DragEventArgs e)
+        {
+            if (!e.Data.GetDataPresent(DataFormats.FileDrop))
+                return;
+            e.Effect = DragDropEffects.Copy;
+        }
+
+        private void textBox2_DragDrop(object sender, DragEventArgs e)
+        {
+            string[] filename = (string[])e.Data.GetData(DataFormats.FileDrop, false);
+            if (filename.Length <= 0)
+                return;
+            ((TextBox)sender).Text = filename[0];
+        }
+
         private void printIPaddr()
         {
             IPAddress ipaddr = Utils.getLocalIpAddr();

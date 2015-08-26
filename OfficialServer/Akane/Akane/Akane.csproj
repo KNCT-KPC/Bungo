@@ -34,11 +34,11 @@
   <ItemGroup>
     <Reference Include="Board, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Board\Board\bin\Release\Board.dll</HintPath>
+      <HintPath>..\..\Board\Board\obj\Debug\Board.dll</HintPath>
     </Reference>
     <Reference Include="Problem, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Problem\Problem\bin\Release\Problem.dll</HintPath>
+      <HintPath>..\..\Problem\Problem\bin\Debug\Problem.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

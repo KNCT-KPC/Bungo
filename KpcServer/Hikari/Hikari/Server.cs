@@ -39,15 +39,6 @@ namespace Hikari
             listenner.Stop();
         }
 
-
-
-
-
-
-
-
-
-
         private async System.Threading.Tasks.Task accept()
         {
             while (true)

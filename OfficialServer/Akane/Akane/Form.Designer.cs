@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form));
             this.button3 = new System.Windows.Forms.Button();
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
             this.board3 = new Board.Board();
@@ -91,7 +92,7 @@
             this.tableLayoutPanel1.RowCount = 2;
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 49.57507F));
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50.42493F));
-            this.tableLayoutPanel1.Size = new System.Drawing.Size(618, 542);
+            this.tableLayoutPanel1.Size = new System.Drawing.Size(618, 594);
             this.tableLayoutPanel1.TabIndex = 3;
             // 
             // board3
@@ -1125,10 +1126,10 @@
         0,
         0,
         0};
-            this.board3.Location = new System.Drawing.Point(3, 271);
+            this.board3.Location = new System.Drawing.Point(3, 297);
             this.board3.Name = "board3";
             this.board3.Pass = false;
-            this.board3.Size = new System.Drawing.Size(303, 268);
+            this.board3.Size = new System.Drawing.Size(303, 294);
             this.board3.TabIndex = 7;
             // 
             // board4
@@ -2162,10 +2163,10 @@
         0,
         0,
         0};
-            this.board4.Location = new System.Drawing.Point(312, 271);
+            this.board4.Location = new System.Drawing.Point(312, 297);
             this.board4.Name = "board4";
             this.board4.Pass = false;
-            this.board4.Size = new System.Drawing.Size(303, 268);
+            this.board4.Size = new System.Drawing.Size(303, 294);
             this.board4.TabIndex = 6;
             // 
             // board2
@@ -3202,7 +3203,7 @@
             this.board2.Location = new System.Drawing.Point(312, 3);
             this.board2.Name = "board2";
             this.board2.Pass = false;
-            this.board2.Size = new System.Drawing.Size(303, 262);
+            this.board2.Size = new System.Drawing.Size(303, 288);
             this.board2.TabIndex = 5;
             // 
             // board1
@@ -4239,7 +4240,7 @@
             this.board1.Location = new System.Drawing.Point(3, 3);
             this.board1.Name = "board1";
             this.board1.Pass = false;
-            this.board1.Size = new System.Drawing.Size(303, 262);
+            this.board1.Size = new System.Drawing.Size(303, 288);
             this.board1.TabIndex = 4;
             // 
             // label1
@@ -4400,7 +4401,7 @@
             this.textBox6.Name = "textBox6";
             this.textBox6.ReadOnly = true;
             this.textBox6.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.textBox6.Size = new System.Drawing.Size(197, 201);
+            this.textBox6.Size = new System.Drawing.Size(197, 253);
             this.textBox6.TabIndex = 23;
             // 
             // label4
@@ -4500,7 +4501,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(845, 566);
+            this.ClientSize = new System.Drawing.Size(845, 618);
             this.Controls.Add(this.label12);
             this.Controls.Add(this.label11);
             this.Controls.Add(this.numericUpDown3);
@@ -4526,6 +4527,7 @@
             this.Controls.Add(this.label1);
             this.Controls.Add(this.tableLayoutPanel1);
             this.Controls.Add(this.button3);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "Form";
             this.Text = "模擬運営サーバ";
             this.tableLayoutPanel1.ResumeLayout(false);

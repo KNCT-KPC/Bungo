@@ -16,15 +16,21 @@ namespace Akane
         private Problem.Problem problem = null;
         private Server server = null;
         private Timer timer = null;
-        private int default_sec = 60;
+        private int default_sec = 600;
         private bool playing = false;
 
         public Form()
         {
             InitializeComponent();
+
             this.timer = new Timer();
             this.timer.Tick += new EventHandler(timerHandler);
             this.timer.Interval = 1000;
+
+            board1.Name = label3.Text;
+            board2.Name = label4.Text;
+            board3.Name = label5.Text;
+            board4.Name = label6.Text;
         }
 
 
@@ -163,7 +169,8 @@ namespace Akane
             tokens[1] = textBox3.Text;
             tokens[2] = textBox4.Text;
             tokens[3] = textBox5.Text;
-            server.gameStart(this, this.problem.Raw, tokens);
+            this.default_sec = Decimal.ToInt32(numericUpDown2.Value);
+            server.gameStart(this, this.problem.Raw, tokens, Decimal.ToInt32(this.numericUpDown3.Value));
             timer.Start();
         }
 

@@ -54,9 +54,13 @@
             this.label6 = new System.Windows.Forms.Label();
             this.textBox1 = new System.Windows.Forms.TextBox();
             this.label10 = new System.Windows.Forms.Label();
+            this.numericUpDown3 = new System.Windows.Forms.NumericUpDown();
+            this.label11 = new System.Windows.Forms.Label();
+            this.label12 = new System.Windows.Forms.Label();
             this.tableLayoutPanel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDown1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDown2)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.numericUpDown3)).BeginInit();
             this.SuspendLayout();
             // 
             // button3
@@ -1123,6 +1127,7 @@
         0};
             this.board3.Location = new System.Drawing.Point(3, 271);
             this.board3.Name = "board3";
+            this.board3.Pass = false;
             this.board3.Size = new System.Drawing.Size(303, 268);
             this.board3.TabIndex = 7;
             // 
@@ -2159,6 +2164,7 @@
         0};
             this.board4.Location = new System.Drawing.Point(312, 271);
             this.board4.Name = "board4";
+            this.board4.Pass = false;
             this.board4.Size = new System.Drawing.Size(303, 268);
             this.board4.TabIndex = 6;
             // 
@@ -3195,6 +3201,7 @@
         0};
             this.board2.Location = new System.Drawing.Point(312, 3);
             this.board2.Name = "board2";
+            this.board2.Pass = false;
             this.board2.Size = new System.Drawing.Size(303, 262);
             this.board2.TabIndex = 5;
             // 
@@ -4231,6 +4238,7 @@
         0};
             this.board1.Location = new System.Drawing.Point(3, 3);
             this.board1.Name = "board1";
+            this.board1.Pass = false;
             this.board1.Size = new System.Drawing.Size(303, 262);
             this.board1.TabIndex = 4;
             // 
@@ -4358,17 +4366,17 @@
             // numericUpDown2
             // 
             this.numericUpDown2.Font = new System.Drawing.Font("MS UI Gothic", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
-            this.numericUpDown2.Location = new System.Drawing.Point(12, 263);
+            this.numericUpDown2.Location = new System.Drawing.Point(115, 263);
             this.numericUpDown2.Maximum = new decimal(new int[] {
             600,
             0,
             0,
             0});
             this.numericUpDown2.Name = "numericUpDown2";
-            this.numericUpDown2.Size = new System.Drawing.Size(169, 22);
+            this.numericUpDown2.Size = new System.Drawing.Size(66, 22);
             this.numericUpDown2.TabIndex = 21;
             this.numericUpDown2.Value = new decimal(new int[] {
-            60,
+            600,
             0,
             0,
             0});
@@ -4445,11 +4453,57 @@
             this.label10.TabIndex = 28;
             this.label10.Text = "TCP Port";
             // 
+            // numericUpDown3
+            // 
+            this.numericUpDown3.Font = new System.Drawing.Font("MS UI Gothic", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
+            this.numericUpDown3.Location = new System.Drawing.Point(35, 263);
+            this.numericUpDown3.Maximum = new decimal(new int[] {
+            3,
+            0,
+            0,
+            0});
+            this.numericUpDown3.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.numericUpDown3.Name = "numericUpDown3";
+            this.numericUpDown3.Size = new System.Drawing.Size(30, 22);
+            this.numericUpDown3.TabIndex = 29;
+            this.numericUpDown3.Value = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            // 
+            // label11
+            // 
+            this.label11.AutoSize = true;
+            this.label11.Font = new System.Drawing.Font("MS UI Gothic", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
+            this.label11.Location = new System.Drawing.Point(9, 265);
+            this.label11.Name = "label11";
+            this.label11.Size = new System.Drawing.Size(22, 15);
+            this.label11.TabIndex = 30;
+            this.label11.Text = "第";
+            // 
+            // label12
+            // 
+            this.label12.AutoSize = true;
+            this.label12.Font = new System.Drawing.Font("MS UI Gothic", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
+            this.label12.Location = new System.Drawing.Point(71, 265);
+            this.label12.Name = "label12";
+            this.label12.Size = new System.Drawing.Size(22, 15);
+            this.label12.TabIndex = 31;
+            this.label12.Text = "回";
+            // 
             // Form
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(845, 566);
+            this.Controls.Add(this.label12);
+            this.Controls.Add(this.label11);
+            this.Controls.Add(this.numericUpDown3);
             this.Controls.Add(this.label10);
             this.Controls.Add(this.textBox1);
             this.Controls.Add(this.label6);
@@ -4477,6 +4531,7 @@
             this.tableLayoutPanel1.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDown1)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDown2)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.numericUpDown3)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -4510,5 +4565,8 @@
         private System.Windows.Forms.TextBox textBox1;
         private Board.Board board3;
         private System.Windows.Forms.Label label10;
+        private System.Windows.Forms.NumericUpDown numericUpDown3;
+        private System.Windows.Forms.Label label11;
+        private System.Windows.Forms.Label label12;
     }
 }

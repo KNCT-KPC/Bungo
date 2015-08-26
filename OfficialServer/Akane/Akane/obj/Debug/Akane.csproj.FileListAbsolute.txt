@@ -23,3 +23,6 @@ C:\Users\Yuusuke\Documents\ptest\newnew\OfficialServer\Akane\Akane\obj\Debug\Aka
 C:\Users\Yuusuke\Documents\ptest\newnew\OfficialServer\Akane\Akane\obj\Debug\Akane.Properties.Resources.resources
 C:\Users\Yuusuke\Documents\ptest\newnew\OfficialServer\Akane\Akane\obj\Debug\Akane.csproj.GenerateResource.Cache
 C:\Users\Yuusuke\Documents\ptest\newnew\OfficialServer\Akane\Akane\obj\Debug\Akane.Form.resources
+C:\Users\Yuusuke\Documents\Bungo\OfficialServer\Akane\Akane\bin\Debug\Akane.exe.config
+C:\Users\Yuusuke\Documents\Bungo\OfficialServer\Akane\Akane\obj\Debug\Akane.exe
+C:\Users\Yuusuke\Documents\Bungo\OfficialServer\Akane\Akane\obj\Debug\Akane.pdb

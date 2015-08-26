@@ -16,6 +16,7 @@ namespace Akane
         private string problem;
         private string[] tokens;
         private Form ansCallback = null;
+        private int id = 1;
 
         public Server(int port)
         {
@@ -67,7 +68,7 @@ namespace Akane
                     res.StatusCode = 403;
                 }
             }
-            else if (req.HttpMethod == "GET" && req.Url.LocalPath == "/quest1.txt")
+            else if (req.HttpMethod == "GET" && req.Url.LocalPath == "/quest" + this.id + ".txt")
             {
                 if (!String.IsNullOrEmpty(req.QueryString["token"]) && Array.IndexOf(this.tokens, req.QueryString["token"]) != -1)
                 {
@@ -94,12 +95,13 @@ namespace Akane
             this.listener.BeginGetContext(this.callback, this.listener);
         }
 
-        public void gameStart(Form callback, string problem, string[] tokens)
+        public void gameStart(Form callback, string problem, string[] tokens, int id)
         {
             this.ansCallback = callback;
             this.problem = problem;
             this.tokens = tokens;
             this.playing = true;
+            this.id = id;
         }
 
         public void gameStop()

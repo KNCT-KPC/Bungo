@@ -1,5 +1,0 @@
-C:\Users\Yuusuke\Documents\ptest\newnew\KpcServer\Board\Board\bin\Debug\Board.dll
-C:\Users\Yuusuke\Documents\ptest\newnew\KpcServer\Board\Board\bin\Debug\Board.pdb
-C:\Users\Yuusuke\Documents\ptest\newnew\KpcServer\Board\Board\obj\Debug\Board.csprojResolveAssemblyReference.cache
-C:\Users\Yuusuke\Documents\ptest\newnew\KpcServer\Board\Board\obj\Debug\Board.dll
-C:\Users\Yuusuke\Documents\ptest\newnew\KpcServer\Board\Board\obj\Debug\Board.pdb

@@ -63,14 +63,14 @@ int solver(int *map, int x1, int y1, int x2, int y2, int *stones, int n)
 		}
 
 		// Like a START BIT
-		sendMsg("S\n");
+		sendMsg("S");
 
 		// Main
 		sendMsg(solutions[i]);
-		for (j=0; j<(n - line); j++) sendMsg("\n");
+		for (j=0; j<(n - line); j++) sendMsg("");
 
 		// Prepare for next problem
-		if (sendMsg("E\n") == EXIT_FAILURE)
+		if (sendMsg("E") == EXIT_FAILURE)
 			return EXIT_SUCCESS;	// transition to `Ready state`
 	}
 

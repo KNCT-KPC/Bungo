@@ -53,7 +53,9 @@ FILE *global_fpread = NULL;
 /* Base */
 int sendMsg(char *msg)
 {
-	fputs(msg, global_fpwrite);
+	if (msg[0] != '\0')
+		fputs(msg, global_fpwrite);
+	fputc('\n', global_fpwrite);
 	fflush(global_fpwrite);
 
 	if (msg[0] != 'E')
@@ -104,12 +106,9 @@ int main(int argc, char *argv[])
 #endif
 	//setvbuf(global_fpwrite, NULL, _IOFBF, 0);	/* Error in windows */
 
-	fputs(CLIENT_NAME, global_fpwrite);
-	fputc('\n', global_fpwrite);
-	fflush(global_fpwrite);
-
+	sendMsg(CLIENT_NAME);
 	while (1) {
-		sendMsg("G\n");
+		sendMsg("G");
 
 		int i;
 		char buf[BUF_SIZE];

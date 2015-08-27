@@ -15,9 +15,14 @@ namespace Hikari
 
             foreach(string k in kpc)
             {
+                count++;
+                if (String.IsNullOrEmpty(k))
+                {
+                    str += "\r\n";
+                    continue;
+                }
                 string[] tmp = k.Split(' ');
                 str += String.Format("{0} {1} {2} {3}\r\n", tmp[2], tmp[3], tmp[0], tmp[1]);
-                count++;
             }
 
             for (int i=count; i<len; i++)
@@ -25,7 +30,6 @@ namespace Hikari
                 str += "\r\n";
             }
 
-            str += "\r\n";
             return str;
         }
     }

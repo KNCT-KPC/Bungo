@@ -19,6 +19,7 @@ namespace Board
         private string name = null;
         private TimeSpan time;
 
+
         public Board()
         {
             InitializeComponent();
@@ -57,7 +58,10 @@ namespace Board
 
         public string BoardName
         {
-            set { this.name = value; }
+            set {
+                this.name = value;
+                Invalidate();
+            }
         }
 
         public int[] Scores
@@ -74,6 +78,18 @@ namespace Board
                 // Score, Stone, Time
                 return new int[3] { score, this.maxid - 1, (int)this.time.TotalMilliseconds };
             }
+        }
+
+
+        public void Copy(Board other)
+        {
+            this.basemap = other.basemap;
+            this.nowmap = other.nowmap;
+            this.maxid = other.maxid;
+            this.pass = other.pass;
+            this.name = other.name;
+            this.time = other.time;
+            Invalidate();
         }
 
         public void reset()
@@ -183,8 +199,9 @@ namespace Board
 
             int[] scores = this.Scores;
             resultlabel.Text = scores[0] + "[zk], " + scores[1] + "[stones], " + scores[2] + "[ms]";
-            namelabel.Text = (this.name == null) ? "" : this.name;
+            namelabel.Text = (this.name == null) ? "NoName" : this.name;
         }
+
 
         private void Board_Load(object sender, EventArgs e)
         {

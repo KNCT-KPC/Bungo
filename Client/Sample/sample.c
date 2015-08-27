@@ -4,7 +4,7 @@
 #include "base.c"
 
 
-/* Sleep用。使わないなら消すとすっきりする */
+/* for Sleep */
 #ifdef WINDOWS
 	#include <windows.h>
 	#define	sleep(n)	Sleep((n) * 1000)
@@ -15,7 +15,7 @@
 
 int solver(int *map, int x1, int y1, int x2, int y2, int *stones, int n, FILE *fp)
 {
-	// とりあえず表示しておく
+	/* Range */
 	printf("(%d, %d) ~ (%d, %d)\n\n", x1, y1, x2, y2);
 
 	int x, y;
@@ -40,7 +40,7 @@ int solver(int *map, int x1, int y1, int x2, int y2, int *stones, int n, FILE *f
 	printf("\n");
 
 
-	// 野生の勘で導き出した答え
+	/* for light.txt */
 	char *solutions[] = {
 		"H 0 2 2\n",
 		"H 0 2 2\nT 0 -6 0\n",
@@ -51,20 +51,26 @@ int solver(int *map, int x1, int y1, int x2, int y2, int *stones, int n, FILE *f
 	printf("Solutions\n");
 	for (i=0; (solutions[i] != NULL); i++) {
 		sleep(5);
-		
-		sendMsg("S\n", fp);
 
+		// Padding
 		int j, line = 0;
 		for (j=0; (solutions[i][j] != '\0'); j++) {
 			if (solutions[i][j] == '\n') line++;
 		}
 
+		// Like a START BIT
+		sendMsg("S\n", fp);
+
+		// Main
 		sendMsg(solutions[i], fp);
 		for (j=0; j<(n - line); j++) sendMsg("\n", fp);
 
+		// Prepare for next problem
 		if (sendMsg("E\n", fp) == EXIT_FAILURE) return EXIT_SUCCESS;
 	}
 
-	return EXIT_SUCCESS;
+
+	// Forced termination
+	return EXIT_FAILURE;
 }
 

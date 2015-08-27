@@ -41,15 +41,21 @@
 #endif
 
 
-
 /* Solver */
 int solver(int *map, int x1, int y1, int x2, int y2, int *stones, int n, FILE *fp);
+
+
+/* Gobal */
+FILE *global_fpwrite = NULL;
+FILE *global_fpread = NULL;
+
 
 /* Base */
 int sendMsg(char *msg, FILE *fp)
 {
 	fputs(msg, fp);
-	fflush(fp);
+	int a = fflush(fp);
+	printf("SEND: %d:%s", a, msg);
 
 	if (msg[0] != 'E') return EXIT_SUCCESS;
 	char tmp[3];
@@ -87,15 +93,17 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 
+	
 	// fdopen
 	FILE *fp;
 #ifdef	WINDOWS
-	osfhandle = _open_osfhandle(sock, _O_RDONLY);
-	fp = fdopen(osfhandle, "r+");
+	osfhandle = _open_osfhandle(sd, _O_RDONLY);
+	printf("r+b\n");
+	fp = fdopen(osfhandle, "r+b");
 #else
 	fp = fdopen(sd, "r+");
 #endif
-	setvbuf(fp, NULL, _IOFBF, 0);
+	//setvbuf(fp, NULL, _IOFBF, 0);	/* error in windows */
 
 	fputs(CLIENT_NAME, fp);
 	fputc('\n', fp);
@@ -138,7 +146,7 @@ int main(int argc, char *argv[])
 
 	fclose(fp);
 	close(sd);
-#ifdef	WINDOES
+#ifdef	WINDOWS
 	_close(osfhandle);
 	WSACleanup();
 #endif

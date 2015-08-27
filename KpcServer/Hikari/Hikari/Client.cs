@@ -8,14 +8,12 @@ using System.Net.Sockets;
 
 namespace Hikari
 {
-    class Client : IComparable<Client>
+    public class Client : IComparable<Client>
     {
-        public enum State { Connected, Neet, Ready, Wait, WORKING };
+        public enum State { Connected, Neet, Ready, WORKING, Cat };
 
         private TcpClient socket;
         private string name = null;
-        private IPAddress ipaddr;
-        private int port;
         private State now = State.Connected;
         private List<string> buf = new List<string>();
         private Board.Board board;
@@ -23,13 +21,8 @@ namespace Hikari
 
         public Client(TcpClient client)
         {
-            this.socket = client;
-
-            IPEndPoint remote = (IPEndPoint)client.Client.RemoteEndPoint;
-            this.ipaddr = remote.Address;
-            this.port = remote.Port;
-
             this.board = new Board.Board();
+            this.socket = client;
         }
 
         public string Name
@@ -77,7 +70,7 @@ namespace Hikari
 
         public int CompareTo(Client other)
         {
-            int cmp = Convert.ToInt32(this.isState(Client.State.WORKING)) - Convert.ToInt32(other.isState(Client.State.WORKING));
+            int cmp = Convert.ToInt32(this.isState(Client.State.WORKING) || this.isState(Client.State.Cat)) - Convert.ToInt32(other.isState(Client.State.WORKING) || other.isState(Client.State.Cat));
             if (cmp != 0)
                 return cmp;
 

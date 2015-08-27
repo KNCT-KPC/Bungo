@@ -28,10 +28,10 @@ namespace Akane
             this.timer.Tick += new EventHandler(timerHandler);
             this.timer.Interval = 1000;
 
-            board1.Name = label3.Text;
-            board2.Name = label4.Text;
-            board3.Name = label5.Text;
-            board4.Name = label6.Text;
+            board1.BoardName = label3.Text;
+            board2.BoardName = label4.Text;
+            board3.BoardName = label5.Text;
+            board4.BoardName = label6.Text;
         }
 
 

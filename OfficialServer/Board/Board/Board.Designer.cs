@@ -34,27 +34,26 @@
             // 
             // resultlabel
             // 
-            this.resultlabel.AutoSize = true;
+            this.resultlabel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.resultlabel.BackColor = System.Drawing.SystemColors.Info;
             this.resultlabel.Font = new System.Drawing.Font("MS UI Gothic", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
-            this.resultlabel.Location = new System.Drawing.Point(-3, 0);
+            this.resultlabel.Location = new System.Drawing.Point(75, 0);
             this.resultlabel.Name = "resultlabel";
-            this.resultlabel.Size = new System.Drawing.Size(47, 15);
+            this.resultlabel.Size = new System.Drawing.Size(245, 15);
             this.resultlabel.TabIndex = 0;
-            this.resultlabel.Text = "Result";
+            this.resultlabel.Text = "1024[zk], 0[stones], 0[ms]";
+            this.resultlabel.TextAlign = System.Drawing.ContentAlignment.TopRight;
             // 
             // namelabel
             // 
-            this.namelabel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.namelabel.AutoSize = true;
             this.namelabel.BackColor = System.Drawing.SystemColors.Info;
             this.namelabel.Font = new System.Drawing.Font("MS UI Gothic", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
-            this.namelabel.Location = new System.Drawing.Point(277, 0);
+            this.namelabel.Location = new System.Drawing.Point(-3, 0);
             this.namelabel.Name = "namelabel";
-            this.namelabel.Size = new System.Drawing.Size(43, 15);
+            this.namelabel.Size = new System.Drawing.Size(72, 15);
             this.namelabel.TabIndex = 1;
-            this.namelabel.Text = "Name";
-            this.namelabel.TextAlign = System.Drawing.ContentAlignment.TopRight;
+            this.namelabel.Text = "HogeHage";
             // 
             // Board
             // 

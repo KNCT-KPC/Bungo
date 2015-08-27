@@ -44,13 +44,15 @@ namespace Hikari
             while (true)
             {
                 TcpClient client = await listenner.AcceptTcpClientAsync();
-                acceptClient(client);
                 onConnect(client);
+                await acceptClient(client);
             }
         }
 
         private async System.Threading.Tasks.Task acceptClient(TcpClient client)
         {
+            try
+            {
             var ns = client.GetStream();
             var ms = new System.IO.MemoryStream();
             byte[] result_bytes = new byte[4096];
@@ -67,7 +69,7 @@ namespace Hikari
                 ms.Write(result_bytes, 0, result_size);
             } while (ns.DataAvailable);
 
-            string message = System.Text.Encoding.UTF8.GetString(ms.ToArray());
+            string message = Encoding.UTF8.GetString(ms.ToArray());
             ms.Close();
 
             StringReader sr = new StringReader(message);
@@ -76,7 +78,11 @@ namespace Hikari
                 onReceive(client, str);
             }
             sr.Close();
-            acceptClient(client);
+            await acceptClient(client);
+            } catch(Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
         }
     }
 }

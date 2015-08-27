@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.IO;
 
 namespace Hikari
 {
@@ -13,6 +15,7 @@ namespace Hikari
         private Problem.Problem problem;
         private bool playing = false;
         private DateTime stime;
+        private Client best;
 
         public Form()
         {
@@ -56,7 +59,7 @@ namespace Hikari
                 case Client.State.Connected:
                     client.Name = msg;
                     client.NowState = Client.State.Neet;
-                    client.Board.Name = msg;
+                    client.Board.BoardName = client.Name;
                     clientEvent("身長が170cmで、体重が74kgです。", client.Name);
                     break;
                 case Client.State.Neet:
@@ -66,12 +69,12 @@ namespace Hikari
                     clientEvent("ポートおっぴろげて神妙に待ってろ!", client.Name);
                     onReady(client);
                     break;
-                case Client.State.Wait:
+                case Client.State.WORKING:
                     if (msg != "S") // START
                         return;
-                    client.NowState = Client.State.WORKING;
+                    client.NowState = Client.State.Cat;
                     break;
-                case Client.State.WORKING:
+                case Client.State.Cat:
                     if (msg == "E") // END
                     {
                         onAnswer(client);
@@ -83,40 +86,57 @@ namespace Hikari
                     return;
             }
         }
-        
+
 
         /* 試合 */
         private void button1_Click(object sender, EventArgs e)
         {
-            string url = textBox2.Text;
-
-            try
+            if (this.playing)
             {
-                this.problem = new Problem.Problem(url);
-            }
-            catch (Exception ex)
-            {
-                this.problem = null;
-                textBox8.AppendText("[SYSTEM]\t" + ex.Message + "\r\n");
+                gameEnd();
                 return;
             }
 
-            if (!this.playing)
+            gameInit();
+        }
+
+        private async void gameInit()
+        {
+            string url = textBox2.Text;
+            string msg = null;
+
+            button1.Text = "開始中";
+            button1.Enabled = false;
+
+            await Task.Run(() => {
+                try
+                {
+                    this.problem = new Problem.Problem(url);
+                }
+                catch (Exception ex)
+                {
+                    this.problem = null;
+                    msg = ex.Message;
+                }
+            });
+
+            button1.Enabled = true;
+            if (msg != null)
             {
-                gameStart();
+                button1.Text = "試合開始";
+                textBox8.AppendText("[Hikari]\t" + msg + "\r\n");
+                return;
             }
-            else
-            {
-                gameEnd();
-            }
+
+            gameStart();
         }
 
         private void gameStart()
         {
             this.playing = true;
             string[] tmp = new string[3] { "おいやっちまおうぜ！", "やっちゃいますか！？", "やっちゃいましょうよ！" };
-            textBox8.AppendText("[SYSTEM]\t" + tmp[(new Random()).Next(3)] + "\r\n");
-            button1.Text = "終了";
+            textBox8.AppendText("[Hikari]\t" + tmp[(new Random()).Next(3)] + "\r\n");
+            button1.Text = "試合終了";
             this.stime = DateTime.Now;
 
             foreach (Client client in clients)
@@ -130,8 +150,9 @@ namespace Hikari
         private void gameEnd()
         {
             this.playing = false;
-            textBox8.AppendText("[SYSTEM]\t終わり！閉廷！\r\n");
-            button1.Text = "開始";
+            textBox8.AppendText("[Hikari]\t終わり！閉廷！\r\n");
+            button1.Text = "試合開始";
+            this.best = null;
         }
 
         private void onReady(Client client)
@@ -139,7 +160,7 @@ namespace Hikari
             if (!this.playing)
                 return;
             client.sendMsg(this.problem.KpcFormat());
-            client.NowState = Client.State.Wait;
+            client.NowState = Client.State.WORKING;
             client.Board.BaseMap = this.problem.Map;
         }
 
@@ -154,7 +175,7 @@ namespace Hikari
             }
 
             client.sendMsg("O\n");  // OK
-            client.NowState = Client.State.Wait;
+            client.NowState = Client.State.WORKING;
 
 
             // 反映処理
@@ -179,32 +200,53 @@ namespace Hikari
             client.Board.Pass = true;
             clientEvent("バァン！(回答)", client.Name);
 
-            if (clients[0] != client)
+            if (this.best != null && !client.Equals(this.best) && !(client.CompareTo(this.best) < 0))
                 return;
 
+            this.best = client;
 
             // 送信処理
-            string answer = Answer.Kpc2Official(kpc, this.problem.Stones.Length);
-            WebClient wc = new WebClient();
+            postAnswerAsync(client, kpc);
+        }
+
+        private async void postAnswerAsync(Client client, string[] ans)
+        {
+            string proper = Answer.Kpc2Official(ans, this.problem.Stones.Length);
             System.Collections.Specialized.NameValueCollection nv = new System.Collections.Specialized.NameValueCollection();
             nv.Add(textBox9.Text, textBox5.Text);
-            nv.Add(textBox4.Text, answer);
+            nv.Add(textBox4.Text, proper);
 
-            string response;
-            try
+            bool check = checkBox1.Checked;
+            bool error = false;
+            clientEvent("通信開始", "UNEI");
+            string msg = await Task.Run(() =>
             {
-                byte[] res = wc.UploadValues(textBox3.Text, nv);
-                response = System.Text.Encoding.UTF8.GetString(res);
-            } catch
-            {
-                client.Board.Pass = false;
-                clientEvent("ダメです。", client.Name);
-                return;
-            }
-            finally
-            {
+                if (check)
+                {
+                    string dir = this.stime.ToString("yyyy-MM-dd-HH-mm-ss");
+                    Directory.CreateDirectory(dir);
+                    File.WriteAllText(dir + "\\" + (int)((DateTime.Now - this.stime).TotalMilliseconds) + "ms.txt", proper);
+                    return "書き込み完了";
+                }
+
+                WebClient wc = new WebClient();
+                string response;
+                try
+                {
+                    byte[] res = wc.UploadValues(textBox3.Text, nv);
+                    response = System.Text.Encoding.UTF8.GetString(res);
+                } catch(Exception ex)
+                {
+                    error = true;
+                    response = ex.Message;
+                }
                 wc.Dispose();
-            }
+                return response;
+            });
+
+            if (error)
+                client.Board.Pass = false;
+            clientEvent(msg, "UNEI");
         }
 
 
@@ -236,7 +278,7 @@ namespace Hikari
             textBox2.Text = url;
         }
 
-        private void clientEvent(string msg, string name=null)
+        private void clientEvent(string msg, string name = null)
         {
             // 件数
             int len = clients.Count;
@@ -247,13 +289,29 @@ namespace Hikari
             textBox8.AppendText(str);
 
             // ソート
-            clients.Sort();
+            if (!this.playing)
+                return;
+
+            List<Client> tmp = new List<Client>(clients);
+            if (this.best != null && (clients.IndexOf(this.best) < 0))
+                tmp.Add(this.best);
+
+            /*
+            if (len < 3)
+                this.board3.BoardName = null;
+            if (len < 2)
+                this.board2.BoardName = null;
+            if (len < 1)
+                this.board1.BoardName = null;
+            */
+
+            tmp.Sort();
             if (len > 0)
-                this.board1 = clients[0].Board;
+                this.board1.Copy(tmp[0].Board);
             if (len > 1)
-                this.board2 = clients[1].Board;
+                this.board2.Copy(tmp[1].Board);
             if (len > 2)
-                this.board3 = clients[2].Board;
+                this.board3.Copy(tmp[2].Board);
         }
     }
 }

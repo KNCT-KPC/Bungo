@@ -13,11 +13,12 @@
 #endif
 
 
-int solver(int *map, int x1, int y1, int x2, int y2, int *stones, int n, FILE *fp)
+int solver(int *map, int x1, int y1, int x2, int y2, int *stones, int n)
 {
 	/* Range */
 	printf("(%d, %d) ~ (%d, %d)\n\n", x1, y1, x2, y2);
 
+	/* Map */
 	int x, y;
 	printf("Map\n");
 	for (y=0; y<32; y++) {
@@ -27,6 +28,7 @@ int solver(int *map, int x1, int y1, int x2, int y2, int *stones, int n, FILE *f
 	}
 	printf("\n");
 
+	/* Stones */
 	int i;
 	printf("Stones\n");
 	for (i=0; i<n; i++) {
@@ -40,7 +42,8 @@ int solver(int *map, int x1, int y1, int x2, int y2, int *stones, int n, FILE *f
 	printf("\n");
 
 
-	/* for light.txt */
+
+	/* Solutions for light.txt */
 	char *solutions[] = {
 		"H 0 2 2\n",
 		"H 0 2 2\nT 0 -6 0\n",
@@ -51,6 +54,7 @@ int solver(int *map, int x1, int y1, int x2, int y2, int *stones, int n, FILE *f
 	printf("Solutions\n");
 	for (i=0; (solutions[i] != NULL); i++) {
 		sleep(5);
+		printf("Solutin %d\n", i+1);
 
 		// Padding
 		int j, line = 0;
@@ -59,16 +63,16 @@ int solver(int *map, int x1, int y1, int x2, int y2, int *stones, int n, FILE *f
 		}
 
 		// Like a START BIT
-		sendMsg("S\n", fp);
+		sendMsg("S\n");
 
 		// Main
-		sendMsg(solutions[i], fp);
-		for (j=0; j<(n - line); j++) sendMsg("\n", fp);
+		sendMsg(solutions[i]);
+		for (j=0; j<(n - line); j++) sendMsg("\n");
 
 		// Prepare for next problem
-		if (sendMsg("E\n", fp) == EXIT_FAILURE) return EXIT_SUCCESS;
+		if (sendMsg("E\n") == EXIT_FAILURE)
+			return EXIT_SUCCESS;	// transition to `Ready state`
 	}
-
 
 	// Forced termination
 	return EXIT_FAILURE;

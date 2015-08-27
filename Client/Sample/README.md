@@ -1,12 +1,13 @@
 # Sample
 
-* Windows(予定) / Linux に対応したクライアントサンプル
-* `int solver()`を弄ってくれ
-* main部をまとめたかったら勝手にしてくれ
+* Windows / Linux に対応したクライアントサンプル
+* `base.c`は使いまわすことを想定
+* `sample.c`をコピーして、`int solver()`を弄ってくれ
 
 ## Linux でのコンパイル
 
-   gcc client.c
+   gcc sample.c
 
 ## Windows でのコンパイル
 
+   cl sample.c

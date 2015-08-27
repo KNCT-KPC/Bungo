@@ -42,7 +42,7 @@
 
 
 /* Solver */
-int solver(int *map, int x1, int y1, int x2, int y2, int *stones, int n, FILE *fp);
+int solver(int *map, int x1, int y1, int x2, int y2, int *stones, int n);
 
 
 /* Gobal */
@@ -51,18 +51,17 @@ FILE *global_fpread = NULL;
 
 
 /* Base */
-int sendMsg(char *msg, FILE *fp)
+int sendMsg(char *msg)
 {
-	fputs(msg, fp);
-	int a = fflush(fp);
-	printf("SEND: %d:%s", a, msg);
+	fputs(msg, global_fpwrite);
+	fflush(global_fpwrite);
 
-	if (msg[0] != 'E') return EXIT_SUCCESS;
+	if (msg[0] != 'E')
+		return EXIT_SUCCESS;
+	
 	char tmp[3];
-	printf("KITAYO\n");
-	if (fgets(tmp, 3, fp) == NULL) return EXIT_FAILURE;
-	printf("tmp = %s\n", tmp);
-	return (tmp[0] == 'X') ? EXIT_FAILURE : EXIT_SUCCESS;
+	char *r = fgets(tmp, 3, global_fpread);
+	return (r == NULL || tmp[0] == 'X') ? EXIT_FAILURE : EXIT_SUCCESS;
 }
 
 int main(int argc, char *argv[])
@@ -95,22 +94,22 @@ int main(int argc, char *argv[])
 
 	
 	// fdopen
-	FILE *fp;
 #ifdef	WINDOWS
 	osfhandle = _open_osfhandle(sd, _O_RDONLY);
-	printf("r+b\n");
-	fp = fdopen(osfhandle, "r+b");
+	global_fpread = fdopen(osfhandle, "rb");
+	global_fpwrite = fdopen(osfhandle, "wb");
 #else
-	fp = fdopen(sd, "r+");
+	global_fpread = fdopen(sd, "rb");
+	global_fpwrite = fdopen(sd, "wb");
 #endif
-	//setvbuf(fp, NULL, _IOFBF, 0);	/* error in windows */
+	//setvbuf(global_fpwrite, NULL, _IOFBF, 0);	/* Error in windows */
 
-	fputs(CLIENT_NAME, fp);
-	fputc('\n', fp);
-	fflush(fp);
+	fputs(CLIENT_NAME, global_fpwrite);
+	fputc('\n', global_fpwrite);
+	fflush(global_fpwrite);
 
 	while (1) {
-		sendMsg("G\n", fp);
+		sendMsg("G\n");
 
 		int i;
 		char buf[BUF_SIZE];
@@ -119,7 +118,7 @@ int main(int argc, char *argv[])
 		int map[32 * 32];
 		int stones[256 * 8 * 8];
 		for (i=0; i<(n+3); i++) {
-			fgets(buf, BUF_SIZE, fp);
+			fgets(buf, BUF_SIZE, global_fpread);
 
 			if (i == 0) {
 				sscanf(buf, "%2d %2d %2d %2d", &x1, &y1, &x2, &y2);
@@ -141,11 +140,13 @@ int main(int argc, char *argv[])
 			}
 		}
 
-		if (solver(map, x1, y1, x2, y2, stones, n, fp) == EXIT_FAILURE) break;
+		if (solver(map, x1, y1, x2, y2, stones, n) == EXIT_FAILURE) break;
 	}
 
-	fclose(fp);
+	fclose(global_fpread);
+	fclose(global_fpwrite);
 	close(sd);
+
 #ifdef	WINDOWS
 	_close(osfhandle);
 	WSACleanup();

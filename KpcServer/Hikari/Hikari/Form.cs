@@ -123,7 +123,7 @@ namespace Hikari
             button1.Enabled = true;
             if (msg != null)
             {
-                button1.Text = "試合開始";
+                button1.Text = "開始";
                 textBox8.AppendText("[Hikari]\t" + msg + "\r\n");
                 return;
             }
@@ -136,7 +136,7 @@ namespace Hikari
             this.playing = true;
             string[] tmp = new string[3] { "おいやっちまおうぜ！", "やっちゃいますか！？", "やっちゃいましょうよ！" };
             textBox8.AppendText("[Hikari]\t" + tmp[(new Random()).Next(3)] + "\r\n");
-            button1.Text = "試合終了";
+            button1.Text = "終了";
             this.stime = DateTime.Now;
 
             foreach (Client client in clients)

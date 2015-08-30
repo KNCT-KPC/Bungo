@@ -206,6 +206,9 @@ namespace Board
         private void Board_Load(object sender, EventArgs e)
         {
             this.SetStyle(ControlStyles.ResizeRedraw, true);
+            this.SetStyle(ControlStyles.DoubleBuffer, true);
+            this.SetStyle(ControlStyles.UserPaint, true);
+            this.SetStyle(ControlStyles.AllPaintingInWmPaint, true);
         }
 
         private void dfs(int[] map, int x, int y)

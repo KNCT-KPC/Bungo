@@ -10,7 +10,7 @@
 #include <string.h>
 #include <sys/types.h>
 #ifdef	WINDOWS
-	#include <winsock.h>
+	#include <winsock.h>	// http://mattn.kaoriya.net/software/windows/20071001121756.htm
 	#include <io.h>
 	#include <fcntl.h>
 	#pragma comment (lib, "ws2_32.lib")

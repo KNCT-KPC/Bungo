@@ -15,3 +15,8 @@ obj/
 *.user
 *.suo
 
+# Binary
+/Binary/*
+!/Binary/Hikari/Hikari.exe
+!/Binary/Akane/Akane.exe
+

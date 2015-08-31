@@ -17,6 +17,7 @@ obj/
 
 # Binary
 /Binary/*
-!/Binary/Hikari/Hikari.exe
-!/Binary/Akane/Akane.exe
-
+!/Binary/Hikari
+/Binary/Hikari/*
+!/Binary/Akane
+/Binary/Akane/*

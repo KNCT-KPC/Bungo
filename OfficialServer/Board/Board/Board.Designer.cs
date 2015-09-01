@@ -37,7 +37,7 @@
             this.resultlabel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.resultlabel.BackColor = System.Drawing.SystemColors.Info;
             this.resultlabel.Font = new System.Drawing.Font("MS UI Gothic", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
-            this.resultlabel.Location = new System.Drawing.Point(75, 0);
+            this.resultlabel.Location = new System.Drawing.Point(70, 3);
             this.resultlabel.Name = "resultlabel";
             this.resultlabel.Size = new System.Drawing.Size(245, 15);
             this.resultlabel.TabIndex = 0;
@@ -49,7 +49,7 @@
             this.namelabel.AutoSize = true;
             this.namelabel.BackColor = System.Drawing.SystemColors.Info;
             this.namelabel.Font = new System.Drawing.Font("MS UI Gothic", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
-            this.namelabel.Location = new System.Drawing.Point(-3, 0);
+            this.namelabel.Location = new System.Drawing.Point(0, 3);
             this.namelabel.Name = "namelabel";
             this.namelabel.Size = new System.Drawing.Size(72, 15);
             this.namelabel.TabIndex = 1;
@@ -60,10 +60,12 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.Info;
+            this.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.Controls.Add(this.namelabel);
             this.Controls.Add(this.resultlabel);
+            this.Location = new System.Drawing.Point(0, 2);
             this.Name = "Board";
-            this.Size = new System.Drawing.Size(320, 320);
+            this.Size = new System.Drawing.Size(318, 318);
             this.Load += new System.EventHandler(this.Board_Load);
             this.ResumeLayout(false);
             this.PerformLayout();

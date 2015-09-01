@@ -32,12 +32,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Board, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Board\Board\obj\Debug\Board.dll</HintPath>
+    <Reference Include="Board">
+      <HintPath>..\..\Board\Board\bin\Debug\Board.dll</HintPath>
     </Reference>
-    <Reference Include="Problem, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
+    <Reference Include="Problem">
       <HintPath>..\..\Problem\Problem\bin\Debug\Problem.dll</HintPath>
     </Reference>
     <Reference Include="System" />

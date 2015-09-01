@@ -53,6 +53,7 @@
   <ItemGroup>
     <Compile Include="Answer.cs" />
     <Compile Include="Client.cs" />
+    <Compile Include="Config.cs" />
     <Compile Include="Form.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -89,6 +90,10 @@
     <None Include="App.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>set fname_new=..\..\..\..\..\Binary\Hikari\$(TargetName)$(TargetExt)
+"C:\Program Files (x86)\Microsoft\ILMerge\ILMerge" /wildcards /out:%25fname_new%25 $(TargetFileName) *.dll /targetplatform:v4,"C:\Windows\Microsoft.NET\Framework\v4.0.30319"</PostBuildEvent>
+  </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

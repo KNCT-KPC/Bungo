@@ -16,11 +16,13 @@ namespace Hikari
         private bool playing = false;
         private DateTime stime;
         private Client best;
+        private Config config;
 
         public Form()
         {
             InitializeComponent();
 
+            initConfig();
             printIPaddr();
             initServer();
         }
@@ -123,7 +125,7 @@ namespace Hikari
             button1.Enabled = true;
             if (msg != null)
             {
-                button1.Text = "開始";
+                button1.Text = "競技開始";
                 textBox8.AppendText("[Hikari]\t" + msg + "\r\n");
                 return;
             }
@@ -133,10 +135,29 @@ namespace Hikari
 
         private void gameStart()
         {
+            textBox5.ReadOnly = true;
+            textBox10.ReadOnly = true;
+            numericUpDown1.ReadOnly = true;
+            textBox1.ReadOnly = true;
+            textBox2.ReadOnly = true;
+            textBox3.ReadOnly = true;
+            textBox4.ReadOnly = true;
+            textBox9.ReadOnly = true;
+            button2.Enabled = false;
+
+            this.config.TokenParam = textBox9.Text;
+            this.config.Token = textBox5.Text;
+            this.config.Server = textBox10.Text;
+            this.config.Counter = Decimal.ToInt32(numericUpDown1.Value);
+            this.config.GetPath = textBox1.Text;
+            this.config.GetAbsPath = textBox2.Text;
+            this.config.PostPath = textBox3.Text;
+            this.config.AnsParam = textBox4.Text;
+
             this.playing = true;
             string[] tmp = new string[3] { "おいやっちまおうぜ！", "やっちゃいますか！？", "やっちゃいましょうよ！" };
             textBox8.AppendText("[Hikari]\t" + tmp[(new Random()).Next(3)] + "\r\n");
-            button1.Text = "終了";
+            button1.Text = "競技終了";
             this.stime = DateTime.Now;
 
             foreach (Client client in clients)
@@ -149,6 +170,16 @@ namespace Hikari
 
         private void gameEnd()
         {
+            textBox5.ReadOnly = false;
+            textBox10.ReadOnly = false;
+            numericUpDown1.ReadOnly = false;
+            textBox1.ReadOnly = false;
+            textBox2.ReadOnly = false;
+            textBox3.ReadOnly = false;
+            textBox4.ReadOnly = false;
+            textBox9.ReadOnly = false;
+            button2.Enabled = true;
+
             this.playing = false;
             textBox8.AppendText("[Hikari]\t終わり！閉廷！\r\n");
             button1.Text = "試合開始";
@@ -216,7 +247,7 @@ namespace Hikari
             nv.Add(textBox9.Text, textBox5.Text);
             nv.Add(textBox4.Text, proper);
 
-            bool check = checkBox1.Checked;
+            bool check = this.problem.isLocal();
             bool error = false;
             clientEvent("通信開始", "UNEI");
             string msg = await Task.Run(() =>
@@ -233,7 +264,8 @@ namespace Hikari
                 string response;
                 try
                 {
-                    byte[] res = wc.UploadValues(textBox3.Text, nv);
+                    string url = "http://" + textBox10.Text + textBox3.Text;
+                    byte[] res = wc.UploadValues(url, nv);
                     response = System.Text.Encoding.UTF8.GetString(res);
                 } catch(Exception ex)
                 {
@@ -250,6 +282,67 @@ namespace Hikari
         }
 
 
+        /* Config */
+        private string configPath()
+        {
+            return Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "\\config.xml";
+        }
+
+        private void initConfig()
+        {
+            bool load = false;
+
+            if (File.Exists(configPath()))
+            {
+                StreamReader sr = null;
+                try {
+                    sr = new StreamReader(configPath(), new System.Text.UTF8Encoding(false));
+                    System.Xml.Serialization.XmlSerializer serializer = new System.Xml.Serialization.XmlSerializer(typeof(Config));
+                    this.config = (Config)serializer.Deserialize(sr);
+                    load = true;
+                } catch (Exception)
+                {
+                    // Nice-Catch!
+                }
+                finally
+                {
+                    if (sr != null)
+                        sr.Close();
+                }
+            }
+
+            if (!load)
+                this.config = new Config();
+
+
+            textBox9.Text = this.config.TokenParam;
+            textBox5.Text = this.config.Token;
+            textBox10.Text = this.config.Server;
+            numericUpDown1.Value = this.config.Counter;
+            textBox1.Text = this.config.GetPath;
+
+            if (this.config.GetAbsPath == null)
+            {
+                GetUrlTextChanged(null, null);
+            }
+            else
+            {
+                textBox2.Text = this.config.GetAbsPath;
+            }
+
+            textBox3.Text = this.config.PostPath;
+            textBox4.Text = this.config.AnsParam;
+        }
+
+        private void Form_Closed(object sender, FormClosedEventArgs e)
+        {
+            System.Xml.Serialization.XmlSerializer serializer = new System.Xml.Serialization.XmlSerializer(typeof(Config));
+            StreamWriter sw = new StreamWriter(configPath(), false, new System.Text.UTF8Encoding(false));
+            serializer.Serialize(sw, this.config);
+            sw.Close();
+        }
+
+
         /* 表示まわり */
         private void textBox2_DragEnter(object sender, DragEventArgs e)
         {
@@ -261,8 +354,9 @@ namespace Hikari
         private void textBox2_DragDrop(object sender, DragEventArgs e)
         {
             string[] filename = (string[])e.Data.GetData(DataFormats.FileDrop, false);
-            if (filename.Length <= 0)
+            if (filename.Length <= 0 || !filename[0].EndsWith(".txt"))
                 return;
+
             ((TextBox)sender).Text = filename[0];
         }
 
@@ -274,7 +368,7 @@ namespace Hikari
 
         private void GetUrlTextChanged(object sender, EventArgs e)
         {
-            string url = textBox1.Text + label2.Text + numericUpDown1.Value + label3.Text + "?token=" + textBox5.Text;
+            string url = "http://" + textBox10.Text + textBox1.Text + "quest" + numericUpDown1.Value + ".txt" + "?token=" + textBox5.Text;
             textBox2.Text = url;
         }
 
@@ -312,6 +406,11 @@ namespace Hikari
                 this.board2.Copy(tmp[1].Board);
             if (len > 2)
                 this.board3.Copy(tmp[2].Board);
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            MessageBox.Show("未実装");
         }
     }
 }

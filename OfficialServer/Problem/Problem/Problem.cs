@@ -12,6 +12,7 @@ namespace Problem
         private int[] map;
         private int[][] stones;
         private string kpc = null;
+        private bool local = false;
 
         public Problem(string filename)
         {
@@ -30,8 +31,10 @@ namespace Problem
                 }
                 sr.Close();
                 lines = tmp.ToArray();
+                this.local = false;
             } else
             {
+                this.local = true;
                 lines = System.IO.File.ReadAllLines(filename, Encoding.ASCII);
             }
 
@@ -73,6 +76,11 @@ namespace Problem
         public int[][] Stones
         {
             get { return this.stones; }
+        }
+
+        public bool isLocal()
+        {
+            return this.local;
         }
 
         public string KpcFormat()

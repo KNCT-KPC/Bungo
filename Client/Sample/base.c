@@ -24,12 +24,12 @@
 
 
 /* Macros */
-#define	MAP(x, y)		map[(y) * 32 + (x)]
-#define	STONE(n, x, y)	stones[(8*8) * (i) + ((y) * 8) + (x)]
+#define	MAP(x, y)	map[((y) << 5) + (x)]
+#define	STONE(n, x, y)	stones[((i) << 6) + ((y) << 4) + (x)]
 
 
 /* Constant */
-#define	BUF_SIZE	(32 * 32 + 1 + 1)
+#define	BUF_SIZE	1026
 #ifndef	CLIENT_NAME
 	#define	CLIENT_NAME	"NoName"
 #endif
@@ -114,8 +114,8 @@ int main(int argc, char *argv[])
 		char buf[BUF_SIZE];
 		
 		int x1, y1, x2, y2, n = 1;
-		int map[32 * 32];
-		int stones[256 * 8 * 8];
+		int map[1024];		// 32 * 32
+		int stones[16384];	// (8 * 8) * 256
 		for (i=0; i<(n+3); i++) {
 			fgets(buf, BUF_SIZE, global_fpread);
 
@@ -131,11 +131,11 @@ int main(int argc, char *argv[])
 
 			int j;
 			if (i == 1) {
-				for (j=0; j<(32 * 32); j++)
+				for (j=0; j<1024; j++)
 					map[j] = buf[j] - '0';
 			} else {
-				for (j=0; j<(8 * 8); j++)
-					stones[(8 * 8 * (i - 3)) + j] = buf[j] - '0';
+				for (j=0; j<64; j++)
+					stones[((i - 3) << 5) + j] = buf[j] - '0';
 			}
 		}
 

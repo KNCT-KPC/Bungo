@@ -254,7 +254,7 @@ namespace Hikari
             {
                 if (check)
                 {
-                    string dir = this.stime.ToString("yyyy-MM-dd-HH-mm-ss");
+                    string dir = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "\\" + this.stime.ToString("yyyy-MM-dd-HH-mm-ss");
                     Directory.CreateDirectory(dir);
                     File.WriteAllText(dir + "\\" + (int)((DateTime.Now - this.stime).TotalMilliseconds) + "ms.txt", proper);
                     return "書き込み完了";

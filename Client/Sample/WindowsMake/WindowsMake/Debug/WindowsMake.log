@@ -1,0 +1,27 @@
+﻿2015/09/06 23:58:19 にビルドを開始しました。
+     1>ノード 2 上のプロジェクト "C:\Users\mori\Desktop\新しいフォルダー\Bungo\Client\Sample\WindowsMake\WindowsMake\WindowsMake.vcxproj" (build ターゲット)。
+     1>InitializeBuildStatus:
+         "AlwaysCreate" が指定されたため "Debug\WindowsMake.unsuccessfulbuild" を作成しています。
+       ClCompile:
+         C:\Program Files\Microsoft Visual Studio 10.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /Od /Oy- /D _MBCS /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc100.pdb" /Gd /TP /analyze- /errorReport:prompt sample.cpp
+         sample.cpp
+     1>c:\users\mori\desktop\新しいフォルダー\bungo\client\sample\windowsmake\windowsmake\sample.cpp(170): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 c:\program files\microsoft visual studio 10.0\vc\include\stdio.h(234) : 'fopen' の宣言を確認してください。
+     1>c:\users\mori\desktop\新しいフォルダー\bungo\client\sample\windowsmake\windowsmake\sample.cpp(171): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 c:\program files\microsoft visual studio 10.0\vc\include\stdio.h(234) : 'fopen' の宣言を確認してください。
+     1>c:\users\mori\desktop\新しいフォルダー\bungo\client\sample\windowsmake\windowsmake\sample.cpp(236): warning C4996: 'sscanf': This function or variable may be unsafe. Consider using sscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 c:\program files\microsoft visual studio 10.0\vc\include\stdio.h(325) : 'sscanf' の宣言を確認してください。
+       Link:
+         C:\Program Files\Microsoft Visual Studio 10.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\mori\Desktop\新しいフォルダー\Bungo\Client\Sample\WindowsMake\Debug\WindowsMake.exe" /NOLOGO WS2_32.Lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /ManifestFile:"Debug\WindowsMake.exe.intermediate.manifest" /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /DEBUG /PDB:"C:\Users\mori\Desktop\新しいフォルダー\Bungo\Client\Sample\WindowsMake\Debug\WindowsMake.pdb" /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\mori\Desktop\新しいフォルダー\Bungo\Client\Sample\WindowsMake\Debug\WindowsMake.lib" /MACHINE:X86 Debug\sample.obj
+         LINK : 前回のインクリメンタル リンクで C:\Users\mori\Desktop\新しいフォルダー\Bungo\Client\Sample\WindowsMake\Debug\WindowsMake.exe が見つからなかったか、ビルドされませんでした。フル リンクを行います。
+         WindowsMake.vcxproj -> C:\Users\mori\Desktop\新しいフォルダー\Bungo\Client\Sample\WindowsMake\Debug\WindowsMake.exe
+       Manifest:
+         C:\Program Files\Microsoft SDKs\Windows\v7.0A\bin\mt.exe /nologo /verbose /outputresource:"C:\Users\mori\Desktop\新しいフォルダー\Bungo\Client\Sample\WindowsMake\Debug\WindowsMake.exe;#1" /manifest Debug\WindowsMake.exe.intermediate.manifest
+       FinalizeBuildStatus:
+         ファイル "Debug\WindowsMake.unsuccessfulbuild" を削除しています。
+         "Debug\WindowsMake.lastbuildstate" のタッチ タスクを実行しています。
+     1>プロジェクト "C:\Users\mori\Desktop\新しいフォルダー\Bungo\Client\Sample\WindowsMake\WindowsMake\WindowsMake.vcxproj" (build ターゲット) のビルドが完了しました。
+
+ビルドに成功しました。
+
+経過時間 00:00:00.71

@@ -21,7 +21,8 @@ namespace Hikari
 
         public Config()
         {
-            Token = "Semete";
+            // ほとんどの項目は Form.cs でセットし直す…はず
+            Token = "6e299e0d3f9f40f0";
             Server = "192.168.1.10";
 
             Counter = 1;

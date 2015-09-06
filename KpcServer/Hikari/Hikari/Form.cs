@@ -312,8 +312,16 @@ namespace Hikari
             }
 
             if (!load)
+            {
                 this.config = new Config();
-
+                this.config.TokenParam = textBox9.Text;
+                this.config.Token = textBox5.Text;
+                this.config.Server = textBox10.Text;
+                this.config.Counter = Decimal.ToInt32(numericUpDown1.Value);
+                this.config.GetPath = textBox1.Text;
+                this.config.PostPath = textBox3.Text;
+                this.config.AnsParam = textBox4.Text;
+            }
 
             textBox9.Text = this.config.TokenParam;
             textBox5.Text = this.config.Token;

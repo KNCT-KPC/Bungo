@@ -58,7 +58,7 @@
 /*          MACROS and Global         */
 /*------------------------------------*/
 #define	MAP(x, y)	map[((y) << 5) + (x)]
-#define	STONE(n, x, y)	stones[((i) << 6) + ((y) << 3) + (x)]
+#define	STONE(n, x, y)	stones[((n) << 6) + ((y) << 3) + (x)]
 
 FILE *global_fpwrite = NULL;
 FILE *global_fpread = NULL;

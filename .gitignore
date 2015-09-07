@@ -23,5 +23,11 @@ obj/
 /Binary/Akane/*
 
 # もりした変更分
-*.ipch
-*.sdf
+/Client/WindowsMake/ipch/*
+/Client/WindowsMake/Debug/*
+!/Client/WindowsMake/Debug/WindowsMake.exe
+/Client/WindowsMake/WindowsMake/*
+/Client/WindowsMake/WindowsMake/Debug/*
+!/Client/WindowsMake/WindowsMake/*.cpp
+!/Client/WindowsMake/WindowsMake/*.h
+!/Client/WindowsMake/WindowsMake/*.vcxproj

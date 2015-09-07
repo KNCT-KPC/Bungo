@@ -22,6 +22,10 @@ obj/
 !/Binary/Akane
 /Binary/Akane/*
 
-*.idb
-*.ipch
-*.tlog
+/Client/FullSearch/ipch/*
+/Client/FullSearch/Debug/*
+!/Client/FullSearch/Debug/FullSearch.exe
+/Client/FullSearch/FullSearch/Debug/*
+!/Client/FullSearch/FullSearch/*.cpp
+!/Client/FullSearch/FullSearch/*.h
+!/Client/FullSearch/FullSearch/*.vcxproj

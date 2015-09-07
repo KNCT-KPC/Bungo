@@ -34,7 +34,7 @@
 	#define	OUTPUT_FILENAME	"-"
 	/* KORE => if (OUTPUT_FILENAME[0] == '-') { global_fpwrite = stdout; } <== */
 #endif
-#define	BUF_SIZE	2048
+#define	BUF_SIZE	1027
 
 /*------------------------------------*/
 /*             LOCAL mode             */

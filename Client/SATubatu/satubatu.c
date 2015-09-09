@@ -102,17 +102,86 @@ void stone2satstone(int8_t *sat_stones, const int *map_base, int x1, int y1, int
 	// unimplemented
 }
 
+
+int varIdx(int col, int row, int n, int x, int y)
+{
+	if (x < 0 || y < 0) {
+		printf("MAZUI DESUYO!, (%d, %d)\n", x, y);
+		exit(1);
+	}
+
+	return (col * row) * n + col * y + x;
+}
+
+
+void clauseAtLeast(FILE *fp, int col, int row, int x1, int y1, int x2, int y2, int n)
+{
+	n++;
+	x1--; x2++;
+	y1--; y2++;
+
+	int i, x, y;
+	for (y=y1; y<y2; y++) {
+		for (x=x1; x<x2; x++) {
+			for (i=0; i<n; i++) {
+				fprintf(fp, "%d ", varIdx(col, row, i, x-x1, y-y1));
+			}
+			fputs("\n", fp);
+		}
+	}
+}
+
+void clauseAtMost(FILE *fp, int col, int row, int x1, int y1, int x2, int y2, int n)
+{
+	n++;
+	x1--; x2++;
+	y1--; y2++;
+
+	int i, j, x, y;
+	for (y=y1; y<y2; y++) {
+		for (x=x1; x<x2; x++) {
+			for (i=0; i<n; i++) {
+				for (j=i+1; j<n; j++) {
+					fprintf(fp, "-%d -%d\n", varIdx(col, row, i, x-x1, y-y1), varIdx(col, row, j, x-x1, y-y1));
+				}
+			}
+		}
+	}
+}
+
+void clauseObstacle(FILE *fp, int col, int row, int id, int8_t *obstacle)
+{
+	int x, y;
+	int idx = 0;
+	while ((x = obstacle[idx++]) != -1) {
+		y = obstacle[idx++];
+		fprintf(fp, "%d\n", varIdx(col, row, id, x, y));
+	}
+}
+
 int solver(FILE *fp, int8_t *sat_stones, int *map, int x1, int y1, int x2, int y2, int *stones, int n)
 {
-	x2++;
-	y2++;
+	x2++; y2++;
 	
 	// Prepare
 	stone2satstone(sat_stones, map, x1, y1, x2, y2, stones, n);
 	
 	// Create DIMACS file
+	int col = x2 - x1;
+	int row = y2 - y1;
+
+	fprintf(fp, "c at-leaset\n");
+	clauseAtLeast(fp, col, row, x1, y1, x2, y2, n);
 	
-	
+	fprintf(fp, "c at-most\n");
+	clauseAtMost(fp, col, row, x1, y1, x2, y2, n);
+
+	fprintf(fp, "c obstacle\n");
+	clauseObstacle(fp, col, row, n, &sat_stones[n << 5]);
+
+	fprintf(fp, "c order\n");
+	//clauseOrder(fp, );
+
 	// Run SAT Solver
 	fflush(fp);
 	
@@ -140,9 +209,9 @@ int main(int argc, char *argv[])
 	int x1, y1, x2, y2, n;
 	int map[1024];
 	int stones[16384];
-	int8_t sat_stones[12550];	// ((16 * 256) * 2) + ((1023 + (33 * 4)) * 2) + (1024 * 2)
+	int8_t sat_stones[12551];	// ((16 * 256) * 2) + (((1023 + (33 * 4)) * 2) + 1) + (1024 * 2)
 	
-	FILE *fp = fopen("satubatu.dimacs", "w");
+	FILE *fp = fopen("/tmp/satubatu.dimacs", "w");
 	while (ready(map, &x1, &y1, &x2, &y2, stones, &n)) {
 		dump(map, x1, y1, x2, y2, stones, n);
 		if (solver(fp, sat_stones, map, x1, y1, x2, y2, stones, n) == EXIT_FAILURE)

@@ -4,20 +4,19 @@
 /*                       -- Yamoto=san jissai kawaii --                       */
 /*                                                                            */
 /******************************************************************************/
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
 #include "common.h"
+
+#define	CLIENT_NAME	"SATubatu"
+#define	SERVER_IPADDR	"127.0.0.1"
 
 /*------------------------------------*/
 /*               Solver               */
 /*------------------------------------*/
-/* for Sleep */
-#ifdef WINDOWS
-	#include <windows.h>
-	#define	sleep(n)	Sleep((n) * 1000)
-#else
-	#include <unistd.h>
-#endif
-
-int solver(int *map, int x1, int y1, int x2, int y2, int *stones, int n)
+void dump(int *map, int x1, int y1, int x2, int y2, int *stones, int n)
 {
 	/* Range */
 	printf("(%d, %d) ~ (%d, %d)\n\n", x1, y1, x2, y2);
@@ -44,59 +43,112 @@ int solver(int *map, int x1, int y1, int x2, int y2, int *stones, int n)
 		}
 	}
 	printf("\n");
+}
 
-	/* Solutions for light.txt */
-	char *solutions[] = {
-		"H 0 2 2\n",
-		"H 0 2 2\nT 0 -6 0\n",
-		"H 0 2 2\nT 0 -6 0\n\nH 0 1 -1\n",
-		NULL
-	};
-
-	printf("Solutions\n");
-	for (i=0; (solutions[i] != NULL); i++) {
-		sleep(5);
-		printf("Solution %d\n", i+1);
-
-		// Padding
-		int j, line = 0;
-		for (j=0; (solutions[i][j] != '\0'); j++) {
-			if (solutions[i][j] == '\n') line++;
+void stone2satstone(int8_t *sat_stones, const int *map_base, int x1, int y1, int x2, int y2, const int *stones_base, int n)
+{
+	int i;
+	int map[1024];
+	int stones[16384];
+	
+	memcpy(map, map_base, sizeof(int) * 1024);
+	memcpy(stones, stones_base, sizeof(int) * 16384);
+	
+	// Stone
+	for (i=0; i<n; i++) {
+		int idx = (i << 5);
+		int blk = 0;
+		int anc_x = -1, anc_y;
+				
+		int x, y;
+		for (y=0; y<8; y++) {
+			for (x=0; x<8; x++) {
+				if (STONE(i, x, y) == 0) continue;
+				
+				if (anc_x < 0) {
+					anc_x = x;
+					anc_y = y;
+				} else {
+					sat_stones[idx++] = x - anc_x;
+					sat_stones[idx++] = y - anc_y;
+				}
+				
+				if (++blk >= 16) goto SIKATANAINE;
+			}
 		}
-
-		// Like a START BIT
-		sendMsg("S");
-
-		// Main
-		sendMsg(solutions[i]);
-		for (j=0; j<(n - line); j++) sendMsg("");
-
-		// Prepare for next problem
-		if (sendMsg("E") == EXIT_FAILURE)
-			return EXIT_SUCCESS;	// transition to `Ready state`
+	
+	SIKATANAINE:
+		sat_stones[idx++] = 0;
+		sat_stones[idx] = 0;
 	}
+	
+	// Obstacle
+	int x, y;
+	int idx = (n << 5);
+	int anc_x = x1 - 1, anc_y = y1 - 1;
+	
+	for (y=anc_y; y<(y2 + 1); y++) {
+		for (x=anc_x; x<(x2 + 1); x++) {
+			if (y == anc_y || y == y2 || x == anc_x || x == x2 || MAP(x, y) == 1) {
+				sat_stones[idx++] = x - anc_x;
+				sat_stones[idx++] = y - anc_y;
+				continue;
+			}
+		}
+	}
+	sat_stones[idx] = -1;
+	
+	// Field
+	// unimplemented
+}
 
-	// Forced termination
+int solver(FILE *fp, int8_t *sat_stones, int *map, int x1, int y1, int x2, int y2, int *stones, int n)
+{
+	x2++;
+	y2++;
+	
+	// Prepare
+	stone2satstone(sat_stones, map, x1, y1, x2, y2, stones, n);
+	
+	// Create DIMACS file
+	
+	
+	// Run SAT Solver
+	fflush(fp);
+	
+	
+	
+	
+	
+	/*
+	sendMsg("S");
+	sendMsg("");
+	if (sendMsg("E") == EXIT_FAILURE) return EXIT_SUCCESS;
+	*/
 	return EXIT_FAILURE;
 }
 
 
-/*------------------------------------*/
-/*                Main                */
-/*------------------------------------*/
+/*----------------------------------------------------------------------------*/
+/*                                    Main                                    */
+/*----------------------------------------------------------------------------*/
 int main(int argc, char *argv[])
 {
 	int osfhandle, sd;
-	initClient(CLIENT_NAME, &osfhandle, &sd);
+	initClient(CLIENT_NAME, SERVER_IPADDR, &osfhandle, &sd);
 	
-	while (1) {
-		int x1, y1, x2, y2, n;
-		int map[1024];
-		int stones[16384];
-		
-		int bflg = ready(map, &x1, &y1, &x2, &y2, stones, &n);
-		if (bflg || solver(map, x1, y1, x2, y2, stones, n) == EXIT_FAILURE) break;
+	int x1, y1, x2, y2, n;
+	int map[1024];
+	int stones[16384];
+	int8_t sat_stones[12550];	// ((16 * 256) * 2) + ((1023 + (33 * 4)) * 2) + (1024 * 2)
+	
+	FILE *fp = fopen("satubatu.dimacs", "w");
+	while (ready(map, &x1, &y1, &x2, &y2, stones, &n)) {
+		dump(map, x1, y1, x2, y2, stones, n);
+		if (solver(fp, sat_stones, map, x1, y1, x2, y2, stones, n) == EXIT_FAILURE)
+			break;
 	}
+	fclose(fp);
 	
 	finalClient(osfhandle, sd);
 	return EXIT_SUCCESS;

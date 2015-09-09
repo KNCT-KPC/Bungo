@@ -4,10 +4,6 @@
 /*                                                                            */
 /******************************************************************************/
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/types.h>
-
 
 /*------------------------------------*/
 /*                FLAG                */
@@ -27,9 +23,7 @@
 /*------------------------------------*/
 /*              Constant              */
 /*------------------------------------*/
-#define	CLIENT_NAME	"Sample"
 #ifndef	LOCAL
-	#define	SERVER_IPADDR	"127.0.0.1"
 	#define	SERVER_PORT	25252
 #else
 	#define	INPUT_FILENAME	"../../Problem/light/light-local.txt"
@@ -71,6 +65,6 @@ extern FILE *global_fpwrite;
 extern FILE *global_fpread;
 extern int sendMsg(char *msg);
 
-extern void initClient(char *name, int *osfhandle, int *sd);
+extern void initClient(char *name, char *server_ipaddr, int *osfhandle, int *sd);
 extern int ready(int *map, int *x1, int *y1, int *x2, int *y2, int *stones, int *n);
 extern void finalClient(int osfhandle, int sd);

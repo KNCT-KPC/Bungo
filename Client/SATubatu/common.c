@@ -3,6 +3,8 @@
 /*                                  common.c                                  */
 /*                                                                            */
 /******************************************************************************/
+#include <stdio.h>
+#include <stdlib.h>
 #include "common.h"
 
 FILE *global_fpwrite = NULL;
@@ -32,7 +34,7 @@ int sendMsg(char *msg)
 /*        Initialize & Finalize       */
 /*------------------------------------*/
 /* Initialize */
-void initClient(char *name, int *osfhandle, int *sd)
+void initClient(char *name, char *server_ipaddr, int *osfhandle, int *sd)
 {
 #ifdef	LOCAL
 	global_fpread = fopen(INPUT_FILENAME, "r");
@@ -55,10 +57,10 @@ void initClient(char *name, int *osfhandle, int *sd)
 	struct sockaddr_in server;
 	server.sin_family = AF_INET;
 	server.sin_port = htons(SERVER_PORT);
-	server.sin_addr.s_addr = inet_addr(SERVER_IPADDR);
+	server.sin_addr.s_addr = inet_addr(server_ipaddr);
 			
 	if (connect(*sd, (struct sockaddr *)&server, sizeof(server)) != 0) {
-		perror(SERVER_IPADDR);
+		perror(server_ipaddr);
 		return EXIT_FAILURE;
 	}
 
@@ -96,7 +98,7 @@ int ready(int *map, int *x1, int *y1, int *x2, int *y2, int *stones, int *n)
 					"Socket"
 				#endif
 			);
-			return 1;
+			return 0;
 		}
 		
 		if (i == 0) {
@@ -119,7 +121,7 @@ int ready(int *map, int *x1, int *y1, int *x2, int *y2, int *stones, int *n)
 		}
 	}
 	
-	return 0;
+	return 1;
 }
 
 /* Finalize */

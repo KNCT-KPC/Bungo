@@ -13,6 +13,9 @@
 #define	CLIENT_NAME	"SATubatu"
 #define	SERVER_IPADDR	"127.0.0.1"
 
+#define	VARIDX(col, row, n, x, y)	(((col) * (row)) * (n) + (col) * (y) + (x))
+
+
 /*------------------------------------*/
 /*               Solver               */
 /*------------------------------------*/
@@ -102,17 +105,6 @@ void stone2satstone(int8_t *sat_stones, const int *map_base, int x1, int y1, int
 	// unimplemented
 }
 
-int varIdx(int col, int row, int n, int x, int y)
-{
-	if (x < 0 || y < 0) {
-		printf("MAZUI DESUYO!, (%d, %d)\n", x, y);
-		exit(1);
-	}
-
-	return (col * row) * n + col * y + x;
-}
-
-
 void clauseAtLeast(FILE *fp, int col, int row, int x1, int y1, int x2, int y2, int n)
 {
 	n++;
@@ -123,7 +115,7 @@ void clauseAtLeast(FILE *fp, int col, int row, int x1, int y1, int x2, int y2, i
 	for (y=y1; y<y2; y++) {
 		for (x=x1; x<x2; x++) {
 			for (i=0; i<n; i++) {
-				fprintf(fp, "%d ", varIdx(col, row, i, x-x1, y-y1));
+				fprintf(fp, "%d ", VARIDX(col, row, i, x-x1, y-y1));
 			}
 			fputs("\n", fp);
 		}
@@ -142,7 +134,7 @@ void clauseAtMost(FILE *fp, int col, int row, int x1, int y1, int x2, int y2, in
 		for (x=x1; x<x2; x++) {
 			for (i=0; i<n; i++) {
 				for (j=i+1; j<n; j++) {
-					fprintf(fp, "-%d -%d\n", varIdx(col, row, i, x-x1, y-y1), varIdx(col, row, j, x-x1, y-y1));
+					fprintf(fp, "-%d -%d\n", VARIDX(col, row, i, x-x1, y-y1), VARIDX(col, row, j, x-x1, y-y1));
 				}
 			}
 		}
@@ -156,21 +148,27 @@ void clauseObstacle(FILE *fp, int col, int row, int id, int8_t *obstacle)
 	int idx = 0;
 	while ((x = obstacle[idx++]) != -1) {
 		y = obstacle[idx++];
-		// これ、(x,y)座標、+1しなくていいの？
-		fprintf(fp, "%d\n", varIdx(col, row, id, x, y));
+		fprintf(fp, "%d\n", VARIDX(col, row, id, x, y));
 	}
 }
 
-
-void clauseOrderSubNeighbor(FILE *fp, int col, int row, int n, int x, int y, int offset_x, int offset_y)
+int clauseOrderSubNeighbor(FILE *fp, int col, int row, int n, int x, int y, int offset_x, int offset_y)
 {
-	fprintf(fp, "-%d ", varIdx(col, row, n, offset_x+x+1, offset_y+y));
-	fprintf(fp, "-%d ", varIdx(col, row, n, offset_x+x, offset_y+y+1));
-	fprintf(fp, "-%d ", varIdx(col, row, n, offset_x+x-1, offset_y+y));
-	fprintf(fp, "-%d ", varIdx(col, row, n, offset_x+x, offset_y+y-1));
+	int i;
+	int dx[] = {1, 0, -1, 0};
+	int dy[] = {0, 1, 0, -1};
+
+	for (i=0; i<4; i++) {
+		int abs_x = offset_y + (x + dx[i]);
+		int abs_y = offset_y + (y + dy[i]);
+		if (abs_x < 0 || abs_y < 0) return -1;
+		fprintf(fp, "-%d ", VARIDX(col, row, n, abs_x, abs_y));
+	}
+
+	return 0;
 }
 
-void clauseOrderSub(FILE *fp, int col, int row, int n, int n1, int n2, int x1, int y1, int x2, int y2, int n2_x, int n2_y, int8_t *sat_stones)
+int clauseOrderSub(FILE *fp, int col, int row, int n, int n1, int n2, int x1, int y1, int x2, int y2, int n2_x, int n2_y, int8_t *sat_stones)
 {
 	if (n1 < 0) {
 		n1 = 0;
@@ -183,37 +181,50 @@ void clauseOrderSub(FILE *fp, int col, int row, int n, int n1, int n2, int x1, i
 		for (j=x1; j<x2; j++) {
 			int x = j-x1 + 1;
 			int y = i-y1 + 1;
-			fprintf(fp, "-%d ", varIdx(col, row, n1, x, y));
+			fprintf(fp, "-%d ", VARIDX(col, row, n1, x, y));
 
 			if (n2 > 0) {
 				int offset_x = 0;
 				int offset_y = 0;
 				do {
-					clauseOrderSubNeighbor(fp, col, row, n1, x, y, offset_x, offset_y);	
-					clauseOrderSubNeighbor(fp, col, row, n2, x, y, offset_x, offset_y);	
+					if (clauseOrderSubNeighbor(fp, col, row, n1, x, y, offset_x, offset_y) == -1)
+						return -1;
+					if (clauseOrderSubNeighbor(fp, col, row, n2, x, y, offset_x, offset_y) == -1)
+						return -1;
 					offset_x = sat_stones[idx++];
 					offset_y = sat_stones[idx++];
 				} while (offset_x != 0 || offset_y != 0);
 			}
 
-			fprintf(fp, "%d ", varIdx(col, row, n1, j+n2_x+1, i+n2_y+1));
+			x = (j + n2_x) + 1;
+			y = (i + n2_y) + 1;
+			if (x < 0 || y < 0) return -1;
+			fprintf(fp, "%d ", VARIDX(col, row, n1, x, y));
 			for (k=n2; k<=n; k++) {
-				fprintf(fp, "%d ", varIdx(col, row, k, j+n2_x+1, i+n2_y+1));
+				fprintf(fp, "%d ", VARIDX(col, row, k, x, y));
 			}
 
 			fprintf(fp, "\n");
 		}
 	}
+
+	return 0;
 }
 
 void clauseOrder(FILE *fp, int col, int row, int x1, int y1, int x2, int y2, int n, int8_t *sat_stones)
 {
+	fpos_t pos;
+
 	int i;
 	for (i=0; i<n; i++) {
 		int idx = i << 5;
 		int x = 0, y = 0;
 		do {
-			clauseOrderSub(fp, col, row, n, i-1, i, x1, y1, x2, y2, x, y, sat_stones);
+			fgetpos(fp, &pos);
+			if (clauseOrderSub(fp, col, row, n, i-1, i, x1, y1, x2, y2, x, y, sat_stones) == -1) {
+				fsetpos(fp, &pos);
+				fprintf(fp, "c back ... (%d, %d, %d)\n", i, x, y);
+			}
 			x = sat_stones[idx++];
 			y = sat_stones[idx++];
 		} while (x != 0 || y != 0);
@@ -243,6 +254,8 @@ int solver(FILE *fp, int8_t *sat_stones, int *map, int x1, int y1, int x2, int y
 
 	fprintf(fp, "c order\n");
 	clauseOrder(fp, col, row, x1, y1, x2, y2, n, sat_stones);
+
+	fprintf(fp, "c define\n");
 
 	// Run SAT Solver
 	fflush(fp);

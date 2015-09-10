@@ -102,7 +102,6 @@ void stone2satstone(int8_t *sat_stones, const int *map_base, int x1, int y1, int
 	// unimplemented
 }
 
-
 int varIdx(int col, int row, int n, int x, int y)
 {
 	if (x < 0 || y < 0) {
@@ -131,6 +130,7 @@ void clauseAtLeast(FILE *fp, int col, int row, int x1, int y1, int x2, int y2, i
 	}
 }
 
+
 void clauseAtMost(FILE *fp, int col, int row, int x1, int y1, int x2, int y2, int n)
 {
 	n++;
@@ -149,15 +149,77 @@ void clauseAtMost(FILE *fp, int col, int row, int x1, int y1, int x2, int y2, in
 	}
 }
 
+
 void clauseObstacle(FILE *fp, int col, int row, int id, int8_t *obstacle)
 {
 	int x, y;
 	int idx = 0;
 	while ((x = obstacle[idx++]) != -1) {
 		y = obstacle[idx++];
+		// これ、(x,y)座標、+1しなくていいの？
 		fprintf(fp, "%d\n", varIdx(col, row, id, x, y));
 	}
 }
+
+
+void clauseOrderSubNeighbor(FILE *fp, int col, int row, int n, int x, int y, int offset_x, int offset_y)
+{
+	fprintf(fp, "-%d ", varIdx(col, row, n, offset_x+x+1, offset_y+y));
+	fprintf(fp, "-%d ", varIdx(col, row, n, offset_x+x, offset_y+y+1));
+	fprintf(fp, "-%d ", varIdx(col, row, n, offset_x+x-1, offset_y+y));
+	fprintf(fp, "-%d ", varIdx(col, row, n, offset_x+x, offset_y+y-1));
+}
+
+void clauseOrderSub(FILE *fp, int col, int row, int n, int n1, int n2, int x1, int y1, int x2, int y2, int n2_x, int n2_y, int8_t *sat_stones)
+{
+	if (n1 < 0) {
+		n1 = 0;
+		n2 = -1;
+	}
+
+	int idx = (n1 << 5);
+	int i, j, k;
+	for (i=y1; i<y2; i++) {
+		for (j=x1; j<x2; j++) {
+			int x = j-x1 + 1;
+			int y = i-y1 + 1;
+			fprintf(fp, "-%d ", varIdx(col, row, n1, x, y));
+
+			if (n2 > 0) {
+				int offset_x = 0;
+				int offset_y = 0;
+				do {
+					clauseOrderSubNeighbor(fp, col, row, n1, x, y, offset_x, offset_y);	
+					clauseOrderSubNeighbor(fp, col, row, n2, x, y, offset_x, offset_y);	
+					offset_x = sat_stones[idx++];
+					offset_y = sat_stones[idx++];
+				} while (offset_x != 0 || offset_y != 0);
+			}
+
+			fprintf(fp, "%d ", varIdx(col, row, n1, j+n2_x+1, i+n2_y+1));
+			for (k=n2; k<=n; k++) {
+				fprintf(fp, "%d ", varIdx(col, row, k, j+n2_x+1, i+n2_y+1));
+			}
+
+			fprintf(fp, "\n");
+		}
+	}
+}
+
+void clauseOrder(FILE *fp, int col, int row, int x1, int y1, int x2, int y2, int n, int8_t *sat_stones)
+{
+	int i;
+	for (i=0; i<n; i++) {
+		int idx = i << 5;
+		int x = 0, y = 0;
+		do {
+			clauseOrderSub(fp, col, row, n, i-1, i, x1, y1, x2, y2, x, y, sat_stones);
+			x = sat_stones[idx++];
+			y = sat_stones[idx++];
+		} while (x != 0 || y != 0);
+	}
+}
+
 
 int solver(FILE *fp, int8_t *sat_stones, int *map, int x1, int y1, int x2, int y2, int *stones, int n)
 {
@@ -180,7 +242,7 @@ int solver(FILE *fp, int8_t *sat_stones, int *map, int x1, int y1, int x2, int y
 	clauseObstacle(fp, col, row, n, &sat_stones[n << 5]);
 
 	fprintf(fp, "c order\n");
-	//clauseOrder(fp, );
+	clauseOrder(fp, col, row, x1, y1, x2, y2, n, sat_stones);
 
 	// Run SAT Solver
 	fflush(fp);

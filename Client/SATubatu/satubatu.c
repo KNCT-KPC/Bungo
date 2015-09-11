@@ -253,6 +253,111 @@ unsigned long long clauseOrder(FILE *fp, int col, int row, int x1, int y1, int x
 }
 
 
+int clauseDefineUniqZkEquals(const int8_t *z1, const int8_t *z2)
+{
+	int idx = 0;
+
+	while (1) {
+		int z1_x = z1[idx];
+		int z2_x = z2[idx++];
+		int z1_y = z1[idx];
+		int z2_y = z1[idx++];
+
+		if (z1_x == z2_x && z1_y == z2_y) return 1;
+	}
+
+	return 0;
+}
+
+void clauseDefineZkRotate(int8_t *zk, int anglestep)
+{
+	int i, idx;
+
+	for (i=0; i<anglestep; i++) {
+		idx = 0;
+		while (1) {
+			int x = zk[idx];
+			int y = zk[idx+1];
+			if (x == 0 && y == 0) break;
+			zk[idx++] = y;
+			zk[idx++] = -x;
+		}
+	}
+}
+
+int clauseDefineUniqZkAdd(const int8_t *zk, int8_t *dst, int op)
+{
+	int i;
+
+	for (i=0; i<op; i++) {
+		if (clauseDefineUniqZkEquals(zk, &dst[i << 5])) return 0;
+	}
+
+	return 1;
+}
+
+int clauseDefineUniqZk(const int8_t *base, int8_t *dst)
+{
+	int i;
+	int op = 0;
+
+	// Init
+	size_t size = sizeof(int8_t) << 5;
+	for (i=0; i<4; i++) memcpy(&dst[i << 4], base, size);
+	
+	int idx = 0;
+	while (1) {
+		int x = base[idx];
+		int y = base[idx+1];
+		if (x == 0 && y == 0) break;
+		dst[128 + idx++] = -x;
+		dst[128 + idx++] = y;
+	}
+
+	for (i=5; i<8; i++) memcpy(&dst[i << 4], &dst[128], size);
+
+
+	// Add
+	for (i=0; i<8; i++) {
+		int8_t *src = &dst[i << 5];
+		clauseDefineZkRotate(src, i % 4);
+		if (clauseDefineUniqZkAdd(src, dst, op)) {
+			int8_t *p = &dst[op << 5];
+			if (src != p) memcpy(p, src, size);
+			op++;
+		}
+	}
+
+	return op;
+}
+
+unsigned long long clauseDefine(unsigned long long *vars, FILE *fp, int col, int row, int x1, int x2, int y1, int y2, int n, int8_t *sat_stones)
+{
+	unsigned long long clause = 0;
+
+	int i;
+	for (i=0; i<n; i++) {
+		int idx = i << 5;
+		int x = 0, y = 0;
+
+		do {
+			int j, k;
+			for (j=y1; j<y2; j++) {
+				for (k=x1; k<x2; k++) {
+					int8_t tmp[256];
+					int op = clauseDefineUniqZk(&sat_stones[i << 5], tmp);
+				}
+			}
+
+			x = sat_stones[idx++];
+			y = sat_stones[idx++];
+		} while (x != 0 || y != 0);
+	}
+
+	return clause;
+}
+
+
 int solver(FILE *fp, int8_t *sat_stones, int *map, int x1, int y1, int x2, int y2, int *stones, int n)
 {
 	x2++; y2++;
@@ -267,6 +372,8 @@ int solver(FILE *fp, int8_t *sat_stones, int *map, int x1, int y1, int x2, int y
 	unsigned long long clause = 0;
 	unsigned long long vars = (col + 2) * (row + 2) * (n + 1);
 
+	// 座標が負数はダメというか、「(x1, y1)以下がダメ」なんじゃないの
+	// となると、(x2, y2)以上もダメなんじゃないの
 	fprintf(fp, "c at-leaset\n");
 	clause += clauseAtLeast(fp, col, row, x1, y1, x2, y2, n);
 	
@@ -280,6 +387,7 @@ int solver(FILE *fp, int8_t *sat_stones, int *map, int x1, int y1, int x2, int y
 	clause += clauseOrder(fp, col, row, x1, y1, x2, y2, n, sat_stones);
 
 	fprintf(fp, "c define\n");
+	//clause += clauseDefine(fp
 
 	printf("clause = %llu, vars = %llu\n", clause, vars);
 

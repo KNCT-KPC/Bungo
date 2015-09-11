@@ -105,6 +105,7 @@ void stone2satstone(int8_t *sat_stones, const int *map_base, int x1, int y1, int
 	// unimplemented
 }
 
+
 void clauseAtLeast(FILE *fp, int col, int row, int x1, int y1, int x2, int y2, int n)
 {
 	n++;
@@ -142,14 +143,19 @@ void clauseAtMost(FILE *fp, int col, int row, int x1, int y1, int x2, int y2, in
 }
 
 
-void clauseObstacle(FILE *fp, int col, int row, int id, int8_t *obstacle)
+int clauseObstacle(FILE *fp, int col, int row, int id, int8_t *obstacle)
 {
 	int x, y;
+	int clause = 0;
+	
 	int idx = 0;
 	while ((x = obstacle[idx++]) != -1) {
 		y = obstacle[idx++];
 		fprintf(fp, "%d\n", VARIDX(col, row, id, x, y));
+		clause++;
 	}
+
+	return clause;
 }
 
 int clauseOrderSubNeighbor(FILE *fp, int col, int row, int n, int x, int y, int offset_x, int offset_y)
@@ -214,6 +220,7 @@ int clauseOrderSub(FILE *fp, int col, int row, int n, int n1, int n2, int x1, in
 void clauseOrder(FILE *fp, int col, int row, int x1, int y1, int x2, int y2, int n, int8_t *sat_stones)
 {
 	fpos_t pos;
+	int clause = 0;
 
 	int i;
 	for (i=0; i<n; i++) {

@@ -116,7 +116,7 @@ unsigned long long clauseAtLeast(FILE *fp, int col, int row, int x1, int y1, int
 	for (y=y1; y<y2; y++) {
 		for (x=x1; x<x2; x++) {
 			for (i=0; i<n; i++) {
-				fprintf(fp, "%d ", VARIDX(col, row, i, x-x1, y-y1));
+				fprintf(fp, "%u ", VARIDX(col, row, i, x-x1, y-y1));
 			}
 			fputs("\n", fp);
 		}
@@ -139,7 +139,7 @@ unsigned long long clauseAtMost(FILE *fp, int col, int row, int x1, int y1, int 
 		for (x=x1; x<x2; x++) {
 			for (i=0; i<n; i++) {
 				for (j=i+1; j<n; j++) {
-					fprintf(fp, "-%d -%d\n", VARIDX(col, row, i, x-x1, y-y1), VARIDX(col, row, j, x-x1, y-y1));
+					fprintf(fp, "-%u -%u\n", VARIDX(col, row, i, x-x1, y-y1), VARIDX(col, row, j, x-x1, y-y1));
 					clause++;
 				}
 			}
@@ -158,7 +158,7 @@ unsigned long long clauseObstacle(FILE *fp, int col, int row, int id, int8_t *ob
 	int idx = 0;
 	while ((x = obstacle[idx++]) != -1) {
 		y = obstacle[idx++];
-		fprintf(fp, "%d\n", VARIDX(col, row, id, x, y));
+		fprintf(fp, "%u\n", VARIDX(col, row, id, x, y));
 		clause++;
 	}
 
@@ -176,7 +176,7 @@ int clauseOrderSubNeighbor(FILE *fp, int col, int row, int n, int x, int y, int 
 		int abs_x = offset_y + (x + dx[i]);
 		int abs_y = offset_y + (y + dy[i]);
 		if (abs_x < 0 || abs_y < 0) return -1;
-		fprintf(fp, "-%d ", VARIDX(col, row, n, abs_x, abs_y));
+		fprintf(fp, "-%u ", VARIDX(col, row, n, abs_x, abs_y));
 	}
 
 	return 0;
@@ -184,7 +184,7 @@ int clauseOrderSubNeighbor(FILE *fp, int col, int row, int n, int x, int y, int 
 
 int clauseOrderSub(FILE *fp, int col, int row, int n1, int n2, int x1, int y1, int x2, int y2, int n, int8_t *n1_stones)
 {
-	fprintf(fp, "-%d ", VARIDX(col, row, n1, x1, y1));
+	fprintf(fp, "-%u ", VARIDX(col, row, n1, x1, y1));
 
 	int idx = 0;
 	if (n2 > 0) {
@@ -201,11 +201,11 @@ int clauseOrderSub(FILE *fp, int col, int row, int n1, int n2, int x1, int y1, i
 	}
 
 	if (x2 < 0 || y2 < 0) return -1;
-	fprintf(fp, "%d ", VARIDX(col, row, n1, x2, y2));
+	fprintf(fp, "%u ", VARIDX(col, row, n1, x2, y2));
 	
 	int i;
 	for (i=n2; i<=n; i++) {
-		fprintf(fp, "%d ", VARIDX(col, row, i, x2, y2));
+		fprintf(fp, "%u ", VARIDX(col, row, i, x2, y2));
 	}
 
 	fprintf(fp, "\n");
@@ -331,21 +331,47 @@ int clauseDefineUniqZk(const int8_t *base, int8_t *dst)
 	return op;
 }
 
-unsigned long long clauseDefine(unsigned long long *vars, FILE *fp, int col, int row, int x1, int x2, int y1, int y2, int n, int8_t *sat_stones)
+unsigned long long clauseDefineSub(FILE *fp, int col, int row, int8_t *stone, int id, unsigned int *vars, int x, int y, int x1, int x2, int y1, int y2)
+{
+	int len = 0;
+	unsigned int ids[16] = {};
+
+	int idx = 0;
+	int offset_x = 0, offset_y = 0;
+	do {
+		int abs_x = x + offset_x;
+		int abs_y = y + offset_y;
+		if (abs_x < x1 || abs_y < y1 || abs_x >= x2 || abs_y >= y2) return 0;
+		ids[len++] = VARIDX(col, row, id, abs_x, abs_y);
+		offset_x = stone[idx++];
+		offset_y = stone[idx++];
+	} while (offset_x != 0 || offset_y != 0);
+
+	int i = 0;
+	for (i=0; i<len; i++) fprintf(fp, "-%u %u\n", *vars, ids[i]);
+	for (i=0; i<len; i++) fprintf(fp, "-%u ", ids[i]);
+	fprintf(fp, "%u\n", (*vars)++);
+
+	return len + 1;
+}
+
+unsigned long long clauseDefine(unsigned int *vars, FILE *fp, int col, int row, int x1, int x2, int y1, int y2, int n, int8_t *sat_stones)
 {
 	unsigned long long clause = 0;
 
-	int i;
+	int i, j, k, l;
 	for (i=0; i<n; i++) {
 		int idx = i << 5;
 		int x = 0, y = 0;
 
 		do {
-			int j, k;
 			for (j=y1; j<y2; j++) {
 				for (k=x1; k<x2; k++) {
 					int8_t tmp[256];
 					int op = clauseDefineUniqZk(&sat_stones[i << 5], tmp);
+					for (l=0; l<op; l++) {
+						clause += clauseDefineSub(fp, col, row, &tmp[l << 5], i, vars, k, j, x1, x2, y1, y2);
+					}
 				}
 			}
 
@@ -370,10 +396,11 @@ int solver(FILE *fp, int8_t *sat_stones, int *map, int x1, int y1, int x2, int y
 	int row = y2 - y1;
 
 	unsigned long long clause = 0;
-	unsigned long long vars = (col + 2) * (row + 2) * (n + 1);
+	unsigned int vars = (col + 2) * (row + 2) * (n + 1);
 
 	// 座標が負数はダメというか、「(x1, y1)以下がダメ」なんじゃないの
 	// となると、(x2, y2)以上もダメなんじゃないの
+	// というか、(0, 0)に正規化できるからいいかな
 	fprintf(fp, "c at-leaset\n");
 	clause += clauseAtLeast(fp, col, row, x1, y1, x2, y2, n);
 	
@@ -387,9 +414,9 @@ int solver(FILE *fp, int8_t *sat_stones, int *map, int x1, int y1, int x2, int y
 	clause += clauseOrder(fp, col, row, x1, y1, x2, y2, n, sat_stones);
 
 	fprintf(fp, "c define\n");
-	//clause += clauseDefine(fp
-
-	printf("clause = %llu, vars = %llu\n", clause, vars);
+	clause += clauseDefine(&vars, fp, col, row, x1, x2, y1, y2, n, sat_stones);
+	
+	printf("clause = %llu, vars = %u\n", clause, vars);
 
 	// Run SAT Solver
 	fflush(fp);

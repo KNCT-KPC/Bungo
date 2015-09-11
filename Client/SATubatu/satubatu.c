@@ -13,6 +13,7 @@
 #define	CLIENT_NAME	"SATubatu"
 #define	SERVER_IPADDR	"127.0.0.1"
 
+#define	DIMACS_FILE_PATH	"/tmp/satubatu.dimacs"
 #define	VARIDX(col, row, n, x, y)	(((col+2) * (row+2)) * (n) + (col+2) * (y) + (x))
 
 
@@ -166,7 +167,7 @@ unsigned long long clauseObstacle(FILE *fp, int col, int row, int id, int8_t *ob
 }
 
 
-int clauseOrderSubNeighbor(FILE *fp, int col, int row, int n, int x, int y, int offset_x, int offset_y)
+int clauseOrderSubNeighbor(FILE *fp, int col, int row, int id, int x, int y, int offset_x, int offset_y, int x1, int y1, int x2, int y2)
 {
 	int i;
 	int dx[] = {1, 0, -1, 0};
@@ -175,39 +176,34 @@ int clauseOrderSubNeighbor(FILE *fp, int col, int row, int n, int x, int y, int 
 	for (i=0; i<4; i++) {
 		int abs_x = offset_y + (x + dx[i]);
 		int abs_y = offset_y + (y + dy[i]);
-		if (abs_x < 0 || abs_y < 0) return -1;
-		fprintf(fp, "-%u ", VARIDX(col, row, n, abs_x, abs_y));
+		if (abs_x < x1 || abs_y < y1 || abs_x >= x2 || abs_y >= y2) return -1;
+		fprintf(fp, "-%u ", VARIDX(col, row, id, abs_x, abs_y));
 	}
 
 	return 0;
 }
 
-int clauseOrderSub(FILE *fp, int col, int row, int n1, int n2, int x1, int y1, int x2, int y2, int n, int8_t *n1_stones)
+int clauseOrderSub(FILE *fp, int col, int row, int n1, int n2, int n1_x, int n1_y, int n2_x, int n2_y, int n, int8_t *n1_stones, int x1, int y1, int x2, int y2)
 {
-	fprintf(fp, "-%u ", VARIDX(col, row, n1, x1, y1));
+	fprintf(fp, "-%u ", VARIDX(col, row, n1, n1_x, n1_y));
 
 	int idx = 0;
 	if (n2 > 0) {
 		int offset_x = 0;
 		int offset_y = 0;
 		do {
-			if (clauseOrderSubNeighbor(fp, col, row, n1, x1, y1, offset_x, offset_y) == -1)
-				return -1;
-			if (clauseOrderSubNeighbor(fp, col, row, n2, x1, y1, offset_x, offset_y) == -1)
-				return -1;
+			if (clauseOrderSubNeighbor(fp, col, row, n1, n1_x, n1_y, offset_x, offset_y, x1, y1, x2, y2) == -1) return -1;
+			if (clauseOrderSubNeighbor(fp, col, row, n2, n1_x, n1_y, offset_x, offset_y, x1, y1, x2, y2) == -1) return -1;
 			offset_x = n1_stones[idx++];
 			offset_y = n1_stones[idx++];
 		} while (offset_x != 0 || offset_y != 0);
 	}
 
-	if (x2 < 0 || y2 < 0) return -1;
-	fprintf(fp, "%u ", VARIDX(col, row, n1, x2, y2));
-	
-	int i;
-	for (i=n2; i<=n; i++) {
-		fprintf(fp, "%u ", VARIDX(col, row, i, x2, y2));
-	}
+	if (n2_x < x1 || n2_y < y1 || n2_x >= x2 || n2_y >= y2) return -1;
 
+	int i;
+	fprintf(fp, "%u ", VARIDX(col, row, n1, n2_x, n2_y));	
+	for (i=n2; i<=n; i++) fprintf(fp, "%u ", VARIDX(col, row, i, n2_x, n2_y));
 	fprintf(fp, "\n");
 	return 0;
 }
@@ -236,7 +232,7 @@ unsigned long long clauseOrder(FILE *fp, int col, int row, int x1, int y1, int x
 			for (j=y1; j<y2; j++) {
 				for (k=x1; k<x2; k++) {
 					fgetpos(fp, &pos);
-					if (clauseOrderSub(fp, col, row, n1, n2, k-x1+1, j-y1+1, k-x+1, j-y+1, n, &sat_stones[idx]) == -1) {
+					if (clauseOrderSub(fp, col, row, n1, n2, k-x1+1, j-y1+1, k-x+1, j-y+1, n, &sat_stones[idx], x1, y1, x2, y2) == -1) {
 						fsetpos(fp, &pos);
 					} else {
 						clause++;
@@ -313,9 +309,7 @@ int clauseDefineUniqZk(const int8_t *base, int8_t *dst)
 		dst[128 + idx++] = -x;
 		dst[128 + idx++] = y;
 	}
-
 	for (i=5; i<8; i++) memcpy(&dst[i << 4], &dst[128], size);
-
 
 	// Add
 	for (i=0; i<8; i++) {
@@ -370,7 +364,7 @@ unsigned long long clauseDefine(unsigned int *vars, FILE *fp, int col, int row, 
 					int8_t tmp[256];
 					int op = clauseDefineUniqZk(&sat_stones[i << 5], tmp);
 					for (l=0; l<op; l++) {
-						clause += clauseDefineSub(fp, col, row, &tmp[l << 5], i, vars, k, j, x1, x2, y1, y2);
+						clause += clauseDefineSub(fp, col, row, &tmp[l << 5], i, vars, k+1, j+1, x1, x2, y1, y2);
 					}
 				}
 			}
@@ -398,9 +392,6 @@ int solver(FILE *fp, int8_t *sat_stones, int *map, int x1, int y1, int x2, int y
 	unsigned long long clause = 0;
 	unsigned int vars = (col + 2) * (row + 2) * (n + 1);
 
-	// 座標が負数はダメというか、「(x1, y1)以下がダメ」なんじゃないの
-	// となると、(x2, y2)以上もダメなんじゃないの
-	// というか、(0, 0)に正規化できるからいいかな
 	fprintf(fp, "c at-leaset\n");
 	clause += clauseAtLeast(fp, col, row, x1, y1, x2, y2, n);
 	
@@ -420,7 +411,7 @@ int solver(FILE *fp, int8_t *sat_stones, int *map, int x1, int y1, int x2, int y
 
 	// Run SAT Solver
 	fflush(fp);
-	
+
 	
 	
 	
@@ -447,7 +438,7 @@ int main(int argc, char *argv[])
 	int stones[16384];
 	int8_t sat_stones[12551];	// ((16 * 256) * 2) + (((1023 + (33 * 4)) * 2) + 1) + (1024 * 2)
 	
-	FILE *fp = fopen("/tmp/satubatu.dimacs", "w");
+	FILE *fp = fopen(DIMACS_FILE_PATH, "w");
 	while (ready(map, &x1, &y1, &x2, &y2, stones, &n)) {
 		dump(map, x1, y1, x2, y2, stones, n);
 		if (solver(fp, sat_stones, map, x1, y1, x2, y2, stones, n) == EXIT_FAILURE)

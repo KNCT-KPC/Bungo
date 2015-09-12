@@ -107,7 +107,7 @@ void stone2satstone(int8_t *sat_stones, const int *map_base, int x1, int y1, int
 }
 
 
-unsigned long long clauseAtLeast(FILE *fp, int col, int row, int x1, int y1, int x2, int y2, int n)
+unsigned int clauseAtLeast(FILE *fp, int col, int row, int x1, int y1, int x2, int y2, int n)
 {
 	n++;
 	x1--; x2++;
@@ -127,13 +127,13 @@ unsigned long long clauseAtLeast(FILE *fp, int col, int row, int x1, int y1, int
 }
 
 
-unsigned long long clauseAtMost(FILE *fp, int col, int row, int x1, int y1, int x2, int y2, int n)
+unsigned int clauseAtMost(FILE *fp, int col, int row, int x1, int y1, int x2, int y2, int n)
 {
 	n++;
 	x1--; x2++;
 	y1--; y2++;
 
-	unsigned long long clause = 0;
+	unsigned int clause = 0;
 
 	int i, j, x, y;
 	for (y=y1; y<y2; y++) {
@@ -151,10 +151,10 @@ unsigned long long clauseAtMost(FILE *fp, int col, int row, int x1, int y1, int 
 }
 
 
-unsigned long long clauseObstacle(FILE *fp, int col, int row, int id, int8_t *obstacle)
+unsigned int clauseObstacle(FILE *fp, int col, int row, int id, int8_t *obstacle)
 {
 	int x, y;
-	unsigned long long clause = 0;
+	unsigned int clause = 0;
 	
 	int idx = 0;
 	while ((x = obstacle[idx++]) != -1) {
@@ -185,8 +185,9 @@ int clauseOrderSubNeighbor(FILE *fp, int col, int row, int id, int x, int y, int
 
 int clauseOrderSub(FILE *fp, int col, int row, int n1, int n2, int n1_x, int n1_y, int n2_x, int n2_y, int n, int8_t *n1_stones, int x1, int y1, int x2, int y2)
 {
+	if (n2_x < x1 || n2_y < y1 || n2_x >= x2 || n2_y >= y2) return -1;
+	
 	fprintf(fp, "-%u ", VARIDX(col, row, n1, n1_x, n1_y));
-
 	int idx = 0;
 	if (n2 > 0) {
 		int offset_x = 0;
@@ -197,21 +198,27 @@ int clauseOrderSub(FILE *fp, int col, int row, int n1, int n2, int n1_x, int n1_
 			offset_x = n1_stones[idx++];
 			offset_y = n1_stones[idx++];
 		} while (offset_x != 0 || offset_y != 0);
+	
+		fprintf(fp, "%u ", VARIDX(col, row, n1, n2_x, n2_y));
+		int i;
+		for (i=n2; i<=n; i++) fprintf(fp, "%u ", VARIDX(col, row, i, n2_x, n2_y));
+	} else {
+		//fprintf(fp, "%u ", VARIDX(col, row, ))
+		
+		
+		
+		
+		
 	}
-
-	if (n2_x < x1 || n2_y < y1 || n2_x >= x2 || n2_y >= y2) return -1;
-
-	int i;
-	fprintf(fp, "%u ", VARIDX(col, row, n1, n2_x, n2_y));	
-	for (i=n2; i<=n; i++) fprintf(fp, "%u ", VARIDX(col, row, i, n2_x, n2_y));
+	
 	fprintf(fp, "\n");
 	return 0;
 }
 
-unsigned long long clauseOrder(FILE *fp, int col, int row, int x1, int y1, int x2, int y2, int n, int8_t *sat_stones)
+unsigned int clauseOrder(FILE *fp, int col, int row, int x1, int y1, int x2, int y2, int n, int8_t *sat_stones)
 {
 	fpos_t pos;
-	unsigned long long clause = 0;
+	unsigned int clause = 0;
 
 	int i;
 	for (i=0; i<n; i++) {
@@ -325,7 +332,7 @@ int clauseDefineUniqZk(const int8_t *base, int8_t *dst)
 	return op;
 }
 
-unsigned long long clauseDefineSub(FILE *fp, int col, int row, int8_t *stone, int id, unsigned int *vars, int x, int y, int x1, int x2, int y1, int y2)
+unsigned int clauseDefineSub(FILE *fp, int col, int row, int8_t *stone, int id, unsigned int *vars, int x, int y, int x1, int x2, int y1, int y2)
 {
 	int len = 0;
 	unsigned int ids[16] = {};
@@ -349,9 +356,9 @@ unsigned long long clauseDefineSub(FILE *fp, int col, int row, int8_t *stone, in
 	return len + 1;
 }
 
-unsigned long long clauseDefine(unsigned int *vars, FILE *fp, int col, int row, int x1, int x2, int y1, int y2, int n, int8_t *sat_stones)
+unsigned int clauseDefine(unsigned int *vars, FILE *fp, int col, int row, int x1, int x2, int y1, int y2, int n, int8_t *sat_stones)
 {
-	unsigned long long clause = 0;
+	unsigned int clause = 0;
 
 	int i, j, k, l;
 	for (i=0; i<n; i++) {
@@ -389,26 +396,28 @@ int solver(FILE *fp, int8_t *sat_stones, int *map, int x1, int y1, int x2, int y
 	int col = x2 - x1;
 	int row = y2 - y1;
 
-	unsigned long long clause = 0;
+	unsigned int clause = 0;
 	unsigned int vars = (col + 2) * (row + 2) * (n + 1);
-
-	fprintf(fp, "c at-leaset\n");
-	clause += clauseAtLeast(fp, col, row, x1, y1, x2, y2, n);
 	
-	fprintf(fp, "c at-most\n");
+	fprintf(fp, "p cnf 4294967295 4294967295\n");
+	
+	clause += clauseAtLeast(fp, col, row, x1, y1, x2, y2, n);
 	clause += clauseAtMost(fp, col, row, x1, y1, x2, y2, n);
-
-	fprintf(fp, "c obstacle\n");
 	clause += clauseObstacle(fp, col, row, n, &sat_stones[n << 5]);
-
-	fprintf(fp, "c order\n");
 	clause += clauseOrder(fp, col, row, x1, y1, x2, y2, n, sat_stones);
-
-	fprintf(fp, "c define\n");
 	clause += clauseDefine(&vars, fp, col, row, x1, x2, y1, y2, n, sat_stones);
 	
-	printf("clause = %llu, vars = %u\n", clause, vars);
-
+	printf("vars = %u, clause = %u\n", clause, vars);
+	
+	char str[28];
+	snprintf(str, 28, "p cnf %u %u", vars, clause);
+	int i, len = strlen(str);
+	for (i=len; i<27; i++) str[i] = ' ';
+	str[i] = '\0';
+	
+	fseek(fp, SEEK_SET, 0);
+	fprintf(fp, "%s", str);
+	
 	// Run SAT Solver
 	fflush(fp);
 

@@ -359,8 +359,8 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 	}
 	printf("\n");	//DEBUG
 
-	printf("\nStart : \n");	//DEBUG
 	DEBUG_waitKey();
+	printf("\nStart : \n");	//DEBUG
 
 	//-----íTçı-----//Åií∑Ç¢Åj
 	int kn = 0;
@@ -466,9 +466,10 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 			}
 		}
 
-		if(putShitNum == 3 && score == 0){
+		if(score == 0){
 			DEBUG_printMap(map, width+1, height);
 		}
+
 		/*
 		printf("\n\t !!!!! terminal !!!!!\n\n");
 		DEBUG_printMap(map, width+1, height);

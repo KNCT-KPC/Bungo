@@ -30,7 +30,8 @@
 	#define	SERVER_IPADDR	"127.0.0.1"
 	#define	SERVER_PORT	25252
 #else
-	#define	INPUT_FILENAME	"../../../Problem/light/light-local.txt"
+//	#define	INPUT_FILENAME	"../../../Problem/light/light-local.txt"
+	#define	INPUT_FILENAME	"../../../Problem/27/27-local.txt"
 	#define	OUTPUT_FILENAME	"-"
 	/* KORE => if (OUTPUT_FILENAME[0] == '-') { global_fpwrite = stdout; } <== */
 #endif

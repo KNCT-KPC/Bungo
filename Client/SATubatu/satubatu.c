@@ -8,18 +8,116 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#include <unistd.h>
+#include <sys/wait.h>
 #include "common.h"
 
 #define	CLIENT_NAME	"SATubatu"
 #define	SERVER_IPADDR	"127.0.0.1"
 
-#define	DIMACS_FILE_PATH	"/tmp/satubatu.dimacs"
+#define	SAT_SOLVER	"glueminisat"
+#define	DIMACS_INPUT_FILE	"/tmp/satubatu.dimacs"
+#define	DIMACS_OUTPUT_FILE	"/tmp/satubatu.out"
 #define	VARIDX(col, row, n, x, y)	((((col+2) * (row+2)) * (n) + (col+2) * (y) + (x)) + 1)
 
 
 /*------------------------------------*/
 /*               Solver               */
 /*------------------------------------*/
+void dump(int *map, int x1, int y1, int x2, int y2, int *stones, int n);
+void stone2satstone(int8_t *sat_stones, const int *map_base, int x1, int y1, int x2, int y2, const int *stones_base, int n);
+unsigned int createDIMACSfile(FILE *fp, int col, int row, int x1, int y1, int x2, int y2, int n, int8_t *sat_stones);
+int satSolve();
+void visual(unsigned int idx, int nega, int col, int row, int *map);
+
+int solver(FILE *fp, int8_t *sat_stones, int *map, int x1, int y1, int x2, int y2, int *stones, int n)
+{
+	x2++; y2++;
+	printf("\n\n\n");
+	
+	// Prepare
+	stone2satstone(sat_stones, map, x1, y1, x2, y2, stones, n);
+	
+	// Z to SAT
+	int col = x2 - x1;
+	int row = y2 - y1;
+	unsigned int vars = createDIMACSfile(fp, col, row, x1, y1, x2, y2, n, sat_stones);
+	
+	// Run the SAT Solver
+	fflush(fp);
+	int sat_flg = satSolve();
+	if (sat_flg < 0) return EXIT_FAILURE;
+	if (sat_flg == 20) {
+		printf("UNSAT\n");
+		return EXIT_FAILURE;
+	}
+	
+	// SAT to Z
+	printf("SAT\n");
+	FILE *out = fopen(DIMACS_OUTPUT_FILE, "r");
+	int i;
+	for (i=0; i<4; i++) fgetc(out);
+	int c = fgetc(out);
+	if (c == 0x0d) c = fgetc(out);
+	
+	do {
+		unsigned int idx = 0;
+		int nega = 0;
+		if (c == '-') {
+			nega = 1;
+			c = fgetc(out);
+		}
+		
+		do {
+			idx *= 10;
+			idx += c - '0';
+		} while ((c = fgetc(out)) != ' ');
+		
+		if (idx > vars) break;
+		visual(idx, nega, col, row, map);
+	} while ((c = fgetc(out)) != '0');
+
+	fclose(out);
+	
+	
+	/*
+	sendMsg("S");
+	sendMsg("");
+	if (sendMsg("E") == EXIT_FAILURE) return EXIT_SUCCESS;
+	*/
+	return EXIT_FAILURE;
+}
+
+
+/*----------------------------------------------------------------------------*/
+/*                                    Main                                    */
+/*----------------------------------------------------------------------------*/
+int main(int argc, char *argv[])
+{
+	int osfhandle, sd;
+	initClient(CLIENT_NAME, SERVER_IPADDR, &osfhandle, &sd);
+	
+	int x1, y1, x2, y2, n;
+	int map[1024];
+	int stones[16384];
+	int8_t sat_stones[12551];	// ((16 * 256) * 2) + (((1023 + (33 * 4)) * 2) + 1) + (1024 * 2)
+	
+	FILE *fp = fopen(DIMACS_INPUT_FILE, "w");
+	while (ready(map, &x1, &y1, &x2, &y2, stones, &n)) {
+		//dump(map, x1, y1, x2, y2, stones, n);
+		if (solver(fp, sat_stones, map, x1, y1, x2, y2, stones, n) == EXIT_FAILURE)
+			break;
+	}
+	fclose(fp);
+	
+	finalClient(osfhandle, sd);
+	return EXIT_SUCCESS;
+}
+
+
+/*----------------------------------------------------------------------------*/
+/*                                   Prepare                                  */
+/*----------------------------------------------------------------------------*/
 void dump(int *map, int x1, int y1, int x2, int y2, int *stones, int n)
 {
 	/* Range */
@@ -107,6 +205,12 @@ void stone2satstone(int8_t *sat_stones, const int *map_base, int x1, int y1, int
 }
 
 
+/*----------------------------------------------------------------------------*/
+/*                                   Clause                                   */
+/*----------------------------------------------------------------------------*/
+/*------------------------------------*/
+/*               AtLeast              */
+/*------------------------------------*/
 unsigned int clauseAtLeast(FILE *fp, int col, int row, int x1, int y1, int x2, int y2, int n)
 {
 	n++;
@@ -127,6 +231,9 @@ unsigned int clauseAtLeast(FILE *fp, int col, int row, int x1, int y1, int x2, i
 }
 
 
+/*------------------------------------*/
+/*               AtMost               */
+/*------------------------------------*/
 unsigned int clauseAtMost(FILE *fp, int col, int row, int x1, int y1, int x2, int y2, int n)
 {
 	n++;
@@ -151,6 +258,9 @@ unsigned int clauseAtMost(FILE *fp, int col, int row, int x1, int y1, int x2, in
 }
 
 
+/*------------------------------------*/
+/*              Obstacle              */
+/*------------------------------------*/
 unsigned int clauseObstacle(FILE *fp, int col, int row, int id, int8_t *obstacle)
 {
 	int x, y;
@@ -167,6 +277,9 @@ unsigned int clauseObstacle(FILE *fp, int col, int row, int id, int8_t *obstacle
 }
 
 
+/*------------------------------------*/
+/*                Order               */
+/*------------------------------------*/
 int clauseOrderSubNeighbor(FILE *fp, int col, int row, int id, int x, int y, int offset_x, int offset_y, int x1, int y1, int x2, int y2)
 {
 	int i;
@@ -259,6 +372,9 @@ unsigned int clauseOrder(FILE *fp, int col, int row, int x1, int y1, int x2, int
 }
 
 
+/*------------------------------------*/
+/*            Define or zk            */
+/*------------------------------------*/
 int clauseDefineUniqZkEquals(const int8_t *z1, const int8_t *z2)
 {
 	int idx = 0;
@@ -388,32 +504,25 @@ unsigned int clauseDefine(unsigned int *vars, FILE *fp, int col, int row, int x1
 }
 
 
-int solver(FILE *fp, int8_t *sat_stones, int *map, int x1, int y1, int x2, int y2, int *stones, int n)
+/*------------------------------------*/
+/*           Create the file          */
+/*------------------------------------*/
+unsigned int createDIMACSfile(FILE *fp, int col, int row, int x1, int y1, int x2, int y2, int n, int8_t *sat_stones)
 {
-	x2++; y2++;
-	
-	// Prepare
-	stone2satstone(sat_stones, map, x1, y1, x2, y2, stones, n);
-	
-	// Create DIMACS file
-	int col = x2 - x1;
-	int row = y2 - y1;
-
 	unsigned int clause = 0;
 	unsigned int vars = (col + 2) * (row + 2) * (n + 1);
+	unsigned int hidden_vars = vars;
 	
 	fprintf(fp, "p cnf 4294967295 4294967295\n");
 	
 	clause += clauseAtLeast(fp, col, row, x1, y1, x2, y2, n);
 	clause += clauseAtMost(fp, col, row, x1, y1, x2, y2, n);
 	clause += clauseObstacle(fp, col, row, n, &sat_stones[n << 5]);
-	clause += clauseOrder(fp, col, row, x1, y1, x2, y2, n, sat_stones);
-	clause += clauseDefine(&vars, fp, col, row, x1, x2, y1, y2, n, sat_stones);
-	
-	printf("vars = %u, clause = %u\n", clause, vars);
+	//clause += clauseOrder(fp, col, row, x1, y1, x2, y2, n, sat_stones);
+	//clause += clauseDefine(&hidden_vars, fp, col, row, x1, x2, y1, y2, n, sat_stones);
 	
 	char str[28];
-	snprintf(str, 28, "p cnf %u %u", vars, clause);
+	snprintf(str, 28, "p cnf %u %u", hidden_vars, clause);
 	int i, len = strlen(str);
 	for (i=len; i<27; i++) str[i] = ' ';
 	str[i] = '\0';
@@ -421,43 +530,45 @@ int solver(FILE *fp, int8_t *sat_stones, int *map, int x1, int y1, int x2, int y
 	fseek(fp, SEEK_SET, 0);
 	fprintf(fp, "%s", str);
 	
-	// Run SAT Solver
-	fflush(fp);
-
-	
-	
-	
-	
-	/*
-	sendMsg("S");
-	sendMsg("");
-	if (sendMsg("E") == EXIT_FAILURE) return EXIT_SUCCESS;
-	*/
-	return EXIT_FAILURE;
+	return vars;
 }
 
 
 /*----------------------------------------------------------------------------*/
-/*                                    Main                                    */
+/*                             Run the SAT Solver                             */
 /*----------------------------------------------------------------------------*/
-int main(int argc, char *argv[])
+int satSolve()
 {
-	int osfhandle, sd;
-	initClient(CLIENT_NAME, SERVER_IPADDR, &osfhandle, &sd);
-	
-	int x1, y1, x2, y2, n;
-	int map[1024];
-	int stones[16384];
-	int8_t sat_stones[12551];	// ((16 * 256) * 2) + (((1023 + (33 * 4)) * 2) + 1) + (1024 * 2)
-	
-	FILE *fp = fopen(DIMACS_FILE_PATH, "w");
-	while (ready(map, &x1, &y1, &x2, &y2, stones, &n)) {
-		dump(map, x1, y1, x2, y2, stones, n);
-		if (solver(fp, sat_stones, map, x1, y1, x2, y2, stones, n) == EXIT_FAILURE)
-			break;
+	pid_t pid = fork();
+	if (pid < 0) return -1;
+	if (pid == 0) {
+		close(0);
+		close(1);
+		execlp(SAT_SOLVER, SAT_SOLVER, DIMACS_INPUT_FILE, DIMACS_OUTPUT_FILE, NULL);
+		_exit(EXIT_FAILURE);
 	}
-	fclose(fp);
 	
-	finalClient(osfhandle, sd);
-	return EXIT_SUCCESS;
+	int status;
+	waitpid(pid, &status, 0);
+	if (!WIFEXITED(status)) return -1;
+	int code = WEXITSTATUS(status);
+	if (code < 10) return -1;
+	
+	return (code == 20) ? 0 : 1;
+}
+
+
+/*----------------------------------------------------------------------------*/
+/*                                  Visualize                                 */
+/*----------------------------------------------------------------------------*/
+void visual(unsigned int idx, int nega, int col, int row, int *map)
+{
+	div_t tmp1 = div(idx - 1, (col + 2) * (row + 2));
+	div_t tmp2 = div(tmp1.rem, (col + 2));
+	
+	int n = tmp1.quot;
+	int x = tmp2.rem;
+	int y = tmp2.quot;
+	
+	printf("x_(%d, %d)_%d = %s\n", x, y, n, nega ? "False" : "True");
 }

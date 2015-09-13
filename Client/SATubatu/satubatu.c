@@ -14,7 +14,7 @@
 #define	SERVER_IPADDR	"127.0.0.1"
 
 #define	DIMACS_FILE_PATH	"/tmp/satubatu.dimacs"
-#define	VARIDX(col, row, n, x, y)	(((col+2) * (row+2)) * (n) + (col+2) * (y) + (x))
+#define	VARIDX(col, row, n, x, y)	((((col+2) * (row+2)) * (n) + (col+2) * (y) + (x)) + 1)
 
 
 /*------------------------------------*/
@@ -119,7 +119,7 @@ unsigned int clauseAtLeast(FILE *fp, int col, int row, int x1, int y1, int x2, i
 			for (i=0; i<n; i++) {
 				fprintf(fp, "%u ", VARIDX(col, row, i, x-x1, y-y1));
 			}
-			fputs("\n", fp);
+			fputs("0\n", fp);
 		}
 	}
 
@@ -140,7 +140,7 @@ unsigned int clauseAtMost(FILE *fp, int col, int row, int x1, int y1, int x2, in
 		for (x=x1; x<x2; x++) {
 			for (i=0; i<n; i++) {
 				for (j=i+1; j<n; j++) {
-					fprintf(fp, "-%u -%u\n", VARIDX(col, row, i, x-x1, y-y1), VARIDX(col, row, j, x-x1, y-y1));
+					fprintf(fp, "-%u -%u 0\n", VARIDX(col, row, i, x-x1, y-y1), VARIDX(col, row, j, x-x1, y-y1));
 					clause++;
 				}
 			}
@@ -159,7 +159,7 @@ unsigned int clauseObstacle(FILE *fp, int col, int row, int id, int8_t *obstacle
 	int idx = 0;
 	while ((x = obstacle[idx++]) != -1) {
 		y = obstacle[idx++];
-		fprintf(fp, "%u\n", VARIDX(col, row, id, x, y));
+		fprintf(fp, "%u 0\n", VARIDX(col, row, id, x, y));
 		clause++;
 	}
 
@@ -211,7 +211,7 @@ int clauseOrderSub(FILE *fp, int col, int row, int n1, int n2, int b_x, int b_y,
 		for (i=n2; i<=n; i++) fprintf(fp, "%u ", VARIDX(col, row, i, o_x, o_y));
 	}
 
-	fprintf(fp, "\n");
+	fprintf(fp, "0\n");
 	return 0;
 }
 
@@ -352,9 +352,9 @@ unsigned int clauseDefineSub(FILE *fp, int col, int row, int8_t *stone, int id, 
 	} while (offset_x != 0 || offset_y != 0);
 
 	int i = 0;
-	for (i=0; i<len; i++) fprintf(fp, "-%u %u\n", *vars, ids[i]);
+	for (i=0; i<len; i++) fprintf(fp, "-%u %u 0\n", *vars, ids[i]);
 	for (i=0; i<len; i++) fprintf(fp, "-%u ", ids[i]);
-	fprintf(fp, "%u\n", (*vars)++);
+	fprintf(fp, "%u 0\n", ++(*vars));
 
 	return len + 1;
 }

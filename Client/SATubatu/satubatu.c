@@ -183,34 +183,34 @@ int clauseOrderSubNeighbor(FILE *fp, int col, int row, int id, int x, int y, int
 	return 0;
 }
 
-int clauseOrderSub(FILE *fp, int col, int row, int n1, int n2, int n1_x, int n1_y, int n2_x, int n2_y, int n, int8_t *n1_stones, int x1, int y1, int x2, int y2)
+int clauseOrderSub(FILE *fp, int col, int row, int n1, int n2, int b_x, int b_y, int o_x, int o_y, int n, int8_t *zk, int x1, int y1, int x2, int y2)
 {
-	if (n2_x < x1 || n2_y < y1 || n2_x >= x2 || n2_y >= y2) return -1;
-	
-	fprintf(fp, "-%u ", VARIDX(col, row, n1, n1_x, n1_y));
-	int idx = 0;
-	if (n2 > 0) {
+	if (o_x < x1 || o_y < y1 || o_x >= x2 || o_y >= y2) return -1;
+
+	int flg = (n1 < 0);
+	fprintf(fp, "-%u ", VARIDX(col, row, flg ? 0 : n1, b_x, b_y));
+
+	if (!flg) {
+		int idx = 0;
 		int offset_x = 0;
 		int offset_y = 0;
+
 		do {
-			if (clauseOrderSubNeighbor(fp, col, row, n1, n1_x, n1_y, offset_x, offset_y, x1, y1, x2, y2) == -1) return -1;
-			if (clauseOrderSubNeighbor(fp, col, row, n2, n1_x, n1_y, offset_x, offset_y, x1, y1, x2, y2) == -1) return -1;
-			offset_x = n1_stones[idx++];
-			offset_y = n1_stones[idx++];
+			if (clauseOrderSubNeighbor(fp, col, row, n1, b_x, b_y, offset_x, offset_y, x1, y1, x2, y2) == -1) return -1;
+			if (clauseOrderSubNeighbor(fp, col, row, n2, b_x, b_y, offset_x, offset_y, x1, y1, x2, y2) == -1) return -1;
+			offset_x = zk[idx++];
+			offset_y = zk[idx++];
 		} while (offset_x != 0 || offset_y != 0);
-	
-		fprintf(fp, "%u ", VARIDX(col, row, n1, n2_x, n2_y));
-		int i;
-		for (i=n2; i<=n; i++) fprintf(fp, "%u ", VARIDX(col, row, i, n2_x, n2_y));
-	} else {
-		//fprintf(fp, "%u ", VARIDX(col, row, ))
-		
-		
-		
-		
-		
 	}
-	
+
+	int i;
+	if (flg) {
+		for (i=0; i<=n; i++) fprintf(fp, "%u ", VARIDX(col, row, i, o_x, o_y));
+	} else {
+		fprintf(fp, "%u ", VARIDX(col, row, n1, o_x, o_y));
+		for (i=n2; i<=n; i++) fprintf(fp, "%u ", VARIDX(col, row, i, o_x, o_y));
+	}
+
 	fprintf(fp, "\n");
 	return 0;
 }
@@ -223,25 +223,28 @@ unsigned int clauseOrder(FILE *fp, int col, int row, int x1, int y1, int x2, int
 	int i;
 	for (i=0; i<n; i++) {
 		int idx = i << 5;
+		int8_t *zk = &sat_stones[i << 5];
 		int x = 0, y = 0;
-		int n1, n2;
-		
-		if (i == 0) {
-			n1 = 0;
-			n2 = -1;
-		} else {
-			n1 = i - 1;
-			n2 = i;
-		}
 
 		do {
 			int j, k;
 			for (j=y1; j<y2; j++) {
 				for (k=x1; k<x2; k++) {
-					fgetpos(fp, &pos);
-					if (clauseOrderSub(fp, col, row, n1, n2, k-x1+1, j-y1+1, k-x+1, j-y+1, n, &sat_stones[idx], x1, y1, x2, y2) == -1) {
-						fsetpos(fp, &pos);
-					} else {
+					int base_x = (k - x1) + 1;
+					int base_y = (j - y1) + 1;
+					int offset_x = base_x + x;
+					int offset_y = base_y + y;
+
+					int l;
+					int dx[] = {1, 0, -1, 0};
+					int dy[] = {0, 1, 0, -1};
+
+					for (l=0; l<4; l++) {
+						fgetpos(fp, &pos);
+						if (clauseOrderSub(fp, col, row, i-1, i, base_x, base_y, offset_x+dx[l], offset_y+dy[l], n, zk, x1, y1, x2, y2) == -1) {
+							fsetpos(fp, &pos);
+							continue;
+						}
 						clause++;
 					}
 				}

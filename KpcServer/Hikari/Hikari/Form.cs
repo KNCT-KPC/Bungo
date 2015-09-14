@@ -371,7 +371,7 @@ namespace Hikari
         private void printIPaddr()
         {
             IPAddress ipaddr = Utils.getLocalIpAddr();
-            textBox6.Text = ipaddr.ToString();
+            textBox6.Text = (ipaddr == null) ? "Unknown" : ipaddr.ToString();
         }
 
         private void GetUrlTextChanged(object sender, EventArgs e)

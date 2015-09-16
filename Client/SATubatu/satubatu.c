@@ -52,17 +52,8 @@ int solver(FILE *fp, int8_t *sat_stones, int *map, int x1, int y1, int x2, int y
 		printf("UNSAT\n");
 		return EXIT_FAILURE;
 	}
-
-	/* Map */
-	int x, y;
-	printf("Map\n");
-	for (y=0; y<32; y++) {
-		printf("\t");
-		for (x=0; x<32; x++) printf("%2d", MAP(x, y));
-		printf("\n");
-	}
-	printf("\n");
-
+	
+	dump(map, x1, y1, x2, y2, stones, n);
 
 	// SAT to Z
 	printf("SAT\n");
@@ -90,9 +81,11 @@ int solver(FILE *fp, int8_t *sat_stones, int *map, int x1, int y1, int x2, int y
 	} while ((c = fgetc(out)) != '0');
 
 	fclose(out);
-
-	printf("\nTWO\n");
+	
+	
 	/* Map */
+	printf("\nTWO\n");
+	int x, y;
 	printf("Map\n");
 	for (y=0; y<32; y++) {
 		printf("\t");
@@ -238,14 +231,10 @@ void stone2satstone(int8_t *sat_stones, const int *map_base, int x1, int y1, int
 /*------------------------------------*/
 unsigned int clauseAtLeast(FILE *fp, int col, int row, int x1, int y1, int x2, int y2, int n)
 {
-	n++;
-	x1--; x2++;
-	y1--; y2++;
-
 	int i, x, y;
 	for (y=y1; y<y2; y++) {
 		for (x=x1; x<x2; x++) {
-			for (i=0; i<=n; i++) {
+			for (i=0; i<n; i++) {
 				fprintf(fp, "%u ", VARIDX(col, row, i, x-x1, y-y1));
 			}
 			fputs("0\n", fp);
@@ -261,17 +250,13 @@ unsigned int clauseAtLeast(FILE *fp, int col, int row, int x1, int y1, int x2, i
 /*------------------------------------*/
 unsigned int clauseAtMost(FILE *fp, int col, int row, int x1, int y1, int x2, int y2, int n)
 {
-	n++;
-	x1--; x2++;
-	y1--; y2++;
-
 	unsigned int clause = 0;
 
 	int i, j, x, y;
 	for (y=y1; y<y2; y++) {
 		for (x=x1; x<x2; x++) {
-			for (i=0; i<=n; i++) {
-				for (j=i+1; j<=n; j++) {
+			for (i=0; i<n; i++) {
+				for (j=i+1; j<n; j++) {
 					fprintf(fp, "-%u -%u 0\n", VARIDX(col, row, i, x-x1, y-y1), VARIDX(col, row, j, x-x1, y-y1));
 					clause++;
 				}
@@ -393,6 +378,8 @@ unsigned int clauseOrder(FILE *fp, int col, int row, int x1, int y1, int x2, int
 		} while (x != 0 || y != 0);
 	}
 	
+	for (i=0; i<300; i++) fprintf(fp, "\n");
+	
 	return clause;
 }
 
@@ -492,12 +479,13 @@ unsigned int clauseDefineSub(FILE *fp, int col, int row, int8_t *stone, int id, 
 		offset_y = stone[idx++];
 	} while (offset_x != 0 || offset_y != 0);
 
-	int i = 0;
+	int i;
+	++(*vars);
 	for (i=0; i<len; i++) fprintf(fp, "-%u %u 0\n", *vars, ids[i]);
 	for (i=0; i<len; i++) fprintf(fp, "-%u ", ids[i]);
-	fprintf(fp, "%u 0\n", ++(*vars));
+	fprintf(fp, "%u 0\n", *vars);
 
-	return len + 1;
+	return ++len;
 }
 
 unsigned int clauseDefine(unsigned int *vars, FILE *fp, int col, int row, int x1, int x2, int y1, int y2, int n, int8_t *sat_stones)
@@ -514,9 +502,25 @@ unsigned int clauseDefine(unsigned int *vars, FILE *fp, int col, int row, int x1
 				for (k=x1; k<x2; k++) {
 					int8_t tmp[256];
 					int op = clauseDefineUniqZk(&sat_stones[i << 5], tmp);
+					
+					int flg = 0;
+					unsigned int vvv[8] = {};
 					for (l=0; l<op; l++) {
-						clause += clauseDefineSub(fp, col, row, &tmp[l << 5], i, vars, k+1, j+1, x1, x2, y1, y2);
+						int c = clauseDefineSub(fp, col, row, &tmp[l << 5], i, vars, k+1, j+1, x1, x2, y1, y2);
+						if (c == 0) continue;
+						vvv[l] = *vars - 1;
+						clause += c;
+						flg = 1;
 					}
+					
+					if (!flg) continue;
+					fprintf(fp, "-%u ", VARIDX(col, row, i, k-x1+1, j-y1+1));
+					for (l=0; l<8; l++) {
+						if (vvv[l] == 0) continue;
+						fprintf(fp, "%u ", vvv[l]);
+					}
+					fprintf(fp, "0\n");
+					clause++;
 				}
 			}
 
@@ -543,8 +547,8 @@ unsigned int createDIMACSfile(FILE *fp, int col, int row, int x1, int y1, int x2
 	clause += clauseAtLeast(fp, col, row, x1, y1, x2, y2, n);
 	clause += clauseAtMost(fp, col, row, x1, y1, x2, y2, n);
 	clause += clauseObstacle(fp, col, row, n, &sat_stones[n << 5]);
-	clause += clauseOrder(fp, col, row, x1, y1, x2, y2, n, sat_stones);
-	//clause += clauseDefine(&hidden_vars, fp, col, row, x1, x2, y1, y2, n, sat_stones);
+	//clause += clauseOrder(fp, col, row, x1, y1, x2, y2, n, sat_stones);
+	clause += clauseDefine(&hidden_vars, fp, col, row, x1, x2, y1, y2, n, sat_stones);
 	
 	char str[28];
 	snprintf(str, 28, "p cnf %u %u", hidden_vars, clause);

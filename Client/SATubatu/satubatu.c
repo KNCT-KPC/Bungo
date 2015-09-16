@@ -28,7 +28,7 @@ void dump(int *map, int x1, int y1, int x2, int y2, int *stones, int n);
 void stone2satstone(int8_t *sat_stones, const int *map_base, int x1, int y1, int x2, int y2, const int *stones_base, int n);
 unsigned int createDIMACSfile(FILE *fp, int col, int row, int x1, int y1, int x2, int y2, int n, int8_t *sat_stones);
 int satSolve();
-void visual(unsigned int idx, int nega, int col, int row, int *map);
+void visual(unsigned int idx, int nega, int col, int row, int *map, int x1, int y1, int x2, int y2);
 
 int solver(FILE *fp, int8_t *sat_stones, int *map, int x1, int y1, int x2, int y2, int *stones, int n)
 {
@@ -46,12 +46,24 @@ int solver(FILE *fp, int8_t *sat_stones, int *map, int x1, int y1, int x2, int y
 	// Run the SAT Solver
 	fflush(fp);
 	int sat_flg = satSolve();
+	printf("FLG = %d\n", sat_flg);
 	if (sat_flg < 0) return EXIT_FAILURE;
-	if (sat_flg == 20) {
+	if (sat_flg == 0) {
 		printf("UNSAT\n");
 		return EXIT_FAILURE;
 	}
-	
+
+	/* Map */
+	int x, y;
+	printf("Map\n");
+	for (y=0; y<32; y++) {
+		printf("\t");
+		for (x=0; x<32; x++) printf("%2d", MAP(x, y));
+		printf("\n");
+	}
+	printf("\n");
+
+
 	// SAT to Z
 	printf("SAT\n");
 	FILE *out = fopen(DIMACS_OUTPUT_FILE, "r");
@@ -59,7 +71,7 @@ int solver(FILE *fp, int8_t *sat_stones, int *map, int x1, int y1, int x2, int y
 	for (i=0; i<4; i++) fgetc(out);
 	int c = fgetc(out);
 	if (c == 0x0d) c = fgetc(out);
-	
+
 	do {
 		unsigned int idx = 0;
 		int nega = 0;
@@ -74,11 +86,24 @@ int solver(FILE *fp, int8_t *sat_stones, int *map, int x1, int y1, int x2, int y
 		} while ((c = fgetc(out)) != ' ');
 		
 		if (idx > vars) break;
-		visual(idx, nega, col, row, map);
+		visual(idx, nega, col, row, map, x1, y1, x2, y2);
 	} while ((c = fgetc(out)) != '0');
 
 	fclose(out);
-	
+
+	printf("\nTWO\n");
+	/* Map */
+	printf("Map\n");
+	for (y=0; y<32; y++) {
+		printf("\t");
+		for (x=0; x<32; x++) printf("%2d", MAP(x, y));
+		printf("\n");
+	}
+	printf("\n");
+
+
+
+
 	
 	/*
 	sendMsg("S");
@@ -220,7 +245,7 @@ unsigned int clauseAtLeast(FILE *fp, int col, int row, int x1, int y1, int x2, i
 	int i, x, y;
 	for (y=y1; y<y2; y++) {
 		for (x=x1; x<x2; x++) {
-			for (i=0; i<n; i++) {
+			for (i=0; i<=n; i++) {
 				fprintf(fp, "%u ", VARIDX(col, row, i, x-x1, y-y1));
 			}
 			fputs("0\n", fp);
@@ -245,8 +270,8 @@ unsigned int clauseAtMost(FILE *fp, int col, int row, int x1, int y1, int x2, in
 	int i, j, x, y;
 	for (y=y1; y<y2; y++) {
 		for (x=x1; x<x2; x++) {
-			for (i=0; i<n; i++) {
-				for (j=i+1; j<n; j++) {
+			for (i=0; i<=n; i++) {
+				for (j=i+1; j<=n; j++) {
 					fprintf(fp, "-%u -%u 0\n", VARIDX(col, row, i, x-x1, y-y1), VARIDX(col, row, j, x-x1, y-y1));
 					clause++;
 				}
@@ -301,7 +326,7 @@ int clauseOrderSub(FILE *fp, int col, int row, int n1, int n2, int b_x, int b_y,
 	if (o_x < x1 || o_y < y1 || o_x >= x2 || o_y >= y2) return -1;
 
 	int flg = (n1 < 0);
-	fprintf(fp, "-%u ", VARIDX(col, row, flg ? 0 : n1, b_x, b_y));
+	fprintf(fp, "-%u ", VARIDX(col, row, flg ? 1 : n2, b_x, b_y));
 
 	if (!flg) {
 		int idx = 0;
@@ -367,7 +392,7 @@ unsigned int clauseOrder(FILE *fp, int col, int row, int x1, int y1, int x2, int
 			y = sat_stones[idx++];
 		} while (x != 0 || y != 0);
 	}
-
+	
 	return clause;
 }
 
@@ -518,7 +543,7 @@ unsigned int createDIMACSfile(FILE *fp, int col, int row, int x1, int y1, int x2
 	clause += clauseAtLeast(fp, col, row, x1, y1, x2, y2, n);
 	clause += clauseAtMost(fp, col, row, x1, y1, x2, y2, n);
 	clause += clauseObstacle(fp, col, row, n, &sat_stones[n << 5]);
-	//clause += clauseOrder(fp, col, row, x1, y1, x2, y2, n, sat_stones);
+	clause += clauseOrder(fp, col, row, x1, y1, x2, y2, n, sat_stones);
 	//clause += clauseDefine(&hidden_vars, fp, col, row, x1, x2, y1, y2, n, sat_stones);
 	
 	char str[28];
@@ -561,14 +586,21 @@ int satSolve()
 /*----------------------------------------------------------------------------*/
 /*                                  Visualize                                 */
 /*----------------------------------------------------------------------------*/
-void visual(unsigned int idx, int nega, int col, int row, int *map)
+void visual(unsigned int idx, int nega, int col, int row, int *map, int x1, int y1, int x2, int y2)
 {
+	if (nega) return;
+
 	div_t tmp1 = div(idx - 1, (col + 2) * (row + 2));
 	div_t tmp2 = div(tmp1.rem, (col + 2));
 	
 	int n = tmp1.quot;
-	int x = tmp2.rem;
-	int y = tmp2.quot;
-	
-	printf("x_(%d, %d)_%d = %s\n", x, y, n, nega ? "False" : "True");
+	int x = tmp2.rem - 1;
+	int y = tmp2.quot - 1;
+
+	if (!(x1 <= x && x < x2)) return;
+	if (!(y1 <= y && y < y2)) return;
+
+	map[(y << 5) + x] = n;
+	//printf("x_(%d, %d)_%d = %s\n", x, y, n, nega ? "False" : "True");
 }
+

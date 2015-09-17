@@ -82,6 +82,8 @@ int solver(FILE *fp, int8_t *sat_stones, int *map, int x1, int y1, int x2, int y
 
 	fclose(out);
 	
+	printf("vars = %d\n", vars);
+	
 	
 	/* Map */
 	printf("\nTWO\n");
@@ -118,7 +120,7 @@ int main(int argc, char *argv[])
 	int x1, y1, x2, y2, n;
 	int map[1024];
 	int stones[16384];
-	int8_t sat_stones[12551];	// ((16 * 256) * 2) + (((1023 + (33 * 4)) * 2) + 1) + (1024 * 2)
+	int8_t sat_stones[12551] = {};	// ((16 * 256) * 2) + (((1023 + (33 * 4)) * 2) + 1) + (1024 * 2)
 	
 	FILE *fp = fopen(DIMACS_INPUT_FILE, "w");
 	while (ready(map, &x1, &y1, &x2, &y2, stones, &n)) {
@@ -231,6 +233,10 @@ void stone2satstone(int8_t *sat_stones, const int *map_base, int x1, int y1, int
 /*------------------------------------*/
 unsigned int clauseAtLeast(FILE *fp, int col, int row, int x1, int y1, int x2, int y2, int n)
 {
+	x1--; y1--;
+	x2++; y2++;
+	n++;
+	
 	int i, x, y;
 	for (y=y1; y<y2; y++) {
 		for (x=x1; x<x2; x++) {
@@ -250,6 +256,10 @@ unsigned int clauseAtLeast(FILE *fp, int col, int row, int x1, int y1, int x2, i
 /*------------------------------------*/
 unsigned int clauseAtMost(FILE *fp, int col, int row, int x1, int y1, int x2, int y2, int n)
 {
+	x1--; y1--;
+	x2++; y2++;
+	n++;
+	
 	unsigned int clause = 0;
 
 	int i, j, x, y;
@@ -385,150 +395,87 @@ unsigned int clauseOrder(FILE *fp, int col, int row, int x1, int y1, int x2, int
 
 
 /*------------------------------------*/
-/*            Define or zk            */
+/*            Define of zk            */
 /*------------------------------------*/
-int clauseDefineUniqZkEquals(const int8_t *z1, const int8_t *z2)
+void clauseDefineOperation(const int8_t *zk, int8_t *dst)
 {
-	int idx = 0;
-
-	while (1) {
-		int z1_x = z1[idx];
-		int z2_x = z2[idx++];
-		int z1_y = z1[idx];
-		int z2_y = z1[idx++];
-
-		if (z1_x == z2_x && z1_y == z2_y) return 1;
-	}
-
-	return 0;
-}
-
-void clauseDefineZkRotate(int8_t *zk, int anglestep)
-{
-	int i, idx;
-
-	for (i=0; i<anglestep; i++) {
-		idx = 0;
-		while (1) {
-			int x = zk[idx];
-			int y = zk[idx+1];
-			if (x == 0 && y == 0) break;
-			zk[idx++] = y;
-			zk[idx++] = -x;
-		}
-	}
-}
-
-int clauseDefineUniqZkAdd(const int8_t *zk, int8_t *dst, int op)
-{
-	int i;
-
-	for (i=0; i<op; i++) {
-		if (clauseDefineUniqZkEquals(zk, &dst[i << 5])) return 0;
-	}
-
-	return 1;
-}
-
-int clauseDefineUniqZk(const int8_t *base, int8_t *dst)
-{
-	int i;
-	int op = 0;
-
-	// Init
-	size_t size = sizeof(int8_t) << 5;
-	for (i=0; i<4; i++) memcpy(&dst[i << 4], base, size);
+	int i, j;
 	
-	int idx = 0;
-	while (1) {
-		int x = base[idx];
-		int y = base[idx+1];
-		if (x == 0 && y == 0) break;
-		dst[128 + idx++] = -x;
-		dst[128 + idx++] = y;
+	memcpy(dst, zk, sizeof(int8_t) << 5);
+	for (i=0; i<32; i+=2) {
+		dst[32 + i] = -zk[i];
+		dst[32 + i+1] = zk[i+1];
 	}
-	for (i=5; i<8; i++) memcpy(&dst[i << 4], &dst[128], size);
-
-	// Add
-	for (i=0; i<8; i++) {
-		int8_t *src = &dst[i << 5];
-		clauseDefineZkRotate(src, i % 4);
-		if (clauseDefineUniqZkAdd(src, dst, op)) {
-			int8_t *p = &dst[op << 5];
-			if (src != p) memcpy(p, src, size);
-			op++;
+	
+	for (i=2; i<8; i++) {
+		for (j=0; j<32; j+=2) {
+			dst[(i << 5) + j] = -dst[(i << 5) - 63 + j];
+			dst[(i << 5) + j + 1] = dst[(i << 5) - 64 + j];
 		}
 	}
-
-	return op;
 }
 
-unsigned int clauseDefineSub(FILE *fp, int col, int row, int8_t *stone, int id, unsigned int *vars, int x, int y, int x1, int x2, int y1, int y2)
+unsigned int clauseDefineSub(unsigned int vars, FILE *fp, int col, int row, int id, int b_x, int b_y, int8_t *zk)
 {
 	int len = 0;
-	unsigned int ids[16] = {};
-
+	unsigned int ids[16];
+	
 	int idx = 0;
-	int offset_x = 0, offset_y = 0;
+	int o_x = 0, o_y = 0;
 	do {
-		int abs_x = x + offset_x;
-		int abs_y = y + offset_y;
-		if (abs_x < x1 || abs_y < y1 || abs_x >= x2 || abs_y >= y2) return 0;
-		ids[len++] = VARIDX(col, row, id, abs_x, abs_y);
-		offset_x = stone[idx++];
-		offset_y = stone[idx++];
-	} while (offset_x != 0 || offset_y != 0);
-
+		int x = b_x + o_x;
+		int y = b_y + o_y;
+		if (!(0 <= x && x < col) || !(0 <= y && y < row)) return 0;
+		ids[len++] = VARIDX(col, row, id, x+1, y+1);
+		
+		o_x = zk[idx++];
+		o_y = zk[idx++];
+	} while (o_x != 0 || o_y != 0);
+	
 	int i;
-	++(*vars);
-	for (i=0; i<len; i++) fprintf(fp, "-%u %u 0\n", *vars, ids[i]);
+	for (i=0; i<len; i++) fprintf(fp, "-%u %u 0\n", vars, ids[i]);
 	for (i=0; i<len; i++) fprintf(fp, "-%u ", ids[i]);
-	fprintf(fp, "%u 0\n", *vars);
-
-	return ++len;
+	fprintf(fp, "%u 0\n", vars);
+	
+	return len + 1;
 }
 
-unsigned int clauseDefine(unsigned int *vars, FILE *fp, int col, int row, int x1, int x2, int y1, int y2, int n, int8_t *sat_stones)
+unsigned int clauseDefine(unsigned int *vars, FILE *fp, int col, int row, int x1, int y1, int x2, int y2, int n, int8_t *sat_stones)
 {
 	unsigned int clause = 0;
-
+	
 	int i, j, k, l;
 	for (i=0; i<n; i++) {
-		int idx = i << 5;
-		int x = 0, y = 0;
+		int8_t tmp[256];
+		clauseDefineOperation(&sat_stones[i << 5], tmp);	// Vivid Read Operation
 
-		do {
-			for (j=y1; j<y2; j++) {
-				for (k=x1; k<x2; k++) {
-					int8_t tmp[256];
-					int op = clauseDefineUniqZk(&sat_stones[i << 5], tmp);
-					
-					int flg = 0;
-					unsigned int vvv[8] = {};
-					for (l=0; l<op; l++) {
-						int c = clauseDefineSub(fp, col, row, &tmp[l << 5], i, vars, k+1, j+1, x1, x2, y1, y2);
-						if (c == 0) continue;
-						vvv[l] = *vars - 1;
-						clause += c;
-						flg = 1;
-					}
-					
-					if (!flg) continue;
-					fprintf(fp, "-%u ", VARIDX(col, row, i, k-x1+1, j-y1+1));
-					for (l=0; l<8; l++) {
-						if (vvv[l] == 0) continue;
-						fprintf(fp, "%u ", vvv[l]);
-					}
-					fprintf(fp, "0\n");
-					clause++;
+		for (j=y1; j<y2; j++) {
+			for (k=x1; k<x2; k++) {
+				unsigned int original_var = *vars;
+				
+				for (l=0; l<8; l++) {
+					unsigned int success = clauseDefineSub(*vars+1, fp, col, row, i, k-x1, j-y1, &tmp[l << 5]);
+					if (success == 0) continue;
+					clause += success;
+					(*vars)++;
 				}
+				
+				/*
+				if (((*vars) - original_var) == 0) {
+					fprintf(fp, "-%u 0\n", VARIDX(col, row, i, k-x1+1, j-y1+1));
+					continue;
+				}
+				*/
+
+				unsigned int t;
+				fprintf(fp, "-%u ", VARIDX(col, row, i, k-x1+1, j-y1+1));
+				for (t=original_var; t<(*vars); t++) fprintf(fp, "%u ", t+1);
+				fprintf(fp, "0\n");
+				clause++;
 			}
-
-			x = sat_stones[idx++];
-			y = sat_stones[idx++];
-		} while (x != 0 || y != 0);
+		}
 	}
-
+	
 	return clause;
 }
 
@@ -548,7 +495,7 @@ unsigned int createDIMACSfile(FILE *fp, int col, int row, int x1, int y1, int x2
 	clause += clauseAtMost(fp, col, row, x1, y1, x2, y2, n);
 	clause += clauseObstacle(fp, col, row, n, &sat_stones[n << 5]);
 	//clause += clauseOrder(fp, col, row, x1, y1, x2, y2, n, sat_stones);
-	clause += clauseDefine(&hidden_vars, fp, col, row, x1, x2, y1, y2, n, sat_stones);
+	clause += clauseDefine(&hidden_vars, fp, col, row, x1, y1, x2, y2, n, sat_stones);
 	
 	char str[28];
 	snprintf(str, 28, "p cnf %u %u", hidden_vars, clause);
@@ -592,7 +539,7 @@ int satSolve()
 /*----------------------------------------------------------------------------*/
 void visual(unsigned int idx, int nega, int col, int row, int *map, int x1, int y1, int x2, int y2)
 {
-	if (nega) return;
+	//if (nega) return;
 
 	div_t tmp1 = div(idx - 1, (col + 2) * (row + 2));
 	div_t tmp2 = div(tmp1.rem, (col + 2));
@@ -603,8 +550,10 @@ void visual(unsigned int idx, int nega, int col, int row, int *map, int x1, int 
 
 	if (!(x1 <= x && x < x2)) return;
 	if (!(y1 <= y && y < y2)) return;
-
+	
+	printf("x_(%d, %d)_%d = %s\n", x, y, n, nega ? "False" : "True");
+	if (nega) return;
+	
 	map[(y << 5) + x] = n;
-	//printf("x_(%d, %d)_%d = %s\n", x, y, n, nega ? "False" : "True");
 }
 

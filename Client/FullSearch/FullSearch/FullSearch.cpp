@@ -72,12 +72,13 @@ class PutPoint{
 private:
 	int i;
 	int k;
+	int s;
 	std::vector<int> p;
 	int* neighborAry;
 	bool start;
 
 public :
-	PutPoint(const int k, const int* shit, PutPoint* prevP){
+	PutPoint(const int k, const int s, const int* shit, PutPoint* prevP){
 		int size;
 		for(size = 0; prevP->neighborAry[size] != -1; size++);
 
@@ -102,10 +103,11 @@ public :
 		}
 
 		i = 0;
+		this->s = s;
 		this->k = k;
 		this->start = false;
 	}
-	PutPoint(const int k, const int* shit, const int* neighbor, const int neighborNum){
+	PutPoint(const int k, const int s, const int* shit, const int* neighbor, const int neighborNum){
 		for(int s = 0; shit[s] != -1; s++){
 			for(int n = 0; neighbor[n] != -1; n++){
 				int value = neighbor[n] - shit[s];
@@ -127,10 +129,11 @@ public :
 		neighborAry[neighborNum] = -1;
 
 		i = 0;
+		this->s = s;
 		this->k = k;
 		this->start = false;
 	}
-	PutPoint(const int k, const int* shit, const int* startMap){
+	PutPoint(const int k, const int s, const int* shit, const int* startMap){
 		for(int s = 0; shit[s] != -1; s++){
 			for(int n = 0; startMap[n] != -1; n++){
 				int value = startMap[n] - shit[s];
@@ -149,6 +152,7 @@ public :
 		neighborAry[0] = -1;
 
 		i = 0;
+		this->s = s;
 		this->k = k;
 		this->start = true;
 	}
@@ -177,6 +181,9 @@ public :
 	}
 	int GetShitNumber(){
 		return k;
+	}
+	int GetShitState(){
+		return s;
 	}
 };
 
@@ -499,21 +506,12 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 
 		//糞（ズク）の再定義
 
-	int** shitAry;
-	int*** shitAry_D = new int**[stonesNum];	//起点配列表現をした糞（ズク）の配列
+	int*** shitAry = new int**[stonesNum];	//起点配列表現をした糞（ズク）の配列
 	for(int s = 0; s < stonesNum; s++){
-		shitAry_D[s] = new int*[8];
-		//shitAry[s] = new int[17];
+		shitAry[s] = new int*[8];
 
 		DEBUG_printMapStone(stones, s);
-		Shit_MapToBaseAry(stones, s, width, shitAry_D[s]);
-
-		DEBUG_waitKey();
-
-		//DEBUG
-//		printf("\tstone %d\n", s);
-//		DEBUG_printBaseAryStone(shitAry[s]);
-		//DEBUG
+		Shit_MapToBaseAry(stones, s, width, shitAry[s]);
 	}
 	printf("\n");	//DEBUG
 
@@ -522,9 +520,10 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 
 	//-----探索-----//（長い）
 	int kn = 0;
+	int st = 0;
 	std::stack<PutPoint*> pStack;
 
-	pStack.push(new PutPoint(kn, shitAry[kn], &(startNeighbor[0])));
+	pStack.push(new PutPoint(kn, st, shitAry[kn][st], &(startNeighbor[0])));
 	int putPoints[17];
 	int putAryLength;
 
@@ -534,11 +533,12 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 
 	//ここから繰り返し
 	while(1){
-		//DEBUG_printMap(map, width+1, height); printf("\n");
+//		DEBUG_printMap(map, width+1, height); printf("\n");
 
 		PutPoint* p = pStack.top();
 		kn = p->GetShitNumber();
-		const int* shit = shitAry[kn];
+		st = p->GetShitState();
+		const int* shit = shitAry[kn][st];
 
 		RemoveShit(map, kn, width, height);
 
@@ -548,16 +548,23 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 				break;
 			} else {
 				//printf("\n＝＝＝＝＝ cannot place No.%d ＝＝＝＝＝\n", kn);
+				do {
+					st++;
+				} while(st < 8 && shitAry[kn][st] == 0);
 
 				pStack.pop();
-				if(kn+1 >= stonesNum){
-					goto TERMINAL;
+				if(st >= 8){
+					st = 0;
+					kn++;
+					if(kn >= stonesNum){
+						goto TERMINAL;
+					}
 				}
 
 				if(p->isStart()){
-					pStack.push(new PutPoint(kn+1, shitAry[kn+1], &(startNeighbor[0])));
+					pStack.push(new PutPoint(kn, st, shitAry[kn][st], &(startNeighbor[0])));
 				} else {
-					pStack.push(new PutPoint(kn+1, shitAry[kn+1], p));
+					pStack.push(new PutPoint(kn, st, shitAry[kn][st], p));
 				}
 				/*
 				printf("↓↓↓↓↓ next shit ↓↓↓↓↓\n");
@@ -566,6 +573,7 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 				continue;
 			}
 		}
+
 
 		/*
 		printf("\tput point : %d\n", nextBasePoint);
@@ -576,6 +584,7 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 		/*
 		bool result = DEBUG_JudgePutable(map, shit, nextBasePoint, width, height, putPoints, &putAryLength);
 		DEBUG_printPutShitOnMap(map, putPoints, putAryLength, width, height);
+		printf("\n");
 		*/
 		
 		if(result){
@@ -590,17 +599,18 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 
 			std::vector<int>* neighbor = CalcNeighborPoint(map, p->GetNeighborAry(), putPoints, putAryLength, width, height); 
 
-			/* DEBUG
+			/*
 			printf("neighbor[ ");
 			for(int i = 0; i < neighbor->size()-1; i++){
 				printf("%d ", neighbor->at(i));
 			}
 			printf("]\n\n");
 
+			/* DEBUG
 			DEBUG_printMap(map, width+1, height);
 			*/
 
-			pStack.push(new PutPoint(kn+1, shitAry[kn+1], neighbor->data(), neighbor->size()));
+			pStack.push(new PutPoint(kn+1, 0, shitAry[kn+1][0], neighbor->data(), neighbor->size()));
 			delete neighbor;
 
 			/* DEBUG
@@ -625,8 +635,8 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 		}
 
 		if(score == 0){
-			DEBUG_printMap(map, width+1, height);
-			printf("\n");
+			//DEBUG_printMap(map, width+1, height);
+			//printf("\n");
 		}
 
 		/*

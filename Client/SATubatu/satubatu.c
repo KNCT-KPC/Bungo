@@ -421,10 +421,9 @@ unsigned int clauseDefineSub(unsigned int vars, FILE *fp, int col, int row, int 
 	unsigned int ids[16];
 	
 	int idx = 0;
-	int o_x = zk[idx++];
-	int o_y = zk[idx++];
+	int o_x = 0, o_y = 0;
 
-	while (o_x != 0 || o_y != 0) {
+	do {
 		int x = b_x + o_x;
 		int y = b_y + o_y;
 		if (!(0 <= x && x < col) || !(0 <= y && y < row)) return 0;
@@ -432,8 +431,8 @@ unsigned int clauseDefineSub(unsigned int vars, FILE *fp, int col, int row, int 
 		
 		o_x = zk[idx++];
 		o_y = zk[idx++];
-	}
-	
+	} while (o_x != 0 || o_y != 0);
+
 	int i;
 	for (i=0; i<len; i++) fprintf(fp, "-%u %u 0\n", vars, ids[i]);
 	for (i=0; i<len; i++) fprintf(fp, "-%u ", ids[i]);
@@ -470,7 +469,7 @@ unsigned int clauseDefine(unsigned int *vars, FILE *fp, int col, int row, int x1
 				*/
 
 				unsigned int t;
-				fprintf(fp, "-%u ", VARIDX(col, row, i, k-x1+1, j-y1+1));
+				//fprintf(fp, "-%u ", VARIDX(col, row, i, k-x1+1, j-y1+1));
 				for (t=original_var; t<(*vars); t++) fprintf(fp, "%u ", t+1);
 				fprintf(fp, "0\n");
 				clause++;

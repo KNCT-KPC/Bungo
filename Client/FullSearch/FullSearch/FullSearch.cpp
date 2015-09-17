@@ -298,6 +298,172 @@ std::vector<int>* CalcNeighborPoint(const int* map, const int* prevNeighbor, con
 	return neighbor;
 }
 
+bool JudgeSameAry(const int* a, const int* b, const int size){
+	for(int i = 0; i < size; i++){
+		if(a[i] != b[i]) return false;
+	}
+	return true;
+}
+
+void Shit_MapToBaseAry(const int* stones, const int stoneNum, const int width, int** baseAry){
+	for(int i = 0; i < 8; i++) baseAry[i] = 0;
+
+	//普通の状態
+	int min = -1;
+	int bsIndex = 0;
+	baseAry[0] = new int[17];
+	for(int i = 0; i < 64; i++){
+		if(STONE(stoneNum, i%8, i/8) == 1){
+			if(min == -1){
+				min = i;
+			}
+
+			baseAry[0][bsIndex] = (i-min) + (i/8-min/8)*((width+1)-8);
+			bsIndex++;
+		}
+		baseAry[0][bsIndex] = -1;	//-1は番兵
+	}
+	DEBUG_printBaseAryStone(baseAry[0]);
+
+	//90°回転
+	min = -1;
+	bsIndex = 0;
+	baseAry[1] = new int[17];
+	for(int i = 0; i < 64; i++){
+		if(STONE(stoneNum, i/8, 7-i%8) == 1){
+			if(min == -1){
+				min = i;
+			}
+
+			baseAry[1][bsIndex] = (i-min) + (i/8-min/8)*((width+1)-8);
+			bsIndex++;
+		}
+		baseAry[1][bsIndex] = -1;	//-1は番兵
+	}
+	if(JudgeSameAry(baseAry[0], baseAry[1], 17)){
+		delete baseAry[1];
+		goto REVERSE;
+	}
+	DEBUG_printBaseAryStone(baseAry[1]);
+
+	//180°回転
+	min = -1;
+	bsIndex = 0;
+	baseAry[2] = new int[17];
+	for(int i = 0; i < 64; i++){
+		if(STONE(stoneNum, 7-i%8, 7-i/8) == 1){
+			if(min == -1){
+				min = i;
+			}
+
+			baseAry[2][bsIndex] = (i-min) + (i/8-min/8)*((width+1)-8);
+			bsIndex++;
+		}
+		baseAry[2][bsIndex] = -1;	//-1は番兵
+	}
+	if(JudgeSameAry(baseAry[0], baseAry[2], 17)){
+		delete baseAry[2];
+		goto REVERSE;
+	}
+	DEBUG_printBaseAryStone(baseAry[2]);
+
+	//270°回転
+	min = -1;
+	bsIndex = 0;
+	baseAry[3] = new int[17];
+	for(int i = 0; i < 64; i++){
+		if(STONE(stoneNum, 7-i/8, i%8) == 1){
+			if(min == -1){
+				min = i;
+			}
+
+			baseAry[3][bsIndex] = (i-min) + (i/8-min/8)*((width+1)-8);
+			bsIndex++;
+		}
+		baseAry[3][bsIndex] = -1;	//-1は番兵
+	}
+	DEBUG_printBaseAryStone(baseAry[3]);
+
+
+REVERSE :;
+	min = -1;
+	bsIndex = 0;
+	baseAry[4] = new int[17];
+	for(int i = 0; i < 64; i++){
+		if(STONE(stoneNum, 7-i%8, i/8) == 1){
+			if(min == -1){
+				min = i;
+			}
+
+			baseAry[4][bsIndex] = (i-min) + (i/8-min/8)*((width+1)-8);
+			bsIndex++;
+		}
+		baseAry[4][bsIndex] = -1;	//-1は番兵
+	}
+	for(int i = 0; i < 4; i++){
+		if(JudgeSameAry(baseAry[i], baseAry[4], 17)){
+			delete baseAry[4];
+			return;
+		}
+	}
+	DEBUG_printBaseAryStone(baseAry[4]);
+
+
+	//90°回転
+	if(baseAry[1] == 0) return;
+	min = -1;
+	bsIndex = 0;
+	baseAry[5] = new int[17];
+	for(int i = 0; i < 64; i++){
+		if(STONE(stoneNum, 7-i/8, 7-i%8) == 1){
+			if(min == -1){
+				min = i;
+			}
+
+			baseAry[5][bsIndex] = (i-min) + (i/8-min/8)*((width+1)-8);
+			bsIndex++;
+		}
+		baseAry[5][bsIndex] = -1;	//-1は番兵
+	}
+	DEBUG_printBaseAryStone(baseAry[5]);
+
+	//180°回転
+	if(baseAry[2] == 0) return;
+	min = -1;
+	bsIndex = 0;
+	baseAry[6] = new int[17];
+	for(int i = 0; i < 64; i++){
+		if(STONE(stoneNum, i%8, 7-i/8) == 1){
+			if(min == -1){
+				min = i;
+			}
+
+			baseAry[6][bsIndex] = (i-min) + (i/8-min/8)*((width+1)-8);
+			bsIndex++;
+		}
+		baseAry[6][bsIndex] = -1;	//-1は番兵
+	}
+	DEBUG_printBaseAryStone(baseAry[6]);
+
+	//270°回転
+	if(baseAry[2] == 0) return;
+	min = -1;
+	bsIndex = 0;
+	baseAry[7] = new int[17];
+	for(int i = 0; i < 64; i++){
+		if(STONE(stoneNum, i/8, i%8) == 1){
+			if(min == -1){
+				min = i;
+			}
+
+			baseAry[7][bsIndex] = (i-min) + (i/8-min/8)*((width+1)-8);
+			bsIndex++;
+		}
+		baseAry[7][bsIndex] = -1;	//-1は番兵
+	}
+	DEBUG_printBaseAryStone(baseAry[7]);
+}
+
 void FullSearch(const int* Map, const int x1, const int y1, const int x2, const int y2, const int* stones, const int stonesNum, char* solution){
 	//strcat(solution, "H 0 2 2\n")
 	//-----初期化処理-----//（長い）
@@ -332,29 +498,21 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 	DEBUG_printMap(map, width+1, height);
 
 		//糞（ズク）の再定義
-	int** shitAry = new int*[stonesNum];	//起点配列表現をした糞（ズク）の配列
+
+	int** shitAry;
+	int*** shitAry_D = new int**[stonesNum];	//起点配列表現をした糞（ズク）の配列
 	for(int s = 0; s < stonesNum; s++){
-		shitAry[s] = new int[17];
+		shitAry_D[s] = new int*[8];
+		//shitAry[s] = new int[17];
 
-		int min = -1;
-		int bsIndex = 0;
-		for(int i = 0; i < 64; i++){
-			if(STONE(s, i%8, i/8) == 1){
-				if(min == -1){
-					min = i;
-				}
+		DEBUG_printMapStone(stones, s);
+		Shit_MapToBaseAry(stones, s, width, shitAry_D[s]);
 
-					//すごくややこしい式だけど多分合ってる
-				shitAry[s][bsIndex] = (i-min) + (i/8-min/8)*((width+1)-8);
-				bsIndex++;
-			}
-			shitAry[s][bsIndex] = -1;	//-1は番兵
-		}
+		DEBUG_waitKey();
 
 		//DEBUG
-		printf("\tstone %d\n", s);
-		DEBUG_printMapStone(stones, s);
-		DEBUG_printBaseAryStone(shitAry[s]);
+//		printf("\tstone %d\n", s);
+//		DEBUG_printBaseAryStone(shitAry[s]);
 		//DEBUG
 	}
 	printf("\n");	//DEBUG
@@ -468,6 +626,7 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 
 		if(score == 0){
 			DEBUG_printMap(map, width+1, height);
+			printf("\n");
 		}
 
 		/*

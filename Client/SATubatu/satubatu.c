@@ -46,7 +46,6 @@ int solver(FILE *fp, int8_t *sat_stones, int *map, int x1, int y1, int x2, int y
 	// Run the SAT Solver
 	fflush(fp);
 	int sat_flg = satSolve();
-	printf("FLG = %d\n", sat_flg);
 	if (sat_flg < 0) return EXIT_FAILURE;
 	if (sat_flg == 0) {
 		printf("UNSAT\n");
@@ -82,16 +81,14 @@ int solver(FILE *fp, int8_t *sat_stones, int *map, int x1, int y1, int x2, int y
 
 	fclose(out);
 	
-	printf("vars = %d\n", vars);
-	
-	
+
 	/* Map */
 	printf("\nTWO\n");
 	int x, y;
 	printf("Map\n");
 	for (y=0; y<32; y++) {
 		printf("\t");
-		for (x=0; x<32; x++) printf("%2d", MAP(x, y));
+		for (x=0; x<32; x++) printf("%d", MAP(x, y));
 		printf("\n");
 	}
 	printf("\n");
@@ -281,18 +278,40 @@ unsigned int clauseAtMost(FILE *fp, int col, int row, int x1, int y1, int x2, in
 /*------------------------------------*/
 /*              Obstacle              */
 /*------------------------------------*/
-unsigned int clauseObstacle(FILE *fp, int col, int row, int id, int8_t *obstacle)
+unsigned int clauseObstacle(FILE *fp, int col, int row, int id, int8_t *obstacle, int x1, int y1, int x2, int y2)
 {
 	int x, y;
 	unsigned int clause = 0;
+	unsigned int ids[2311] = {};
+	int len = 0;
 	
 	int idx = 0;
 	while ((x = obstacle[idx++]) != -1) {
 		y = obstacle[idx++];
-		fprintf(fp, "%u 0\n", VARIDX(col, row, id, x, y));
+		unsigned int cnf_id = VARIDX(col, row, id, x, y);
+		fprintf(fp, "%u 0\n", cnf_id);
 		clause++;
+		ids[len++] = cnf_id;
 	}
 
+	x1--; y1--;
+	x2++; y2++;	
+	int i;
+	for (y=y1; y<y2; y++) {
+		for (x=x1; x<x2; x++) {
+			unsigned int cnf_id = VARIDX(col, row, id, x-x1, y-y1);
+			int flg = 0;
+			for (i=0; i<len; i++) {
+				if (ids[i] != cnf_id) continue;
+				flg = 1;
+				break;
+			}
+			if (flg) continue;
+			fprintf(fp, "-%u 0\n", cnf_id);
+			clause++;
+		}
+	}
+	
 	return clause;
 }
 
@@ -460,19 +479,27 @@ unsigned int clauseDefine(unsigned int *vars, FILE *fp, int col, int row, int x1
 					clause += success;
 					(*vars)++;
 				}
-				
-				/*
-				if (((*vars) - original_var) == 0) {
-					fprintf(fp, "-%u 0\n", VARIDX(col, row, i, k-x1+1, j-y1+1));
-					continue;
-				}
-				*/
 
+				/*
 				unsigned int t;
-				//fprintf(fp, "-%u ", VARIDX(col, row, i, k-x1+1, j-y1+1));
+				for (t=original_var; t<(*vars); t++) fprintf(fp, "-%u %u 0\n", VARIDX(col, row, i, k-x1+1, j-y1+1), t+1);
+				clause++;
+				for (t=original_var; t<(*vars); t++) fprintf(fp, "%u -%u 0\n", VARIDX(col, row, i, k-x1+1, j-y1+1), t+1);
+				clause++;
+				*/
+				
+				unsigned int t;
+				fprintf(fp, "-%u ", VARIDX(col, row, i, k-x1+1, j-y1+1));
 				for (t=original_var; t<(*vars); t++) fprintf(fp, "%u ", t+1);
 				fprintf(fp, "0\n");
 				clause++;
+				
+				/*
+				fprintf(fp, "%u ", VARIDX(col, row, i, k-x1+1, j-y1+1));
+				for (t=original_var; t<(*vars); t++) fprintf(fp, "-%u ", t+1);
+				fprintf(fp, "0\n");
+				clause++;
+				*/
 			}
 		}
 	}
@@ -494,7 +521,7 @@ unsigned int createDIMACSfile(FILE *fp, int col, int row, int x1, int y1, int x2
 	
 	clause += clauseAtLeast(fp, col, row, x1, y1, x2, y2, n);
 	clause += clauseAtMost(fp, col, row, x1, y1, x2, y2, n);
-	clause += clauseObstacle(fp, col, row, n, &sat_stones[n << 5]);
+	clause += clauseObstacle(fp, col, row, n, &sat_stones[n << 5], x1, y1, x2, y2);
 	//clause += clauseOrder(fp, col, row, x1, y1, x2, y2, n, sat_stones);
 	clause += clauseDefine(&hidden_vars, fp, col, row, x1, y1, x2, y2, n, sat_stones);
 	
@@ -540,7 +567,7 @@ int satSolve()
 /*----------------------------------------------------------------------------*/
 void visual(unsigned int idx, int nega, int col, int row, int *map, int x1, int y1, int x2, int y2)
 {
-	//if (nega) return;
+	if (nega) return;
 
 	div_t tmp1 = div(idx - 1, (col + 2) * (row + 2));
 	div_t tmp2 = div(tmp1.rem, (col + 2));
@@ -551,9 +578,6 @@ void visual(unsigned int idx, int nega, int col, int row, int *map, int x1, int 
 
 	if (!(x1 <= x && x < x2)) return;
 	if (!(y1 <= y && y < y2)) return;
-	
-	printf("x_(%d, %d)_%d = %s\n", x, y, n, nega ? "False" : "True");
-	if (nega) return;
 	
 	map[(y << 5) + x] = n;
 }

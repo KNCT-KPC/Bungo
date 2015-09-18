@@ -188,14 +188,17 @@ public :
 };
 
 
-void RemoveShit(int* map, const int shitNumber, const int width, const int height){
+int RemoveShit(int* map, const int shitNumber, const int width, const int height){
+	int num = 0;
 	for(int y = 0; y < height; y++){
 		for(int x = 0; x < width; x++){
 			if(MAP(map, x, y) == shitNumber+1){
 				MAP(map, x, y) = 0;
+				num++;
 			}
 		}
 	}
+	return num;
 }
 
 void PutShit(int* map, const int shitNumber, const int* putPoints, const int putAryLength){
@@ -312,6 +315,13 @@ bool JudgeSameAry(const int* a, const int* b, const int size){
 	return true;
 }
 
+int CountShitSize(const int* a){
+	int i;
+	for(i = 0; a[i] != -1; i++);
+
+	return i;
+}
+
 void Shit_MapToBaseAry(const int* stones, const int stoneNum, const int width, int** baseAry){
 	for(int i = 0; i < 8; i++) baseAry[i] = 0;
 
@@ -328,8 +338,8 @@ void Shit_MapToBaseAry(const int* stones, const int stoneNum, const int width, i
 			baseAry[0][bsIndex] = (i-min) + (i/8-min/8)*((width+1)-8);
 			bsIndex++;
 		}
-		baseAry[0][bsIndex] = -1;	//-1ÇÕî‘ï∫
 	}
+	baseAry[0][bsIndex] = -1;	//-1ÇÕî‘ï∫
 	DEBUG_printBaseAryStone(baseAry[0]);
 
 	//90ÅãâÒì]
@@ -345,10 +355,11 @@ void Shit_MapToBaseAry(const int* stones, const int stoneNum, const int width, i
 			baseAry[1][bsIndex] = (i-min) + (i/8-min/8)*((width+1)-8);
 			bsIndex++;
 		}
-		baseAry[1][bsIndex] = -1;	//-1ÇÕî‘ï∫
 	}
+	baseAry[1][bsIndex] = -1;	//-1ÇÕî‘ï∫
 	if(JudgeSameAry(baseAry[0], baseAry[1], 17)){
 		delete baseAry[1];
+		baseAry[1] = 0;
 		goto REVERSE;
 	}
 	DEBUG_printBaseAryStone(baseAry[1]);
@@ -366,10 +377,11 @@ void Shit_MapToBaseAry(const int* stones, const int stoneNum, const int width, i
 			baseAry[2][bsIndex] = (i-min) + (i/8-min/8)*((width+1)-8);
 			bsIndex++;
 		}
-		baseAry[2][bsIndex] = -1;	//-1ÇÕî‘ï∫
 	}
+	baseAry[2][bsIndex] = -1;	//-1ÇÕî‘ï∫
 	if(JudgeSameAry(baseAry[0], baseAry[2], 17)){
 		delete baseAry[2];
+		baseAry[2] = 0;
 		goto REVERSE;
 	}
 	DEBUG_printBaseAryStone(baseAry[2]);
@@ -387,8 +399,8 @@ void Shit_MapToBaseAry(const int* stones, const int stoneNum, const int width, i
 			baseAry[3][bsIndex] = (i-min) + (i/8-min/8)*((width+1)-8);
 			bsIndex++;
 		}
-		baseAry[3][bsIndex] = -1;	//-1ÇÕî‘ï∫
 	}
+	baseAry[3][bsIndex] = -1;	//-1ÇÕî‘ï∫
 	DEBUG_printBaseAryStone(baseAry[3]);
 
 
@@ -405,11 +417,12 @@ REVERSE :;
 			baseAry[4][bsIndex] = (i-min) + (i/8-min/8)*((width+1)-8);
 			bsIndex++;
 		}
-		baseAry[4][bsIndex] = -1;	//-1ÇÕî‘ï∫
 	}
+	baseAry[4][bsIndex] = -1;	//-1ÇÕî‘ï∫
 	for(int i = 0; i < 4; i++){
 		if(JudgeSameAry(baseAry[i], baseAry[4], 17)){
 			delete baseAry[4];
+			baseAry[4] = 0;
 			return;
 		}
 	}
@@ -430,8 +443,8 @@ REVERSE :;
 			baseAry[5][bsIndex] = (i-min) + (i/8-min/8)*((width+1)-8);
 			bsIndex++;
 		}
-		baseAry[5][bsIndex] = -1;	//-1ÇÕî‘ï∫
 	}
+	baseAry[5][bsIndex] = -1;	//-1ÇÕî‘ï∫
 	DEBUG_printBaseAryStone(baseAry[5]);
 
 	//180ÅãâÒì]
@@ -448,8 +461,8 @@ REVERSE :;
 			baseAry[6][bsIndex] = (i-min) + (i/8-min/8)*((width+1)-8);
 			bsIndex++;
 		}
-		baseAry[6][bsIndex] = -1;	//-1ÇÕî‘ï∫
 	}
+	baseAry[6][bsIndex] = -1;	//-1ÇÕî‘ï∫
 	DEBUG_printBaseAryStone(baseAry[6]);
 
 	//270ÅãâÒì]
@@ -466,8 +479,8 @@ REVERSE :;
 			baseAry[7][bsIndex] = (i-min) + (i/8-min/8)*((width+1)-8);
 			bsIndex++;
 		}
-		baseAry[7][bsIndex] = -1;	//-1ÇÕî‘ï∫
 	}
+	baseAry[7][bsIndex] = -1;	//-1ÇÕî‘ï∫
 	DEBUG_printBaseAryStone(baseAry[7]);
 }
 
@@ -498,6 +511,7 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 	for(int h = 0; h < height; h++){
 		MAP(m, width, h) = -2;
 	}
+	int freeSize = width*height;
 
 	startNeighbor.push_back(-1);	//-1ÇÕî‘ï∫
 
@@ -531,6 +545,11 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 	int putShitNum = 0;
 	int minScore_minShitNum = 1025;
 
+	int* shitSizeAry = new int[stonesNum];
+	for(int i = 0; i < stonesNum; i++){
+		shitSizeAry[i] = CountShitSize(shitAry[i][0]);
+	}
+
 	//Ç±Ç±Ç©ÇÁåJÇËï‘Çµ
 	while(1){
 //		DEBUG_printMap(map, width+1, height); printf("\n");
@@ -540,7 +559,7 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 		st = p->GetShitState();
 		const int* shit = shitAry[kn][st];
 
-		RemoveShit(map, kn, width, height);
+		freeSize += RemoveShit(map, kn, width, height);
 
 		int nextBasePoint;
 		if(!p->GetNextValue(&nextBasePoint)){
@@ -561,6 +580,12 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 					}
 				}
 
+				if(kn == 2 && st == 2){
+					kn = 2;
+					DEBUG_printBaseAryStone(shitAry[kn][st]);
+					DEBUG_waitKey();
+				}
+
 				if(p->isStart()){
 					pStack.push(new PutPoint(kn, st, shitAry[kn][st], &(startNeighbor[0])));
 				} else {
@@ -572,6 +597,9 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 				*/
 				continue;
 			}
+		}
+		if(kn == 0){
+			printf("> %d %d\n", st, nextBasePoint);
 		}
 
 
@@ -591,6 +619,7 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 			//printf("\nplace > ");
 			
 			PutShit(map, kn, putPoints, putAryLength);
+			freeSize -= shitSizeAry[kn];
 			putShitNum++;
 
 			if(kn+1 >= stonesNum){
@@ -598,6 +627,9 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 			}
 
 			std::vector<int>* neighbor = CalcNeighborPoint(map, p->GetNeighborAry(), putPoints, putAryLength, width, height); 
+
+//			printf("%d\n",freeSize);
+//			DEBUG_waitKey();
 
 			/*
 			printf("neighbor[ ");
@@ -628,9 +660,18 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 		if(minScore > score){
 			minScore = score;
 			minScore_minShitNum = putShitNum;
+		
+			DEBUG_printMap(map, width+1, height);
+			printf("score(%d,%d)\n", minScore, minScore_minShitNum);
+			printf("\n");
+
 		} else if(minScore == score){
 			if(minScore_minShitNum > putShitNum){
 				minScore_minShitNum = putShitNum;
+
+				DEBUG_printMap(map, width+1, height);
+				printf("score(%d,%d)\n", minScore, minScore_minShitNum);
+				printf("\n");
 			}
 		}
 
@@ -657,6 +698,7 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 
 
 	//-----èIóπèàóù-----//
+	delete shitSizeAry;
 	delete map;
 	delete[] shitAry;
 

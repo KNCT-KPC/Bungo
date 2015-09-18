@@ -420,10 +420,12 @@ REVERSE :;
 	}
 	baseAry[4][bsIndex] = -1;	//-1は番兵
 	for(int i = 0; i < 4; i++){
-		if(JudgeSameAry(baseAry[i], baseAry[4], 17)){
-			delete baseAry[4];
-			baseAry[4] = 0;
-			return;
+		if(baseAry[i] != 0){
+			if(JudgeSameAry(baseAry[i], baseAry[4], 17)){
+				delete baseAry[4];
+				baseAry[4] = 0;
+				return;
+			}
 		}
 	}
 	DEBUG_printBaseAryStone(baseAry[4]);
@@ -484,6 +486,14 @@ REVERSE :;
 	DEBUG_printBaseAryStone(baseAry[7]);
 }
 
+int CountArrayAdd(const int* a, const int size, const int p){
+	int result = 0;
+	for(int i = p; i < size; i++){
+		result += a[i];
+	}
+	return result;
+}
+
 void FullSearch(const int* Map, const int x1, const int y1, const int x2, const int y2, const int* stones, const int stonesNum, char* solution){
 	//strcat(solution, "H 0 2 2\n")
 	//-----初期化処理-----//（長い）
@@ -495,6 +505,8 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 	int* map = new int[(width+1) * height];	//対象領域だけを考慮したマップ
 	std::vector<int> startNeighbor;
 
+	int freeSize = width*height;
+	const int maxFreeSize = freeSize;
 	for(int h = 0; h < height; h++){
 		for(int w = 0; w < width; w++){
 			int value = Map[(w+x1) + (h+y1)*32];
@@ -505,13 +517,13 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 				startNeighbor.push_back(w+h*width);
 			} else {
 				MAP(m, w, h) = -1;
+				freeSize--;
 			}
 		}
 	}
 	for(int h = 0; h < height; h++){
 		MAP(m, width, h) = -2;
 	}
-	int freeSize = width*height;
 
 	startNeighbor.push_back(-1);	//-1は番兵
 
@@ -574,16 +586,19 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 				pStack.pop();
 				if(st >= 8){
 					st = 0;
-					kn++;
+
+					//
+					int temp_kn = kn;
+					do{
+						kn++;
+					} while(kn < stonesNum && shitSizeAry[kn] > freeSize);
+					//} while(0);
+
 					if(kn >= stonesNum){
+						kn = temp_kn;
 						goto TERMINAL;
 					}
-				}
-
-				if(kn == 2 && st == 2){
-					kn = 2;
-					DEBUG_printBaseAryStone(shitAry[kn][st]);
-					DEBUG_waitKey();
+					//????
 				}
 
 				if(p->isStart()){
@@ -607,6 +622,11 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 		printf("\tput point : %d\n", nextBasePoint);
 		DEBUG_printBaseAryStone(shit);
 		*/
+		if(kn == 3 && freeSize == 4){
+			kn = 3;
+			DEBUG_printMap(map, width+1, height);
+			DEBUG_printMapStone(stones, kn);
+		}
 
 		bool result = JudgePutable(map, shit, nextBasePoint, width, height, putPoints, &putAryLength);
 		/*
@@ -616,20 +636,50 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 		*/
 		
 		if(result){
+			if(kn == 0 && st == 0 && nextBasePoint == 13) {
+				nextBasePoint = 13;
+			}
 			//printf("\nplace > ");
 			
 			PutShit(map, kn, putPoints, putAryLength);
+			DEBUG_printMap(map, width+1, height);
 			freeSize -= shitSizeAry[kn];
 			putShitNum++;
+			printf("%d\n", putShitNum);
 
-			if(kn+1 >= stonesNum){
+			//int ca = CountArrayAdd(shitSizeAry, stonesNum, kn+1);
+
+			//次に配置予定の糞（ズク）が空き領域よりも大きいならスキップする
+			int temp_kn = kn;
+			do{
+				kn++;
+			} while(kn < stonesNum && shitSizeAry[kn] > freeSize);
+			//} while(0);
+
+			if(kn >= stonesNum){
+				kn = temp_kn;
 				goto TERMINAL;
 			}
 
-			std::vector<int>* neighbor = CalcNeighborPoint(map, p->GetNeighborAry(), putPoints, putAryLength, width, height); 
 
-//			printf("%d\n",freeSize);
-//			DEBUG_waitKey();
+			if(freeSize < maxFreeSize/2){
+				int totalShitSize = 0;
+				for(int i = kn; i < stonesNum; i++){
+					if(shitSizeAry[i] <= freeSize){	//置ける
+						totalShitSize += shitSizeAry[i];
+					}
+				}
+				if(minScore < freeSize - totalShitSize){
+					//DEBUG_printMap(map, width+1, height);
+					printf("%d < %d\n", minScore, freeSize-totalShitSize);
+					freeSize += RemoveShit(map, p->GetShitNumber(), width, height);
+					pStack.pop();
+					putShitNum--;
+					goto TERMINAL;
+				}
+			}
+
+			std::vector<int>* neighbor = CalcNeighborPoint(map, p->GetNeighborAry(), putPoints, putAryLength, width, height); 
 
 			/*
 			printf("neighbor[ ");
@@ -642,7 +692,8 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 			DEBUG_printMap(map, width+1, height);
 			*/
 
-			pStack.push(new PutPoint(kn+1, 0, shitAry[kn+1][0], neighbor->data(), neighbor->size()));
+
+			pStack.push(new PutPoint(kn, 0, shitAry[kn][0], neighbor->data(), neighbor->size()));
 			delete neighbor;
 
 			/* DEBUG
@@ -661,7 +712,7 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 			minScore = score;
 			minScore_minShitNum = putShitNum;
 		
-			DEBUG_printMap(map, width+1, height);
+			//DEBUG_printMap(map, width+1, height);
 			printf("score(%d,%d)\n", minScore, minScore_minShitNum);
 			printf("\n");
 
@@ -669,7 +720,7 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 			if(minScore_minShitNum > putShitNum){
 				minScore_minShitNum = putShitNum;
 
-				DEBUG_printMap(map, width+1, height);
+				//DEBUG_printMap(map, width+1, height);
 				printf("score(%d,%d)\n", minScore, minScore_minShitNum);
 				printf("\n");
 			}

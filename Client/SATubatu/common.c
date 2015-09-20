@@ -138,3 +138,49 @@ void finalClient(int osfhandle, int sd)
 	#endif
 #endif
 }
+
+
+/*------------------------------------*/
+/*                Debug               */
+/*------------------------------------*/
+void dump(int *map, int x1, int y1, int x2, int y2, int *stones, int n)
+{
+	/* Range */
+	printf("(%d, %d) ~ (%d, %d)\n\n", x1, y1, x2, y2);
+
+	/* Map */
+	int x, y;
+	printf("Map\n");
+	for (y=0; y<32; y++) {
+		printf("\t");
+		for (x=0; x<32; x++) printf("%d", MAP(x, y));
+		printf("\n");
+	}
+	printf("\n");
+
+	/* Stones */
+	int i;
+	printf("Stones\n");
+	for (i=0; i<n; i++) {
+		printf("\tstone %d\n", i+1);
+		for (y=0; y<8; y++) {
+			printf("\t\t");
+			for (x=0; x<8; x++) printf("%d", STONE(i, x, y));
+			printf("\n");
+		}
+	}
+	printf("\n");
+}
+
+void dumpMap(int *map, int x1, int y1, int x2, int y2)
+{
+	int x, y;
+	printf("Map\n");
+	for (y=0; y<32; y++) {
+		printf("\t");
+		for (x=0; x<32; x++) printf("%3d", MAP(x, y));
+		printf("\n");
+	}
+	printf("\n");
+}
+

@@ -1,5 +1,5 @@
 milkt: milkt.o common.o
-	gcc satubatu.o common.o -o satubatu -Wall
+	gcc milkt.o common.o -o milkt -Wall
 
 milkt.o: milkt.c ../SATubatu/common.h
 	gcc -c milkt.c -Wall

@@ -68,3 +68,7 @@ extern int sendMsg(char *msg);
 extern void initClient(char *name, char *server_ipaddr, int *osfhandle, int *sd);
 extern int ready(int *map, int *x1, int *y1, int *x2, int *y2, int *stones, int *n);
 extern void finalClient(int osfhandle, int sd);
+
+extern void dump(int *map, int x1, int y1, int x2, int y2, int *stones, int n);
+extern void dumpMap(int *map, int x1, int y1, int x2, int y2);
+

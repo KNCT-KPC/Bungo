@@ -39,12 +39,13 @@ int solver(FILE *fp, int *map, int x1, int y1, int x2, int y2, int *stones, int 
 	createCSPfile(fp, map, x1, y1, x2, y2, sat_stones, n);
 
 	// Run Sugar
-	FILE *sat_fp;
+	fflush(fp);
 	int code = satSolve(map);
 
 	printf("code = %d\n", code);
 	dumpMap(map, x1, y1, x2, y2);
-
+	
+	
 	/*
 	sendMsg("S");
 	sendMsg("");
@@ -166,9 +167,26 @@ void BlockDefineOperation(const int8_t *zk, int8_t *dst)
 	}
 }
 
+void allLoliBba(FILE *fp, int x, int y, int xb, int yb, const int *dx, const int *dy, int x1, int y1, int x2, int y2, int id, const char *op)
+{
+	int i;
+	for (i=0; i<4; i++) {
+		int xd = xb + dx[i];
+		int yd = xb + dy[i];
+		if (!(((y1 - 1) <= yd) && (yd <= y2))
+			|| !(((x1 - 1) <= xd) && (xd <= x2))
+			|| ((xd == x) && (yd == y))) {
+				fprintf(fp, " false");
+				continue;
+			}
+		
+		fprintf(fp, " (%s x_%d_%d %d)", op, xd, yd, id);
+	}
+}
+
 void createCSPfile(FILE *fp, int *map, int x1, int y1, int x2, int y2, int8_t *sat_stones, int n)
 {
-	int x,y, i, j, k, l, m;
+	int x,y, i, j, k, l;
 
 	// Mass Define
 	fprintf(fp, "(domain zk 0 %d)\n", n - 1);
@@ -247,44 +265,34 @@ void createCSPfile(FILE *fp, int *map, int x1, int y1, int x2, int y2, int8_t *s
 
 
 	// Order
-	/*
 	fprintf(fp, "(int first_zk 0 %d)\n", n - 1);
 	for (i=0; i<n; i++) {
 		fprintf(fp, "(iff (= first_zk %d) (and", i);
 		for (y=y1; y<y2; y++) {
 			for (x=x1; x<x2; x++) {
-				fprintf(fp, " (>= x_%d_%d %n)", x, y, i);
+				fprintf(fp, " (>= x_%d_%d %d)\n", x, y, i);
 
 				int dx[] = {1, 0, -1, 0};
 				int dy[] = {0, 1, 0, -1};
-				fprintf(fp, "(=> (= x_%d_%d %d) (or", x, y, i);
+				fprintf(fp, " (=> (= x_%d_%d %d) (and", x, y, i);
 				for (k=0; k<4; k++) fprintf(fp, " (>= x_%d_%d %d)", x+dx[k], y+dy[k], n);
-				fprintf(fp, "))\n");
+				fprintf(fp, "))");
 
 				for (k=i+1; k<n; k++) {
 					for (l=0; l<4; l++) {
 						int xb = x + dx[l];
 						int yb = y + dy[l];
-						fprintf(fp, "(=> (and (= x_%d_%d %d) (= x_%d_%d %d)) (or", x, y, i, xb, yb, k);
-						for (m=0; m<4; m++) {
-							int xd = xb + dx[m];
-							int yd = xb + dy[m];
-							if (!(((y1 - 1) <= yd) && (yd <= y2))
-								|| !(((x1 - 1) <= xd) && (xd <= x2))
-								|| ((xd == x) && (yd == y))) goto YANMAR;
-							fprintf(fp, " (>= x_%d_%d %d)", xd, yd, k);
-							continue;
-						YANMAR:
-							fprintf(fp, " false");
-						}
-						fprintf(fp, "))\n");
+						fprintf(fp, " (=> (and (= x_%d_%d %d) (= x_%d_%d %d)) (or (and", x, y, i, xb, yb, k);
+						allLoliBba(fp, x, y, xb, yb, dx, dy, x1, y1, x2, y2, k, ">=");
+						fprintf(fp, ") (and");
+						allLoliBba(fp, x, y, xb, yb, dx, dy, x1, y1, x2, y2, k, "<=");
+						fprintf(fp, ")))\n");
 					}
 				}
 			}
 		}
 		fprintf(fp, "))\n");
 	}
-	*/
 }
 
 

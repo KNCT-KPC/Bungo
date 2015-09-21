@@ -43,7 +43,7 @@ int solver(FILE *fp, int *map, int x1, int y1, int x2, int y2, int *stones, int 
 	int code = satSolve(map);
 
 	printf("code = %d\n", code);
-	dumpMap(map, x1, y1, x2, y2);
+	dumpMap(map, x1, y1, x2, y2, n);
 	
 	
 	/*
@@ -198,7 +198,6 @@ void createCSPfile(FILE *fp, int *map, int x1, int y1, int x2, int y2, int8_t *s
 		}
 	}
 
-
 	// Block Define
 	fprintf(fp, "(domain intbool 0 1)\n");
 	for (y=y1; y<y2; y++) {
@@ -209,6 +208,7 @@ void createCSPfile(FILE *fp, int *map, int x1, int y1, int x2, int y2, int8_t *s
 		}
 	}
 
+	/*
 	fprintf(fp, "(predicate (onlyonesub a0 a1 a2 a3 a4 a5 a6 a7) (and a0 (not a1) (not a2) (not a3) (not a4) (not a5) (not a6 )(not a7)))\n");
 	fprintf(fp, "(predicate (onlyone b0 b1 b2 b3 b4 b5 b6 b7) (or (onlyonesub b0 b1 b2 b3 b4 b5 b6 b7) (onlyonesub b1 b2 b3 b4 b5 b6 b7 b0) (onlyonesub b2 b3 b4 b5 b6 b7 b0 b1) (onlyonesub b3 b4 b5 b6 b7 b0 b1 b2) (onlyonesub b4 b5 b6 b7 b0 b1 b2 b3) (onlyonesub b5 b6 b7 b0 b1 b2 b3 b4) (onlyonesub b6 b7 b0 b1 b2 b3 b4 b5) (onlyonesub b7 b0 b1 b2 b3 b4 b5 b6)))\n");
 
@@ -262,8 +262,9 @@ void createCSPfile(FILE *fp, int *map, int x1, int y1, int x2, int y2, int8_t *s
 		}
 		fprintf(fp, ") 1)\n");
 	}
+	*/
 
-
+	/*
 	// Order
 	fprintf(fp, "(int first_zk 0 %d)\n", n - 1);
 	for (i=0; i<n; i++) {
@@ -293,6 +294,7 @@ void createCSPfile(FILE *fp, int *map, int x1, int y1, int x2, int y2, int8_t *s
 		}
 		fprintf(fp, "))\n");
 	}
+	*/
 }
 
 
@@ -320,10 +322,8 @@ int satSolve(int *map)
 	int i;
 	for (i=0; i<1024; i++) map[i] = -1;
 
-	printf("COMMAND: %s\n", buf);
-
 	while (fgets(buf, 128, fp) != NULL) {
-		printf("DOUYO: %s", buf);
+		printf("DEBUG: %s", buf);
 
 		char *p = strchr(buf, '\n');
 		if (p != NULL) *p = '\0';
@@ -346,9 +346,9 @@ int satSolve(int *map)
 			map[((y) << 5) + (x)] = n;
 			continue;
 		}
-
-		//code = -1;
-		//goto END;
+		
+		code = -1;
+		goto END;
 	}
 
 END:

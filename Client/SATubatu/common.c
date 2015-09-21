@@ -172,13 +172,17 @@ void dump(int *map, int x1, int y1, int x2, int y2, int *stones, int n)
 	printf("\n");
 }
 
-void dumpMap(int *map, int x1, int y1, int x2, int y2)
+void dumpMap(int *map, int x1, int y1, int x2, int y2, int n)
 {
 	int x, y;
 	printf("Map\n");
 	for (y=0; y<32; y++) {
 		printf("\t");
-		for (x=0; x<32; x++) printf("%3d", MAP(x, y));
+		for (x=0; x<32; x++) {
+			int tmp = MAP(x, y);
+			if (tmp == -1 || tmp == n) printf("-");
+			else printf("%d", tmp);
+		}
 		printf("\n");
 	}
 	printf("\n");

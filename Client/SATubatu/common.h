@@ -70,5 +70,5 @@ extern int ready(int *map, int *x1, int *y1, int *x2, int *y2, int *stones, int 
 extern void finalClient(int osfhandle, int sd);
 
 extern void dump(int *map, int x1, int y1, int x2, int y2, int *stones, int n);
-extern void dumpMap(int *map, int x1, int y1, int x2, int y2);
+extern void dumpMap(int *map, int x1, int y1, int x2, int y2, int n);
 

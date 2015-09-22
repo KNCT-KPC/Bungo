@@ -208,10 +208,10 @@ void createCSPfile(FILE *fp, int *map, int x1, int y1, int x2, int y2, int8_t *s
 		}
 	}
 
-	/*
-	fprintf(fp, "(predicate (onlyonesub a0 a1 a2 a3 a4 a5 a6 a7) (and a0 (not a1) (not a2) (not a3) (not a4) (not a5) (not a6 )(not a7)))\n");
+	fprintf(fp, "(predicate (onlyonesub a0 a1 a2 a3 a4 a5 a6 a7) (and a0 (not a1) (not a2) (not a3) (not a4) (not a5) (not a6 ) (not a7)))\n");
 	fprintf(fp, "(predicate (onlyone b0 b1 b2 b3 b4 b5 b6 b7) (or (onlyonesub b0 b1 b2 b3 b4 b5 b6 b7) (onlyonesub b1 b2 b3 b4 b5 b6 b7 b0) (onlyonesub b2 b3 b4 b5 b6 b7 b0 b1) (onlyonesub b3 b4 b5 b6 b7 b0 b1 b2) (onlyonesub b4 b5 b6 b7 b0 b1 b2 b3) (onlyonesub b5 b6 b7 b0 b1 b2 b3 b4) (onlyonesub b6 b7 b0 b1 b2 b3 b4 b5) (onlyonesub b7 b0 b1 b2 b3 b4 b5 b6)))\n");
 
+	// n に関するループを一番外にしたほうが良いんじゃ...
 	for (y=y1; y<y2; y++) {
 		for (x=x1; x<x2; x++) {
 			for (i=0; i<n; i++) {
@@ -219,6 +219,7 @@ void createCSPfile(FILE *fp, int *map, int x1, int y1, int x2, int y2, int8_t *s
 				BlockDefineOperation(&sat_stones[i << 5], tmp);
 
 				int len = 8;
+				fprintf(fp, "(=> (= y_%d_%d_%d 1) (= x_%d_%d %d))\n", x, y, i, x, y, i);
 				fprintf(fp, "(iff (= y_%d_%d_%d 1) (onlyone", x, y, i);
 
 				for (j=0; j<8; j++) {
@@ -233,8 +234,10 @@ void createCSPfile(FILE *fp, int *map, int x1, int y1, int x2, int y2, int8_t *s
 					do {
 						int a_x = x + o_x;
 						int a_y = y + o_y;
-						if (!((y1 <= y) && (y < y2)) || !((x1 <= x) && (x < x2))) goto DAMEDESU;
+						if (!((y1 <= a_y) && (a_y < y2)) || !((x1 <= a_x) && (a_x < x2))) goto DAMEDESU;
 						fprintf(fp, " (= x_%d_%d %d)", a_x, a_y, i);
+						o_x = tmp[idx++];
+						o_y = tmp[idx++];
 					} while (o_x != 0 || o_y != 0);
 
 					fprintf(fp, ")");
@@ -262,7 +265,6 @@ void createCSPfile(FILE *fp, int *map, int x1, int y1, int x2, int y2, int8_t *s
 		}
 		fprintf(fp, ") 1)\n");
 	}
-	*/
 
 	/*
 	// Order

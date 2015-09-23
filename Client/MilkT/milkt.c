@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
-#include <unistd.h>
+#include <stdint.h>
 #include <sys/wait.h>
 #include "../SATubatu/common.h"
 
@@ -17,6 +17,8 @@
 
 #define	CSP_INPUT_FILE	"/tmp/milkt.csp"
 
+#define	MIN(a, b)	(((a) < (b)) ? (a) : (b))
+#define	MAX(a, b)	(((a) > (b)) ? (a) : (b))
 
 /*------------------------------------*/
 /*               Solver               */
@@ -82,48 +84,65 @@ int main(int argc, char *argv[])
 /*----------------------------------------------------------------------------*/
 /*                                   Prepare                                  */
 /*----------------------------------------------------------------------------*/
-void stone2satstone(int8_t *sat_stones, const int *map_base, int x1, int y1, int x2, int y2, const int *stones_base, int n)
+void s2s(const int *stone, int8_t *dst)
 {
-	int i;
-	int map[1024];
-	int stones[16384];
-	
-	memcpy(map, map_base, sizeof(int) * 1024);
-	memcpy(stones, stones_base, sizeof(int) * 16384);
-	
-	// Stone
-	for (i=0; i<n; i++) {
-		int idx = (i << 5);
-		int blk = 0;
-		int anc_x = -1, anc_y;
+	int idx = 0;
+	int blk = 0;
+	int anc_x = -1, anc_y;
 				
-		int x, y;
-		for (y=0; y<8; y++) {
-			for (x=0; x<8; x++) {
-				if (STONE(i, x, y) == 0) continue;
-				
-				if (anc_x < 0) {
-					anc_x = x;
-					anc_y = y;
-				} else {
-					sat_stones[idx++] = x - anc_x;
-					sat_stones[idx++] = y - anc_y;
-				}
-				
-				if (++blk >= 16) goto SIKATANAINE;
+	int x, y;
+	for (y=0; y<8; y++) {
+		for (x=0; x<8; x++) {
+			if (stone[(y << 3) + x] == 0) continue;
+			
+			if (anc_x < 0) {
+				anc_x = x;
+				anc_y = y;
+			} else {
+				dst[idx++] = x - anc_x;
+				dst[idx++] = y - anc_y;
 			}
+			
+			if (++blk >= 16) goto SIKATANAINE;
 		}
+	}
 	
 	SIKATANAINE:
-		sat_stones[idx++] = 0;
-		sat_stones[idx] = 0;
-	}
+		dst[idx++] = 0;
+		dst[idx] = 0;
+}
+
+void stone2satstone(int8_t *sat_stones, const int *map_base, int x1, int y1, int x2, int y2, const int *stones_base, int n)
+{
+	int i, stones[16384];
+	
+	memcpy(stones, stones_base, sizeof(int) * 16384);
+	for (i=0; i<n; i++) s2s(&stones[i << 6], &sat_stones[i << 5]);
 }
 
 
 /*----------------------------------------------------------------------------*/
 /*                              Create a CSP file                             */
 /*----------------------------------------------------------------------------*/
+void BlockNormalize(int8_t *zk)
+{
+	int i, len = 2;
+
+	int offset[] = {0, 0};
+	for (i=0; i<32; i+=2) {
+		int x = zk[i];
+		int y = zk[i+1];
+		if (x == 0 && y == 0) break;
+		offset[0] = MIN(offset[0], x);
+		offset[1] = MIN(offset[1], y);
+		len += 2;
+	}
+
+	int stone[64] = {};
+	for (i=0; i<len; i+=2) stone[((zk[i+1]-offset[1]) << 3) + (zk[i]-offset[0])] = 1;
+	s2s(stone, zk);
+}
+
 // Vivid Red Operation
 void BlockDefineOperation(const int8_t *zk, int8_t *dst)
 {
@@ -145,6 +164,9 @@ void BlockDefineOperation(const int8_t *zk, int8_t *dst)
 		}
 	}
 
+	// Normalize
+	for (i=0; i<8; i++) BlockNormalize(&dst[i << 5]);
+
 	// dedup
 	for (i=1; i<8; i++) {
 		int m_idx = i << 5;
@@ -153,17 +175,18 @@ void BlockDefineOperation(const int8_t *zk, int8_t *dst)
 			int s_idx = j << 5;
 			if (dst[s_idx] == INT8_MAX) continue;
 
+			int dup = 1;
 			for (k=0; k<30; k++) {
-				if (dst[m_idx + k] != dst[s_idx + j]) goto NO_DUP;
+				if (dst[m_idx + k] != dst[s_idx + k]) {
+					dup = 0;
+					break;
+				}
 			}
+
+			if (!dup) continue;
+			dst[m_idx] = INT8_MAX;
+			break;
 		}
-
-		// dup
-		dst[m_idx] = INT8_MAX;
-
-		// no
-	NO_DUP:
-		continue; // noop
 	}
 }
 
@@ -186,7 +209,7 @@ void allLoliBba(FILE *fp, int x, int y, int xb, int yb, const int *dx, const int
 
 void createCSPfile(FILE *fp, int *map, int x1, int y1, int x2, int y2, int8_t *sat_stones, int n)
 {
-	int x,y, i, j, k, l;
+	int x,y, i, j, k, l, xx, yy;
 
 	// Mass Define
 	fprintf(fp, "(domain zk 0 %d)\n", n - 1);
@@ -212,52 +235,6 @@ void createCSPfile(FILE *fp, int *map, int x1, int y1, int x2, int y2, int8_t *s
 	fprintf(fp, "(predicate (onlyonesub a0 a1 a2 a3 a4 a5 a6 a7) (and a0 (not a1) (not a2) (not a3) (not a4) (not a5) (not a6 ) (not a7)))\n");
 	fprintf(fp, "(predicate (onlyone b0 b1 b2 b3 b4 b5 b6 b7) (or (onlyonesub b0 b1 b2 b3 b4 b5 b6 b7) (onlyonesub b1 b2 b3 b4 b5 b6 b7 b0) (onlyonesub b2 b3 b4 b5 b6 b7 b0 b1) (onlyonesub b3 b4 b5 b6 b7 b0 b1 b2) (onlyonesub b4 b5 b6 b7 b0 b1 b2 b3) (onlyonesub b5 b6 b7 b0 b1 b2 b3 b4) (onlyonesub b6 b7 b0 b1 b2 b3 b4 b5) (onlyonesub b7 b0 b1 b2 b3 b4 b5 b6)))\n");
 
-	// DEBUG
-	for (i=0; i<n; i++) {
-		int8_t tmp[256];
-		BlockDefineOperation(&sat_stones[i << 5], tmp);
-
-		for (y=y1; y<y2; y++) {
-			for (x=x1; x<x2; x++) {
-				printf("y_%d_%d_%d", x, y, i);
-
-				int len = 8;
-				for (j=0; j<8; j++) {
-					int idx = j << 5;
-					if (tmp[idx] == INT8_MAX) {
-						printf("\n\tNO!");
-						continue;
-					}
-
-					printf("\n\t%d", j);
-					int o_x = 0, o_y = 0;
-					do {
-						int a_x = x + o_x;
-						int a_y = y + o_y;
-						if (!((y1 <= a_y) && (a_y < y2)) || !((x1 <= a_x) && (a_x < x2))) goto DAMEDES;
-						printf("\n\t\t(= x_%d_%d %d)", a_x, a_y, i);
-						o_x = tmp[idx++];
-						o_y = tmp[idx++];
-					} while (o_x != 0 || o_y != 0);
-					
-					len--;
-					continue;
-
-				DAMEDES:
-					printf("\n\t\tDAME");
-				}
-
-				printf("\n");
-			}
-		}
-	}
-	
-	
-	
-	
-	
-	
-	
 	for (i=0; i<n; i++) {
 		int8_t tmp[256];
 		BlockDefineOperation(&sat_stones[i << 5], tmp);
@@ -271,26 +248,32 @@ void createCSPfile(FILE *fp, int *map, int x1, int y1, int x2, int y2, int8_t *s
 					int idx = j << 5;
 					if (tmp[idx] == INT8_MAX) continue;
 
-					fpos_t pos;
-					fgetpos(fp, &pos);
-					fprintf(fp, " (and");
-
+					uint8_t mm[1024] = {};	// Help U
 					int o_x = 0, o_y = 0;
 					do {
 						int a_x = x + o_x;
 						int a_y = y + o_y;
 						if (!((y1 <= a_y) && (a_y < y2)) || !((x1 <= a_x) && (a_x < x2))) goto DAMEDESU;
-						fprintf(fp, " (= x_%d_%d %d)", a_x, a_y, i);
+						mm[(a_y << 5) + a_x] = 1;
 						o_x = tmp[idx++];
 						o_y = tmp[idx++];
 					} while (o_x != 0 || o_y != 0);
 
+					fprintf(fp, " (and");
+					for (yy=y1; yy<y2; yy++) {
+						for (xx=x1; xx<x2; xx++) {
+							if (mm[(yy << 5) + xx] == 0) {
+								fprintf(fp, " (not (= x_%d_%d %d))", xx, yy, i);
+								continue;
+							}
+							fprintf(fp, " (= x_%d_%d %d)", xx, yy, i);
+						}
+					}
 					fprintf(fp, ")");
 					len--;
-					continue;
 
 				DAMEDESU:
-					fsetpos(fp, &pos);	// これ以降を0埋めするとか切り詰めるとかはしないので、すごい長い文を書いていたら困る
+					continue;	// NOOP
 				}
 
 				for (j=0; j<len; j++) fprintf(fp, " false");
@@ -300,9 +283,8 @@ void createCSPfile(FILE *fp, int *map, int x1, int y1, int x2, int y2, int8_t *s
 	}
 
 	// Anchor
-	int xx, yy;
 	for (i=0; i<n; i++) {
-		fprintf(fp, "(iff (= (+");
+		fprintf(fp, "(=> (= (+");
 		for (y=y1; y<y2; y++) {
 			for (x=x1; x<x2; x++) {
 				fprintf(fp, " y_%d_%d_%d", x, y, i);
@@ -316,6 +298,16 @@ void createCSPfile(FILE *fp, int *map, int x1, int y1, int x2, int y2, int8_t *s
 		}
 		fprintf(fp, "))\n");
 	}
+
+	// これを入れると高速になる
+	for (i=0; i<n; i++) {
+		for (y=y1; y<y2; y++) {
+			for (x=x1; x<x2; x++) {
+				fprintf(fp, "(=> (= y_%d_%d_%d 1) (= x_%d_%d %d))\n", x, y, i, x, y, i);
+			}
+		}
+	}
+
 
 	// Only one railgun
 	for (i=0; i<n; i++) {

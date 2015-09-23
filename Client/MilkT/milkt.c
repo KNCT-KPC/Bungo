@@ -151,7 +151,7 @@ void BlockDefineOperation(const int8_t *zk, int8_t *dst)
 
 		for (j=0; j<i; j++) {
 			int s_idx = j << 5;
-			if (dst[s_idx] == 0xff) continue;
+			if (dst[s_idx] == INT8_MAX) continue;
 
 			for (k=0; k<30; k++) {
 				if (dst[m_idx + k] != dst[s_idx + j]) goto NO_DUP;
@@ -159,7 +159,7 @@ void BlockDefineOperation(const int8_t *zk, int8_t *dst)
 		}
 
 		// dup
-		dst[m_idx] = 0xff;
+		dst[m_idx] = INT8_MAX;
 
 		// no
 	NO_DUP:
@@ -212,6 +212,52 @@ void createCSPfile(FILE *fp, int *map, int x1, int y1, int x2, int y2, int8_t *s
 	fprintf(fp, "(predicate (onlyonesub a0 a1 a2 a3 a4 a5 a6 a7) (and a0 (not a1) (not a2) (not a3) (not a4) (not a5) (not a6 ) (not a7)))\n");
 	fprintf(fp, "(predicate (onlyone b0 b1 b2 b3 b4 b5 b6 b7) (or (onlyonesub b0 b1 b2 b3 b4 b5 b6 b7) (onlyonesub b1 b2 b3 b4 b5 b6 b7 b0) (onlyonesub b2 b3 b4 b5 b6 b7 b0 b1) (onlyonesub b3 b4 b5 b6 b7 b0 b1 b2) (onlyonesub b4 b5 b6 b7 b0 b1 b2 b3) (onlyonesub b5 b6 b7 b0 b1 b2 b3 b4) (onlyonesub b6 b7 b0 b1 b2 b3 b4 b5) (onlyonesub b7 b0 b1 b2 b3 b4 b5 b6)))\n");
 
+	// DEBUG
+	for (i=0; i<n; i++) {
+		int8_t tmp[256];
+		BlockDefineOperation(&sat_stones[i << 5], tmp);
+
+		for (y=y1; y<y2; y++) {
+			for (x=x1; x<x2; x++) {
+				printf("y_%d_%d_%d", x, y, i);
+
+				int len = 8;
+				for (j=0; j<8; j++) {
+					int idx = j << 5;
+					if (tmp[idx] == INT8_MAX) {
+						printf("\n\tNO!");
+						continue;
+					}
+
+					printf("\n\t%d", j);
+					int o_x = 0, o_y = 0;
+					do {
+						int a_x = x + o_x;
+						int a_y = y + o_y;
+						if (!((y1 <= a_y) && (a_y < y2)) || !((x1 <= a_x) && (a_x < x2))) goto DAMEDES;
+						printf("\n\t\t(= x_%d_%d %d)", a_x, a_y, i);
+						o_x = tmp[idx++];
+						o_y = tmp[idx++];
+					} while (o_x != 0 || o_y != 0);
+					
+					len--;
+					continue;
+
+				DAMEDES:
+					printf("\n\t\tDAME");
+				}
+
+				printf("\n");
+			}
+		}
+	}
+	
+	
+	
+	
+	
+	
+	
 	for (i=0; i<n; i++) {
 		int8_t tmp[256];
 		BlockDefineOperation(&sat_stones[i << 5], tmp);
@@ -223,7 +269,7 @@ void createCSPfile(FILE *fp, int *map, int x1, int y1, int x2, int y2, int8_t *s
 				int len = 8;
 				for (j=0; j<8; j++) {
 					int idx = j << 5;
-					if (tmp[idx] == 0xff) continue;
+					if (tmp[idx] == INT8_MAX) continue;
 
 					fpos_t pos;
 					fgetpos(fp, &pos);

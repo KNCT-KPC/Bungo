@@ -269,7 +269,7 @@ void createCSPfile(FILE *fp, int *map, int x1, int y1, int x2, int y2, int8_t *s
 							fprintf(fp, " (= x_%d_%d %d)", xx, yy, i);
 						}
 					}
-					fprintf(fp, ")");
+					fprintf(fp, ")\n");
 					len--;
 
 				DAMEDESU:
@@ -320,7 +320,6 @@ void createCSPfile(FILE *fp, int *map, int x1, int y1, int x2, int y2, int8_t *s
 		fprintf(fp, ") 1)\n");
 	}
 
-	/*
 	// Order
 	fprintf(fp, "(int first_zk 0 %d)\n", n - 1);
 	for (i=0; i<n; i++) {
@@ -346,6 +345,17 @@ void createCSPfile(FILE *fp, int *map, int x1, int y1, int x2, int y2, int8_t *s
 						fprintf(fp, ")))\n");
 					}
 				}
+			}
+		}
+		fprintf(fp, "))\n");
+	}
+
+	/*
+	for (i=0; i<n; i++) {
+		fprintf(fp, "(=> (= first_zk %d) (and", i);
+		for (y=y1; y<y2; y++) {
+			for (x=x1; x<x2; x++) {
+				fprintf(fp, " (<= x_%d_%d %d)", x, y, i);
 			}
 		}
 		fprintf(fp, "))\n");

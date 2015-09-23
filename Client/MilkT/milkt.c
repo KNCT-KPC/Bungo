@@ -198,6 +198,7 @@ void createCSPfile(FILE *fp, int *map, int x1, int y1, int x2, int y2, int8_t *s
 		}
 	}
 
+
 	// Block Define
 	fprintf(fp, "(domain intbool 0 1)\n");
 	for (y=y1; y<y2; y++) {
@@ -211,17 +212,15 @@ void createCSPfile(FILE *fp, int *map, int x1, int y1, int x2, int y2, int8_t *s
 	fprintf(fp, "(predicate (onlyonesub a0 a1 a2 a3 a4 a5 a6 a7) (and a0 (not a1) (not a2) (not a3) (not a4) (not a5) (not a6 ) (not a7)))\n");
 	fprintf(fp, "(predicate (onlyone b0 b1 b2 b3 b4 b5 b6 b7) (or (onlyonesub b0 b1 b2 b3 b4 b5 b6 b7) (onlyonesub b1 b2 b3 b4 b5 b6 b7 b0) (onlyonesub b2 b3 b4 b5 b6 b7 b0 b1) (onlyonesub b3 b4 b5 b6 b7 b0 b1 b2) (onlyonesub b4 b5 b6 b7 b0 b1 b2 b3) (onlyonesub b5 b6 b7 b0 b1 b2 b3 b4) (onlyonesub b6 b7 b0 b1 b2 b3 b4 b5) (onlyonesub b7 b0 b1 b2 b3 b4 b5 b6)))\n");
 
-	// n に関するループを一番外にしたほうが良いんじゃ...
-	for (y=y1; y<y2; y++) {
-		for (x=x1; x<x2; x++) {
-			for (i=0; i<n; i++) {
-				int8_t tmp[256];
-				BlockDefineOperation(&sat_stones[i << 5], tmp);
+	for (i=0; i<n; i++) {
+		int8_t tmp[256];
+		BlockDefineOperation(&sat_stones[i << 5], tmp);
 
-				int len = 8;
-				fprintf(fp, "(=> (= y_%d_%d_%d 1) (= x_%d_%d %d))\n", x, y, i, x, y, i);
+		for (y=y1; y<y2; y++) {
+			for (x=x1; x<x2; x++) {
 				fprintf(fp, "(iff (= y_%d_%d_%d 1) (onlyone", x, y, i);
 
+				int len = 8;
 				for (j=0; j<8; j++) {
 					int idx = j << 5;
 					if (tmp[idx] == 0xff) continue;
@@ -254,6 +253,23 @@ void createCSPfile(FILE *fp, int *map, int x1, int y1, int x2, int y2, int8_t *s
 		}
 	}
 
+	// Anchor
+	int xx, yy;
+	for (i=0; i<n; i++) {
+		fprintf(fp, "(iff (= (+");
+		for (y=y1; y<y2; y++) {
+			for (x=x1; x<x2; x++) {
+				fprintf(fp, " y_%d_%d_%d", x, y, i);
+			}
+		}
+		fprintf(fp, ") 0)\n (and");
+		for (yy=y1; yy<y2; yy++) {
+			for (xx=x1; xx<x2; xx++) {
+				fprintf(fp, " (not (= x_%d_%d %d))", xx, yy, i);
+			}
+		}
+		fprintf(fp, "))\n");
+	}
 
 	// Only one railgun
 	for (i=0; i<n; i++) {

@@ -308,7 +308,6 @@ void createCSPfile(FILE *fp, int *map, int x1, int y1, int x2, int y2, int8_t *s
 		}
 	}
 
-
 	// Only one railgun
 	for (i=0; i<n; i++) {
 		fprintf(fp, "(<= (+");
@@ -320,18 +319,21 @@ void createCSPfile(FILE *fp, int *map, int x1, int y1, int x2, int y2, int8_t *s
 		fprintf(fp, ") 1)\n");
 	}
 
+	/*
 	// Order
 	fprintf(fp, "(int first_zk 0 %d)\n", n - 1);
 	for (i=0; i<n; i++) {
-		fprintf(fp, "(iff (= first_zk %d) (and", i);
+		fprintf(fp, "(=> (= first_zk %d) (and", i);
 		for (y=y1; y<y2; y++) {
 			for (x=x1; x<x2; x++) {
-				fprintf(fp, " (>= x_%d_%d %d)\n", x, y, i);
+				fprintf(fp, "\n (>= x_%d_%d %d)", x, y, i);
 
 				int dx[] = {1, 0, -1, 0};
 				int dy[] = {0, 1, 0, -1};
-				fprintf(fp, " (=> (= x_%d_%d %d) (and", x, y, i);
+				fprintf(fp, "\n (=> (= x_%d_%d %d) (and", x, y, i);
 				for (k=0; k<4; k++) fprintf(fp, " (>= x_%d_%d %d)", x+dx[k], y+dy[k], n);
+				
+				
 				fprintf(fp, "))");
 
 				for (k=i+1; k<n; k++) {
@@ -349,13 +351,14 @@ void createCSPfile(FILE *fp, int *map, int x1, int y1, int x2, int y2, int8_t *s
 		}
 		fprintf(fp, "))\n");
 	}
+	*/
 
 	/*
 	for (i=0; i<n; i++) {
-		fprintf(fp, "(=> (= first_zk %d) (and", i);
+		fprintf(fp, "(=> (= first_zk %d) (or", i);
 		for (y=y1; y<y2; y++) {
 			for (x=x1; x<x2; x++) {
-				fprintf(fp, " (<= x_%d_%d %d)", x, y, i);
+				fprintf(fp, " (= x_%d_%d %d)", x, y, i);
 			}
 		}
 		fprintf(fp, "))\n");

@@ -68,6 +68,29 @@ void DEBUG_waitKey(){
 	scanf("%c", &DEBUG_C);
 }
 
+bool DEBUG_JudgePutable(const int* map, const int* shit, const int basePoint, const int width, const int height, int* putPoints, int* putAryLength){
+	int i;
+	bool result = true;
+
+	for(i = 0; shit[i] != -1; i++){
+		putPoints[i] = shit[i];
+	}
+	*putAryLength = i;
+
+	for(int j = 0; j < *putAryLength; j++){
+		int preValue = putPoints[j];
+		putPoints[j] += basePoint;
+
+		if(putPoints[j] < 0 || putPoints[j] >= (width+1)*height){
+			result = false;
+		}
+		if(map[putPoints[j]] != 0){
+			result = false;
+		}
+	}
+	return result;
+}
+
 class PutPoint{
 private:
 	int i;
@@ -215,29 +238,6 @@ int CalcScore(int* map, int width, int height){
 		}
 	}
 	return score;
-}
-
-bool DEBUG_JudgePutable(const int* map, const int* shit, const int basePoint, const int width, const int height, int* putPoints, int* putAryLength){
-	int i;
-	bool result = true;
-
-	for(i = 0; shit[i] != -1; i++){
-		putPoints[i] = shit[i];
-	}
-	*putAryLength = i;
-
-	for(int j = 0; j < *putAryLength; j++){
-		int preValue = putPoints[j];
-		putPoints[j] += basePoint;
-
-		if(putPoints[j] < 0 || putPoints[j] >= (width+1)*height){
-			result = false;
-		}
-		if(map[putPoints[j]] != 0){
-			result = false;
-		}
-	}
-	return result;
 }
 
 bool JudgePutable(const int* map, const int* shit, const int basePoint, const int width, const int height, int* putPoints, int* putAryLength){
@@ -494,6 +494,7 @@ int CountArrayAdd(const int* a, const int size, const int p){
 	return result;
 }
 
+
 void FullSearch(const int* Map, const int x1, const int y1, const int x2, const int y2, const int* stones, const int stonesNum, char* solution){
 	//strcat(solution, "H 0 2 2\n")
 	//-----初期化処理-----//（長い）
@@ -514,7 +515,7 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 			//入力では 壁 = 1 になっているが、ここでは 壁 = -1 とする。
 			if(value == 0){
 				MAP(m, w, h) = 0;
-				startNeighbor.push_back(w+h*width);
+				startNeighbor.push_back(w+h*width);	//置ける地点として記憶
 			} else {
 				MAP(m, w, h) = -1;
 				freeSize--;
@@ -524,25 +525,29 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 	for(int h = 0; h < height; h++){
 		MAP(m, width, h) = -2;
 	}
-
 	startNeighbor.push_back(-1);	//-1は番兵
 
 	printf("%d %d\n", width, height); //DEBUG
 	DEBUG_printMap(map, width+1, height);
 
-		//糞（ズク）の再定義
 
+		//糞（ズク）の再定義
 	int*** shitAry = new int**[stonesNum];	//起点配列表現をした糞（ズク）の配列
+	int* shitSizeAry = new int[stonesNum];
 	for(int s = 0; s < stonesNum; s++){
 		shitAry[s] = new int*[8];
 
 		DEBUG_printMapStone(stones, s);
 		Shit_MapToBaseAry(stones, s, width, shitAry[s]);
-	}
-	printf("\n");	//DEBUG
 
+		shitSizeAry[s] = CountShitSize(shitAry[s][0]);	//サイズを計る
+		printf("\t size : %d\n", shitSizeAry[s]);
+	}
+
+	printf("\n");	//DEBUG
 	DEBUG_waitKey();
 	printf("\nStart : \n");	//DEBUG
+
 
 	//-----探索-----//（長い）
 	int kn = 0;
@@ -557,64 +562,67 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 	int putShitNum = 0;
 	int minScore_minShitNum = 1025;
 
-	int* shitSizeAry = new int[stonesNum];
-	for(int i = 0; i < stonesNum; i++){
-		shitSizeAry[i] = CountShitSize(shitAry[i][0]);
-	}
-
 	//ここから繰り返し
 	while(1){
-//		DEBUG_printMap(map, width+1, height); printf("\n");
-
 		PutPoint* p = pStack.top();
 		kn = p->GetShitNumber();
 		st = p->GetShitState();
 		const int* shit = shitAry[kn][st];
-
+	
 		freeSize += RemoveShit(map, kn, width, height);	//コレ
+		//前回の配置点配列を保存しておいて、短縮する？
+		//ここでやる必要ある？
 
 		int nextBasePoint;
 		if(!p->GetNextValue(&nextBasePoint)){
 			if(pStack.size() == 1){
-				break;
+				break;	//the end
 			} else {
-				//printf("\n＝＝＝＝＝ cannot place No.%d ＝＝＝＝＝\n", kn);
+				//重複している向きにはnullが入っているので、スキップする。
 				do {
 					st++;
 				} while(st < 8 && shitAry[kn][st] == 0);
 
-				pStack.pop();
-				if(st >= 8){
-					st = 0;
+				pStack.pop();	//現在の配置点配列をポップ（糞×向き）
 
-					//
+				if(st >= 8){	//すべての向きが終了
+					st = 0;	//向きをリセットして
+
+					//残りの空き領域から、置けない糞（ズク）をスキップする。
 					int temp_kn = kn;
 					do{
 						kn++;
 					} while(kn < stonesNum && shitSizeAry[kn] > freeSize);
-					//} while(0);
 
+					//もうコレ以上置けないなら、終端とする
 					if(kn >= stonesNum){
 						kn = temp_kn;
 						goto TERMINAL;
 					}
+					
+					//ここから
+					/*
+					{	//おけるなら
+						if(freeSize < maxFreeSize/2){
+							int totalShitSize = 0;	//現実的に置ける糞（ズク）の合計
+							for(int i = kn; i < stonesNum; i++){
+								if(shitSizeAry[i] <= freeSize){	//置ける
+									totalShitSize += shitSizeAry[i];
+								}
+							}
 
-					if(false){
-					//if(freeSize < maxFreeSize/2){
-						int totalShitSize = 0;
-						for(int i = kn; i < stonesNum; i++){
-							if(shitSizeAry[i] <= freeSize){	//置ける
-								totalShitSize += shitSizeAry[i];
+							if(minScore < freeSize - totalShitSize){
+								//最良スコアを超えられないなら、終端へ
+								freeSize += RemoveShit(map, p->GetShitNumber(), width, height);	//ココ
+									//ここでもリムーブしてます。
+								pStack.pop();	//他の
+								putShitNum--;
+								goto TERMINAL;
 							}
 						}
-						if(minScore < freeSize - totalShitSize){
-							//printf("%d < %d\n", minScore, freeSize-totalShitSize);
-							freeSize += RemoveShit(map, p->GetShitNumber(), width, height);
-							pStack.pop();
-							putShitNum--;
-							goto TERMINAL;
-						}
 					}
+					*/
+					//ここまで超あやしい
 				}
 
 				if(p->isStart()){
@@ -622,34 +630,21 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 				} else {
 					pStack.push(new PutPoint(kn, st, shitAry[kn][st], p));
 				}
-				/*
-				printf("↓↓↓↓↓ next shit ↓↓↓↓↓\n");
-				DEBUG_waitKey();
-				*/
+
 				continue;
 			}
 		}
-		if(kn == 0){
-			printf("> %d %d\n", st, nextBasePoint);
-		}
 
+		/*
 		for(int i = 0; i < kn; i++){
 			printf("*");
 		}printf("\n");
+		*/
 
-		/*
-		printf("\tput point : %d\n", nextBasePoint);
-		DEBUG_printBaseAryStone(shit);
-		*/
 		bool result = JudgePutable(map, shit, nextBasePoint, width, height, putPoints, &putAryLength);
-		/*
-		bool result = DEBUG_JudgePutable(map, shit, nextBasePoint, width, height, putPoints, &putAryLength);
-		DEBUG_printPutShitOnMap(map, putPoints, putAryLength, width, height);
-		printf("\n");
-		*/
 		
-		if(result){
-			//printf("\nplace > ");
+		if(result){	//おけるなら
+			//配置処理
 			PutShit(map, kn, putPoints, putAryLength);
 			freeSize -= shitSizeAry[kn];
 			putShitNum++;
@@ -659,56 +654,37 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 			do{
 				kn++;
 			} while(kn < stonesNum && shitSizeAry[kn] > freeSize);
-			//} while(0);
-
+			
+			//糞（ズク）がもう無いなら
 			if(kn >= stonesNum){
 				kn = temp_kn;
-				goto TERMINAL;
+				goto TERMINAL;	//終端とする
 			}
 
-			//if(false){
 			if(freeSize < maxFreeSize/2){
-				int totalShitSize = 0;
+				int totalShitSize = 0;	//現実的に置ける糞（ズク）の合計
 				for(int i = kn; i < stonesNum; i++){
 					if(shitSizeAry[i] <= freeSize){	//置ける
 						totalShitSize += shitSizeAry[i];
 					}
 				}
+
 				if(minScore < freeSize - totalShitSize){
-					//printf("%d < %d\n", minScore, freeSize-totalShitSize);
+					//最良スコアを超えられないなら、終端へ
 					freeSize += RemoveShit(map, p->GetShitNumber(), width, height);
-					pStack.pop();
-					putShitNum--;
+					pStack.pop();	//ここいら怪しい
+					putShitNum--;	//怪しい
 					goto TERMINAL;
 				}
 			}
 
-			std::vector<int>* neighbor = CalcNeighborPoint(map, p->GetNeighborAry(), putPoints, putAryLength, width, height); 
-
-			/*
-			printf("neighbor[ ");
-			for(int i = 0; i < neighbor->size()-1; i++){
-				printf("%d ", neighbor->at(i));
-			}
-			printf("]\n\n");
-
-			/* DEBUG
-			DEBUG_printMap(map, width+1, height);
-			*/
-
+			std::vector<int>* neighbor = CalcNeighborPoint(map, p->GetNeighborAry(), putPoints, putAryLength, width, height); //ココ
 
 			pStack.push(new PutPoint(kn, 0, shitAry[kn][0], neighbor->data(), neighbor->size()));
 			delete neighbor;
-
-			/* DEBUG
-			printf("\n↓↓↓↓↓ next shit ↓↓↓↓↓\n");
-			DEBUG_waitKey();
-			*/
-		} else {
-			//printf("\ncannot place\n");
 		}
-
 		continue;
+
 	TERMINAL:
 		//ポイント集計、解答作成
 		int score = CalcScore(map, width, height);

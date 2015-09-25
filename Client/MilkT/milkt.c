@@ -319,51 +319,28 @@ void createCSPfile(FILE *fp, int *map, int x1, int y1, int x2, int y2, int8_t *s
 		fprintf(fp, ") 1)\n");
 	}
 
-	/*
 	// Order
-	fprintf(fp, "(int first_zk 0 %d)\n", n - 1);
 	for (i=0; i<n; i++) {
-		fprintf(fp, "(=> (= first_zk %d) (and", i);
 		for (y=y1; y<y2; y++) {
 			for (x=x1; x<x2; x++) {
-				fprintf(fp, "\n (>= x_%d_%d %d)", x, y, i);
-
-				int dx[] = {1, 0, -1, 0};
-				int dy[] = {0, 1, 0, -1};
-				fprintf(fp, "\n (=> (= x_%d_%d %d) (and", x, y, i);
-				for (k=0; k<4; k++) fprintf(fp, " (>= x_%d_%d %d)", x+dx[k], y+dy[k], n);
-				
-				
-				fprintf(fp, "))");
-
-				for (k=i+1; k<n; k++) {
-					for (l=0; l<4; l++) {
-						int xb = x + dx[l];
-						int yb = y + dy[l];
-						fprintf(fp, " (=> (and (= x_%d_%d %d) (= x_%d_%d %d)) (or (and", x, y, i, xb, yb, k);
-						allLoliBba(fp, x, y, xb, yb, dx, dy, x1, y1, x2, y2, k, ">=");
-						fprintf(fp, ") (and");
-						allLoliBba(fp, x, y, xb, yb, dx, dy, x1, y1, x2, y2, k, "<=");
-						fprintf(fp, ")))\n");
+				for (j=i+1; j<n; j++) {
+					fprintf(fp, "(=> (and (= (+");
+					for (yy=y1; yy<y2; yy++) {
+						for (xx=x1; xx<x2; xx++) {
+							fprintf(fp, " y_%d_%d_%d", x, y, i);
+						}
 					}
+					fprintf(fp, ") 1) (= x_%d_%d %d)) (or", x, y, k);
+					
+					int dx[] = {1, 0, -1, 0};
+					int dy[] = {0, 1, 0, -1};
+					for (k=0; k<4; k++) fprintf(fp, " (= x_%d_%d %d)", x+dx[k], y+dy[k], i);
+					
+					fprintf(fp, "))\n");
 				}
 			}
 		}
-		fprintf(fp, "))\n");
 	}
-	*/
-
-	/*
-	for (i=0; i<n; i++) {
-		fprintf(fp, "(=> (= first_zk %d) (or", i);
-		for (y=y1; y<y2; y++) {
-			for (x=x1; x<x2; x++) {
-				fprintf(fp, " (= x_%d_%d %d)", x, y, i);
-			}
-		}
-		fprintf(fp, "))\n");
-	}
-	*/
 }
 
 

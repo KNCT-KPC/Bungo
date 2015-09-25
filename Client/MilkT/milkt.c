@@ -193,6 +193,22 @@ void BlockDefineOperation(const int8_t *zk, int8_t *dst)
 	}
 }
 
+void isUse(FILE *fp, int x1, int y1, int x2, int y2, int first, int attention)
+{
+	int i, x, y;
+
+	for (i=0; i<attention; i++) {
+		fprintf(fp, " (= (+"); 
+
+		for (y=y1; y<y2; y++) {
+			for (x=x1; x<x2; x++) {
+				fprintf(fp, " y_%d_%d_%d", x, y, i);
+			}
+		}
+		fprintf(fp, ") %c)\n", (i == first) ? '1' : '0');
+	}
+}
+
 void createCSPfile(FILE *fp, int *map, int x1, int y1, int x2, int y2, int8_t *sat_stones, int n)
 {
 	int x,y, i, j, k, xx, yy;
@@ -307,19 +323,20 @@ void createCSPfile(FILE *fp, int *map, int x1, int y1, int x2, int y2, int8_t *s
 		fprintf(fp, ") 1)\n");
 	}
 
+	// TEST
+	fprintf(fp, "(not (= x_3_0 5))\n");
+	fprintf(fp, "(not (= x_3_3 6))\n");
+	//fprintf(fp, "(not (= x_3_3 6))\n");
+	//fprintf(fp, "(not (= x_3_3 5))\n");
 
 	// Order
 	for (i=0; i<n; i++) {
 		for (y=y1; y<y2; y++) {
 			for (x=x1; x<x2; x++) {
 				for (j=i+1; j<n; j++) {
-					fprintf(fp, "(=> (and (= (+");
-					for (yy=y1; yy<y2; yy++) {
-						for (xx=x1; xx<x2; xx++) {
-							fprintf(fp, " y_%d_%d_%d", x, y, i);
-						}
-					}
-					fprintf(fp, ") 1) (= x_%d_%d %d)) (or", x, y, k);
+					fprintf(fp, "(=> (and");
+					isUse(fp, x1, y1, x2, y2, i, j);
+					fprintf(fp, " (= x_%d_%d %d)) (or", x, y, j);
 					
 					int dx[] = {1, 0, -1, 0};
 					int dy[] = {0, 1, 0, -1};
@@ -358,6 +375,8 @@ int satSolve(int *map)
 	for (i=0; i<1024; i++) map[i] = -1;
 
 	while (fgets(buf, 128, fp) != NULL) {
+		printf("DEBUG: %s", buf);
+
 		char *p = strchr(buf, '\n');
 		if (p != NULL) *p = '\0';
 

@@ -46,7 +46,10 @@ int solver(FILE *fp, int *map, int x1, int y1, int x2, int y2, int *stones, int 
 
 	printf("code = %d\n", code);
 	dumpMap(map, x1, y1, x2, y2, n);
-	
+
+	// CSP to Z
+
+
 	
 	/*
 	sendMsg("S");
@@ -190,26 +193,9 @@ void BlockDefineOperation(const int8_t *zk, int8_t *dst)
 	}
 }
 
-void allLoliBba(FILE *fp, int x, int y, int xb, int yb, const int *dx, const int *dy, int x1, int y1, int x2, int y2, int id, const char *op)
-{
-	int i;
-	for (i=0; i<4; i++) {
-		int xd = xb + dx[i];
-		int yd = xb + dy[i];
-		if (!(((y1 - 1) <= yd) && (yd <= y2))
-			|| !(((x1 - 1) <= xd) && (xd <= x2))
-			|| ((xd == x) && (yd == y))) {
-				fprintf(fp, " false");
-				continue;
-			}
-		
-		fprintf(fp, " (%s x_%d_%d %d)", op, xd, yd, id);
-	}
-}
-
 void createCSPfile(FILE *fp, int *map, int x1, int y1, int x2, int y2, int8_t *sat_stones, int n)
 {
-	int x,y, i, j, k, l, xx, yy;
+	int x,y, i, j, k, xx, yy;
 
 	// Mass Define
 	fprintf(fp, "(domain zk 0 %d)\n", n - 1);
@@ -282,6 +268,7 @@ void createCSPfile(FILE *fp, int *map, int x1, int y1, int x2, int y2, int8_t *s
 		}
 	}
 
+
 	// Anchor
 	for (i=0; i<n; i++) {
 		fprintf(fp, "(=> (= (+");
@@ -308,6 +295,7 @@ void createCSPfile(FILE *fp, int *map, int x1, int y1, int x2, int y2, int8_t *s
 		}
 	}
 
+
 	// Only one railgun
 	for (i=0; i<n; i++) {
 		fprintf(fp, "(<= (+");
@@ -318,6 +306,7 @@ void createCSPfile(FILE *fp, int *map, int x1, int y1, int x2, int y2, int8_t *s
 		}
 		fprintf(fp, ") 1)\n");
 	}
+
 
 	// Order
 	for (i=0; i<n; i++) {
@@ -369,8 +358,6 @@ int satSolve(int *map)
 	for (i=0; i<1024; i++) map[i] = -1;
 
 	while (fgets(buf, 128, fp) != NULL) {
-		printf("DEBUG: %s", buf);
-
 		char *p = strchr(buf, '\n');
 		if (p != NULL) *p = '\0';
 

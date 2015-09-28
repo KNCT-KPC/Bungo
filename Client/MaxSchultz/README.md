@@ -7,7 +7,15 @@ Guten Morgen! わたし、折部やすな！たぶん高校生！
 
 ## 準備
 
-* あとで書く
+### z3のインストール
+
+    $ git clone https://github.com/Z3Prover/z3.git
+    $ cd z3
+    $ python src/mk_make.py
+    $ cd build;
+    $ make -j hoge
+    $ sudo mkdir /usr/lib/python3.4/site-packages/__pycache__
+    $ sudo make install
 
 ## ルールの構成
 

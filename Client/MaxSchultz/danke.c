@@ -15,7 +15,7 @@
 #define	CLIENT_NAME	"Danke"
 #define	SERVER_IPADDR	"127.0.0.1"
 
-#define	MAP_OUTPUT_FILE	"/tmp/danke.map"
+#define	DANKE_FILE	"/tmp/danke.py"
 
 #define	MIN(a, b)	(((a) < (b)) ? (a) : (b))
 #define	MAX(a, b)	(((a) > (b)) ? (a) : (b))
@@ -24,7 +24,7 @@
 /*               Solver               */
 /*------------------------------------*/
 void stone2satstone(int8_t *sat_stones, const int *map_base, int x1, int y1, int x2, int y2, const int *stones_base, int n);
-void createCSPfile(FILE *fp, int *map, int x1, int y1, int x2, int y2, int8_t *sat_stones, int n);
+void createDankefile(FILE *fp, int *map, int x1, int y1, int x2, int y2, int8_t *sat_stones, int n);
 int satSolve(int *map);
 
 int solver(FILE *fp, int *map, int x1, int y1, int x2, int y2, int *stones, int n)
@@ -36,7 +36,7 @@ int solver(FILE *fp, int *map, int x1, int y1, int x2, int y2, int *stones, int 
 
 	// Prepare
 	stone2satstone(sat_stones, map, x1, y1, x2, y2, stones, n);
-	createMapfile(fp, map, x1, y1, x2, y2, sat_stones, n);
+	createDankefile(fp, map, x1, y1, x2, y2, sat_stones, n);
 
 	// Run Python module
 	fflush(fp);
@@ -45,13 +45,7 @@ int solver(FILE *fp, int *map, int x1, int y1, int x2, int y2, int *stones, int 
 
 	printf("code = %d\n", code);
 	dumpMap(map, x1, y1, x2, y2, n);
-	*/
 
-	// CSP to Z
-
-
-	
-	/*
 	sendMsg("S");
 	sendMsg("");
 	if (sendMsg("E") == EXIT_FAILURE) return EXIT_SUCCESS;
@@ -72,7 +66,7 @@ int main(int argc, char *argv[])
 	int map[1024];
 	int stones[16384];
 
-	FILE *fp = fopen(CSP_INPUT_FILE, "w");
+	FILE *fp = fopen(DANKE_FILE, "w");
 	while (ready(map, &x1, &y1, &x2, &y2, stones, &n)) {
 		if (solver(fp, map, x1, y1, x2, y2, stones, n) == EXIT_FAILURE) break;
 	}
@@ -125,7 +119,7 @@ void stone2satstone(int8_t *sat_stones, const int *map_base, int x1, int y1, int
 
 
 /*----------------------------------------------------------------------------*/
-/*                              Create a CSP file                             */
+/*                             Create a Danke file                            */
 /*----------------------------------------------------------------------------*/
 void BlockNormalize(int8_t *zk)
 {
@@ -209,40 +203,46 @@ void isUse(FILE *fp, int x1, int y1, int x2, int y2, int first, int attention)
 	}
 }
 
-void createCSPfile(FILE *fp, int *map, int x1, int y1, int x2, int y2, int8_t *sat_stones, int n)
+void createDankefile(FILE *fp, int *map, int x1, int y1, int x2, int y2, int8_t *sat_stones, int n)
 {
 	int x,y, i, j, k, xx, yy;
 
 	// Mass Define
-	fprintf(fp, "(domain zk 0 %d)\n", n - 1);
-	fprintf(fp, "(domain obstacle %d)\n", n);
-	
+	i = 0;
+	fprintf(fp, "s = solver()\n\n# Mass Def\nxs = []");
 	for(y=(y1-1); y<=y2; y++) {
 		for(x=(x1-1); x<=x2; x++) {
-			fprintf(fp, "(int x_%d_%d %s)\n", x, y, (!((y1 <= y) && (y < y2)) || !((x1 <= x) && (x < x2)) || MAP(x, y) == 1) ? "obstacle" : "zk");
-		}
-	}
-
-
-	// Block Define
-	fprintf(fp, "(domain intbool 0 1)\n");
-	for (y=y1; y<y2; y++) {
-		for (x=x1; x<x2; x++) {
-			for (i=0; i<n; i++) {
-				fprintf(fp, "(int y_%d_%d_%d intbool)\n", x, y, i);
+			fprintf(fp, "xs[%d] = Int('x_%d_%d')\n", i, x, y);
+			if (!((y1 <= y) && (y < y2)) || !((x1 <= x) && (x < x2)) || MAP(x, y) == 1) {
+				fprintf(fp, "s.add(xs[%d] == %d)\n", i, n);
+			} else {
+				fprintf(fp, "s.add(0 <= xs[%d], xs[%d] < %d)\n", i, i, n);
 			}
+			i++;
 		}
 	}
-
-	fprintf(fp, "(predicate (onlyonesub a0 a1 a2 a3 a4 a5 a6 a7) (and a0 (not a1) (not a2) (not a3) (not a4) (not a5) (not a6 ) (not a7)))\n");
-	fprintf(fp, "(predicate (onlyone b0 b1 b2 b3 b4 b5 b6 b7) (or (onlyonesub b0 b1 b2 b3 b4 b5 b6 b7) (onlyonesub b1 b2 b3 b4 b5 b6 b7 b0) (onlyonesub b2 b3 b4 b5 b6 b7 b0 b1) (onlyonesub b3 b4 b5 b6 b7 b0 b1 b2) (onlyonesub b4 b5 b6 b7 b0 b1 b2 b3) (onlyonesub b5 b6 b7 b0 b1 b2 b3 b4) (onlyonesub b6 b7 b0 b1 b2 b3 b4 b5) (onlyonesub b7 b0 b1 b2 b3 b4 b5 b6)))\n");
-
+	
+	
+	// Block Define
+	fprintf(fp, "# Block Def\nys = []\n");
 	for (i=0; i<n; i++) {
 		int8_t tmp[256];
 		BlockDefineOperation(&sat_stones[i << 5], tmp);
-
+		
+		fprintf(fp, "ys[%d] = Bool('y_%d')\n", i, i);
 		for (y=y1; y<y2; y++) {
 			for (x=x1; x<x2; x++) {
+				// Python で predicate みたいなの作っておけば良い
+				// いや、Cでも良いかな
+				// とりあえずstringで
+				
+				/*
+				
+				
+				
+				
+				
+				
 				fprintf(fp, "(iff (= y_%d_%d_%d 1) (onlyone", x, y, i);
 
 				int len = 8;
@@ -280,11 +280,12 @@ void createCSPfile(FILE *fp, int *map, int x1, int y1, int x2, int y2, int8_t *s
 
 				for (j=0; j<len; j++) fprintf(fp, " false");
 				fprintf(fp, "))\n");
+				*/
 			}
 		}
 	}
-
-
+	
+	/*
 	// Anchor
 	for (i=0; i<n; i++) {
 		fprintf(fp, "(=> (= (+");
@@ -347,12 +348,14 @@ void createCSPfile(FILE *fp, int *map, int x1, int y1, int x2, int y2, int8_t *s
 			}
 		}
 	}
+	*/
 }
 
 
 /*----------------------------------------------------------------------------*/
 /*                                  Run Sugar                                 */
 /*----------------------------------------------------------------------------*/
+/*
 int startsWith(const char *s1, const char *s2, int s1len, int s2len)
 {
 	if (s1len > s2len) return 0;
@@ -407,4 +410,4 @@ END:
 	pclose(fp);
 	return code;
 }
-
+*/

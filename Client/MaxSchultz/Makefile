@@ -1,8 +1,8 @@
 danke: danke.o common.o
-	gcc milkt.o common.o -o milkt -Wall
+	gcc danke.o common.o -o danke -Wall
 
-milkt.o: milkt.c ../SATubatu/common.h
-	gcc -c milkt.c -Wall
+milkt.o: danke.c ../SATubatu/common.h
+	gcc -c danke.c -Wall
 
 common.o: ../SATubatu/common.c ../SATubatu/common.h
 	gcc -c ../SATubatu/common.c -Wall
@@ -13,5 +13,5 @@ clean:
 	-rm *.o
 
 distclean: clean
-	-rm milkt
+	-rm danke
 

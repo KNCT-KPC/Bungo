@@ -569,7 +569,7 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 		st = p->GetShitState();
 		const int* shit = shitAry[kn][st];
 	
-		freeSize += RemoveShit(map, kn, width, height);	//コレ
+		//freeSize += RemoveShit(map, kn, width, height);	//コレ
 		//前回の配置点配列を保存しておいて、短縮する？
 		//ここでやる必要ある？
 
@@ -642,7 +642,7 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 		*/
 
 		bool result = JudgePutable(map, shit, nextBasePoint, width, height, putPoints, &putAryLength);
-		
+
 		if(result){	//おけるなら
 			//配置処理
 			PutShit(map, kn, putPoints, putAryLength);
@@ -687,7 +687,8 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 
 	TERMINAL:
 		//ポイント集計、解答作成
-		int score = CalcScore(map, width, height);
+		//int score = CalcScore(map, width, height);
+		int score = freeSize;	//ココ
 		if(minScore > score){
 			minScore = score;
 			minScore_minShitNum = putShitNum;
@@ -721,6 +722,7 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 		DEBUG_waitKey();
 		*/
 		putShitNum--;
+		freeSize += RemoveShit(map, pStack.top()->GetShitNumber(), width, height);	//コレ
 
 		continue;
 	}

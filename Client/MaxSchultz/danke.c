@@ -45,7 +45,9 @@ int solver(FILE *fp, int *map, int x1, int y1, int x2, int y2, int *stones, int 
 
 	printf("code = %d\n", code);
 	dumpMap(map, x1, y1, x2, y2, n);
+	*/
 
+	/*
 	sendMsg("S");
 	sendMsg("");
 	if (sendMsg("E") == EXIT_FAILURE) return EXIT_SUCCESS;
@@ -117,6 +119,14 @@ void stone2satstone(int8_t *sat_stones, const int *map_base, int x1, int y1, int
 	for (i=0; i<n; i++) s2s(&stones[i << 6], &sat_stones[i << 5]);
 }
 
+int KVStrio(int x, int y, int val)
+{
+	static int kvs[1156];
+	
+	int idx = (x + 1) * 34 + (y + 1);
+	if (val >= 0) kvs[idx] = val;
+	return kvs[idx];
+}
 
 /*----------------------------------------------------------------------------*/
 /*                             Create a Danke file                            */
@@ -187,20 +197,27 @@ void BlockDefineOperation(const int8_t *zk, int8_t *dst)
 	}
 }
 
-void isUse(FILE *fp, int x1, int y1, int x2, int y2, int first, int attention)
+void OneOneOne(FILE *fp, int n, const int8_t *define, int len)
 {
-	int i, x, y;
+	int i, j, k;
+	const int8_t *p;
 
-	for (i=0; i<attention; i++) {
-		fprintf(fp, " (= (+"); 
-
-		for (y=y1; y<y2; y++) {
-			for (x=x1; x<x2; x++) {
-				fprintf(fp, " y_%d_%d_%d", x, y, i);
+	fprintf(fp, "Or(");
+	for (i=0; i<len; i++) {
+		fprintf(fp, "And(");
+		for (j=0; j<len; j++) {
+			p = &define[j << 5];
+			fprintf(fp, "%sAnd(", (i == j) ? "" : "Not(");
+			for (k=0; (k<32 && p[k] >= 0); k+=2) {
+				int x = p[k] + 1;
+				int y = p[k+1] + 1;
+				fprintf(fp, "xs[%d] == %d,", KVStrio(x, y, -1), n);
 			}
+			fprintf(fp, ")%s,\n", (i == j) ? "" : ")");
 		}
-		fprintf(fp, ") %c)\n", (i == first) ? '1' : '0');
+		fprintf(fp, "),");
 	}
+	fprintf(fp, ")");
 }
 
 void createDankefile(FILE *fp, int *map, int x1, int y1, int x2, int y2, int8_t *sat_stones, int n)
@@ -209,110 +226,76 @@ void createDankefile(FILE *fp, int *map, int x1, int y1, int x2, int y2, int8_t 
 
 	// Mass Define
 	i = 0;
-	fprintf(fp, "s = solver()\n\n# Mass Def\nxs = []");
+	fprintf(fp, "from z3 import *\n\ns = Solver()\n\n# Mass Def\nxs = []\n");
 	for(y=(y1-1); y<=y2; y++) {
 		for(x=(x1-1); x<=x2; x++) {
-			fprintf(fp, "xs[%d] = Int('x_%d_%d')\n", i, x, y);
+			fprintf(fp, "xs.append(Int('x_%d_%d'))\n", x, y);
 			if (!((y1 <= y) && (y < y2)) || !((x1 <= x) && (x < x2)) || MAP(x, y) == 1) {
 				fprintf(fp, "s.add(xs[%d] == %d)\n", i, n);
 			} else {
 				fprintf(fp, "s.add(0 <= xs[%d], xs[%d] < %d)\n", i, i, n);
 			}
-			i++;
+			KVStrio(x, y, i++);
 		}
 	}
 	
-	
 	// Block Define
-	fprintf(fp, "# Block Def\nys = []\n");
+	int col = y2 - y1;
+	fprintf(fp, "\n# Block Def\nys = []\n");
 	for (i=0; i<n; i++) {
+		int len = 0;
 		int8_t tmp[256];
+		int8_t define[262144] = {};
 		BlockDefineOperation(&sat_stones[i << 5], tmp);
 		
-		fprintf(fp, "ys[%d] = Bool('y_%d')\n", i, i);
+		fprintf(fp, "ys.append(Bool('y_%d'))\n", i);
 		for (y=y1; y<y2; y++) {
 			for (x=x1; x<x2; x++) {
-				// Python で predicate みたいなの作っておけば良い
-				// いや、Cでも良いかな
-				// とりあえずstringで
-				
-				/*
-				
-				
-				
-				
-				
-				
-				fprintf(fp, "(iff (= y_%d_%d_%d 1) (onlyone", x, y, i);
-
-				int len = 8;
 				for (j=0; j<8; j++) {
 					int idx = j << 5;
 					if (tmp[idx] == INT8_MAX) continue;
 
-					uint8_t mm[1024] = {};	// Help U
-					int o_x = 0, o_y = 0;
+					k = len << 5;
+					int l = 0, o_x = 0, o_y = 0;
 					do {
 						int a_x = x + o_x;
 						int a_y = y + o_y;
 						if (!((y1 <= a_y) && (a_y < y2)) || !((x1 <= a_x) && (a_x < x2))) goto DAMEDESU;
-						mm[(a_y << 5) + a_x] = 1;
+						define[k++] = a_x;
+						define[k++] = a_y;
 						o_x = tmp[idx++];
 						o_y = tmp[idx++];
+						l++;
 					} while (o_x != 0 || o_y != 0);
-
-					fprintf(fp, " (and");
-					for (yy=y1; yy<y2; yy++) {
-						for (xx=x1; xx<x2; xx++) {
-							if (mm[(yy << 5) + xx] == 0) {
-								fprintf(fp, " (not (= x_%d_%d %d))", xx, yy, i);
-								continue;
-							}
-							fprintf(fp, " (= x_%d_%d %d)", xx, yy, i);
-						}
-					}
-					fprintf(fp, ")\n");
-					len--;
+					
+					len++;
+					if (l < 16) define[k] = -1;
 
 				DAMEDESU:
 					continue;	// NOOP
 				}
+			}
+		}
 
-				for (j=0; j<len; j++) fprintf(fp, " false");
-				fprintf(fp, "))\n");
-				*/
-			}
-		}
-	}
-	
-	/*
-	// Anchor
-	for (i=0; i<n; i++) {
-		fprintf(fp, "(=> (= (+");
-		for (y=y1; y<y2; y++) {
-			for (x=x1; x<x2; x++) {
-				fprintf(fp, " y_%d_%d_%d", x, y, i);
-			}
-		}
-		fprintf(fp, ") 0)\n (and");
-		for (yy=y1; yy<y2; yy++) {
-			for (xx=x1; xx<x2; xx++) {
-				fprintf(fp, " (not (= x_%d_%d %d))", xx, yy, i);
-			}
-		}
+		fprintf(fp, "s.add(ys[%d] == (", i);
+		OneOneOne(fp, i, define, len);
 		fprintf(fp, "))\n");
 	}
 
-	// これを入れると高速になる
+	// Anchor
 	for (i=0; i<n; i++) {
+		fprintf(fp, "s.add(Implies(ys[%d] == False, And(", i);
+
 		for (y=y1; y<y2; y++) {
 			for (x=x1; x<x2; x++) {
-				fprintf(fp, "(=> (= y_%d_%d_%d 1) (= x_%d_%d %d))\n", x, y, i, x, y, i);
+				fprintf(fp, "xs[%d] != %d,", KVStrio(x, y, -1), i);
 			}
 		}
+
+		fprintf(fp, ")))\n");
 	}
 
-
+	/*
 	// Only one railgun
 	for (i=0; i<n; i++) {
 		fprintf(fp, "(<= (+");
@@ -349,29 +332,21 @@ void createDankefile(FILE *fp, int *map, int x1, int y1, int x2, int y2, int8_t 
 		}
 	}
 	*/
+
+	// Dump
+	fprintf(fp, "\nr = s.check()\nif r != sat: exit(10)\n\nm = s.model()\nfor d in m: print(d, '=', m[d])\n");
 }
 
 
 /*----------------------------------------------------------------------------*/
-/*                                  Run Sugar                                 */
+/*                                  Run Sugar?                                 */
 /*----------------------------------------------------------------------------*/
-/*
-int startsWith(const char *s1, const char *s2, int s1len, int s2len)
-{
-	if (s1len > s2len) return 0;
-	
-	int i;
-	for (i=0; i<s1len; i++) if (s1[i] != s2[i]) return 0;
-	return 1;
-}
-
 int satSolve(int *map)
 {
 	FILE *fp;
 	char buf[128];
-	int code = 1;
 
-	snprintf(buf, 128, "sugar %s", CSP_INPUT_FILE);
+	snprintf(buf, 128, "python %s", DANKE_FILE);
 	if ((fp = popen(buf, "r")) == NULL) return -1;
 
 	int i;
@@ -379,35 +354,19 @@ int satSolve(int *map)
 
 	while (fgets(buf, 128, fp) != NULL) {
 		printf("DEBUG: %s", buf);
+		if (buf[0] != 'x') continue;
 
 		char *p = strchr(buf, '\n');
 		if (p != NULL) *p = '\0';
-
-		if (buf[0] == 's') {
-			int len = strlen(&buf[1]);
-			if (startsWith(" SATISFIABLE", &buf[1], 12, len)) continue;
-			code = startsWith(" UNSATISFIABLE", &buf[1], 14, len) ? 0 : -1;
-			goto END;
-		}
-
-		if (buf[0] == 'a') {
-			if (buf[1] == '\n') goto END;
-			if (buf[2] != 'x') continue;
-
-			int x, y, n;
-			sscanf(&buf[2], "x_%d_%d\t%d", &x, &y, &n);
-
-			if ((x < 0) || (x >= 32) || (y < 0) || (y >= 32)) continue;
-			map[((y) << 5) + (x)] = n;
-			continue;
-		}
 		
-		code = -1;
-		goto END;
+		int x, y, n;
+		sscanf(buf, "x_%d_%d = %d", &x, &y, &n);
+		
+		if ((x < 0) || (x >= 32) || (y < 0) || (y >= 32)) continue;
+		map[((y) << 5) + (x)] = n;
 	}
 
-END:
-	pclose(fp);
-	return code;
+	int code = pclose(fp);
+	return code == 0 ? 1 : code == 10 ? 0 : -1;
 }
-*/
+

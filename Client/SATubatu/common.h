@@ -56,14 +56,18 @@
 /*------------------------------------*/
 #define	MAP(x, y)	map[((y) << 5) + (x)]
 #define	STONE(n, x, y)	stones[((n) << 6) + ((y) << 3) + (x)]
+#define	MIN(a, b)	(((a) < (b)) ? (a) : (b))
+#define	MAX(a, b)	(((a) > (b)) ? (a) : (b))
+
+extern FILE *global_fpwrite;
+extern FILE *global_fpread;
 
 
 /*------------------------------------*/
 /*               extern               */
 /*------------------------------------*/
-extern FILE *global_fpwrite;
-extern FILE *global_fpread;
 extern int sendMsg(char *msg);
+extern int sendPutMsg(char front, int angle, int x, int y);
 
 extern void initClient(char *name, char *server_ipaddr, int *osfhandle, int *sd);
 extern int ready(int *map, int *x1, int *y1, int *x2, int *y2, int *stones, int *n);
@@ -71,4 +75,4 @@ extern void finalClient(int osfhandle, int sd);
 
 extern void dump(int *map, int x1, int y1, int x2, int y2, int *stones, int n);
 extern void dumpMap(int *map, int x1, int y1, int x2, int y2, int n);
-
+extern void dumpMap2(int *map);

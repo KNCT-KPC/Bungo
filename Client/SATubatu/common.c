@@ -29,6 +29,12 @@ int sendMsg(char *msg)
 #endif
 }
 
+int sendPutMsg(char front, int angle, int x, int y)
+{
+	char str[32];
+	snprintf(str, 32, "%c %d %d %d", (front == 'F') ? 'H' : 'T', angle, x, y);
+	return sendMsg(str);
+}
 
 /*------------------------------------*/
 /*        Initialize & Finalize       */
@@ -188,4 +194,27 @@ void dumpMap(int *map, int x1, int y1, int x2, int y2, int n)
 	printf("\n");
 }
 
-
+void dumpMap2(int *map)
+{
+	int x, y;
+	
+	for (y=0; y<32; y++) {
+		printf("\t");
+		for (x=0; x<32; x++) {
+			int tmp = MAP(x, y);
+			if (tmp == -1) {
+				printf("-");
+			} else if (tmp == -2) {
+				printf("|");
+			} else if (tmp < 10){
+				printf("%d", tmp);
+			} else if (tmp < 36){
+				printf("%c", 55 + tmp);
+			} else {
+				printf("X");
+			}
+		}
+		printf("\n");
+	}
+	printf("\n");
+}

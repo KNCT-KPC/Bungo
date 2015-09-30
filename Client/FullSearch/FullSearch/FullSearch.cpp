@@ -5,6 +5,7 @@
 #include <vector>
 #include <stack>
 #include <queue>
+#include <Windows.h>
 
 #define	STONE(n, x, y)	stones[((n) << 6) + ((y) << 3) + (x)]
 #define MAP(m, x, y) map[(x) + (y)*(width+1)]
@@ -614,6 +615,9 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 	int putShitNum = 0;
 	int minScore_minShitNum = 1025;
 
+	LARGE_INTEGER liFreq, start;
+	QueryPerformanceFrequency( &liFreq );
+	QueryPerformanceCounter( &start );
 	//‚±‚±‚©‚çŒJ‚è•Ô‚µ
 	while(1){
 		PutPoint* p = pStack.top();
@@ -767,6 +771,9 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 
 	//‚±‚±‚Ü‚ÅŒJ‚è•Ô‚µ
 
+	LARGE_INTEGER end;
+	QueryPerformanceCounter( &end );
+	printf("time : %d\n", (end.QuadPart - start.QuadPart)/liFreq.QuadPart);
 
 	//-----I—¹ˆ—-----//
 	delete shitSizeAry;

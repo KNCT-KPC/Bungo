@@ -39,17 +39,20 @@ void bestScore(Score *best, const int *map);
 void s2s4z(const int *map, int8_t *dst);
 void mawareSetsugetsuka(int front, int angle, const int *stone, int *x, int *y);
 
-void putStone(const Stone *stones, int n, int *map, int x1, int y1, int x2, int y2)
+void putStone(const Stone *stones, int first, int n, int *map, int x1, int y1, int x2, int y2)
 {
 	int i, x, y, j, k;
 	int tmpmap[1024];
 	memcpy(tmpmap, map, sizeof(int) * 1024);
 
+	int ids[256];
+	for (i=0; i<n; i++) ids[i] = (first + i) % n;
+
 	int id = stones[0].id;
 	for (i=0; i<n; i++) {
-		if (stones[i].id < id) continue;
+		int id = ids[i];
 		int8_t operation[256];
-		BlockDefineOperation(stones[i].list, operation);
+		BlockDefineOperation(stones[id].list, operation);
 
 		for (y=y1; y<y2; y++) {
 			for (x=x1; x<x2; x++) {
@@ -57,7 +60,7 @@ void putStone(const Stone *stones, int n, int *map, int x1, int y1, int x2, int 
 					int8_t *p = &operation[j << 5];
 					if (p[0] == INT8_MAX) continue;
 
-					for (k=0; k<stones[i].len; k++) {
+					for (k=0; k<stones[id].len; k++) {
 						int xx = x + p[k << 1];
 						int yy = y + p[(k << 1) + 1];
 
@@ -65,7 +68,7 @@ void putStone(const Stone *stones, int n, int *map, int x1, int y1, int x2, int 
 
 						int idx = (yy << 5) + xx;
 						if (tmpmap[idx] != -1) goto DAMEDESU;
-						tmpmap[idx] = stones[i].id;
+						tmpmap[idx] = stones[id].id;
 					}
 
 					if (isAccept(tmpmap, x1, y1, x2, y2)) goto NEXT;
@@ -93,7 +96,7 @@ void sendAnswer(const int *map, const Stone *stones, const int *original_stone, 
 
 		for (j=0; j<1024; j++) {
 			if (map[j] != i) continue;
-			zkmap[j] = map[j];
+			zkmap[j] = 1;
 			len++;
 		}
 
@@ -151,8 +154,11 @@ int solver(int *map, int x1, int y1, int x2, int y2, int *original_stones, int n
 	}
 
 	// Score
-	for (i=0; i<n; i++) stones[i].score = (((double)(n - i) / (double)n) * (double)stones[i].len) * 0.0625;
-	qsort(stones, n, sizeof(Stone), sortByScore);
+	Stone sorted[256];
+	//for (i=0; i<n; i++) stones[i].score = (((double)(n - i) / (double)n) * (double)stones[i].len) * 0.0625;
+	for (i=0; i<n; i++) stones[i].score = ((double)(n - i) / (double)n);
+	memcpy(sorted, stones, sizeof(Stone) * 256);
+	qsort(sorted, n, sizeof(Stone), sortByScore);
 
 	// Put
 	Score best;
@@ -160,8 +166,7 @@ int solver(int *map, int x1, int y1, int x2, int y2, int *original_stones, int n
 	int tmpmap[1024];
 	for (i=0; i<n; i++) {
 		memcpy(tmpmap, map, sizeof(int) * 1024);
-		// なんか怪しい、メモに「n-(stones[i].id)」とある
-		putStone(&stones[i], n-i, tmpmap, x1, y1, x2, y2);
+		putStone(sorted, sorted[i].id, n, tmpmap, x1, y1, x2, y2);
 		bestScore(&best, tmpmap);
 	}
 
@@ -258,7 +263,7 @@ void s2s4z(const int *map, int8_t *dst)
 		}
 	}
 
-	for (x=idx; x<32; x++) dst[x] = 0;
+	for (x=idx; x<32; x++) dst[x] = INT8_MAX;
 }
 
 void stoneEncode(Stone *dst, const int *stones_base, int n)

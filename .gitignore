@@ -25,7 +25,10 @@ obj/
 /Client/FullSearch/ipch/*
 /Client/FullSearch/Debug/*
 !/Client/FullSearch/Debug/FullSearch.exe
+/Client/FullSearch/Release/*
+!/Client/FullSearch/Release/FullSearch.exe
 /Client/FullSearch/FullSearch/Debug/*
+/Client/FullSearch/FullSearch/Release/*
 !/Client/FullSearch/FullSearch/*.cpp
 !/Client/FullSearch/FullSearch/*.h
 !/Client/FullSearch/FullSearch/*.vcxproj

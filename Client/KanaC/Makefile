@@ -1,4 +1,4 @@
-CFLAGS=-Wall
+CFLAGS=-Wall -O2 -march=native
 
 kanac: kana.o common.o kcommon.o
 	gcc $(CFLAGS) kana.o common.o kcommon.o -o kanac

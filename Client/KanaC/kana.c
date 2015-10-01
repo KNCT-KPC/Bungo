@@ -91,6 +91,10 @@ void putWrapper(Score *best, Stone *stones, int n, const int *map, int x1, int y
 		memcpy(tmpmap, map, sizeof(int) * 1024);
 		putStone(sorted, sorted[i].id, n, tmpmap, x1, y1, x2, y2);
 		bestScore(best, tmpmap);
+
+		printf("Best Score(~%d): %d, Zk: %d\n", i, best->score, best->zk);
+		dumpMap2(best->map);
+		printf("\n");
 	}
 }
 
@@ -115,7 +119,7 @@ int solver(int *map, int x1, int y1, int x2, int y2, int *original_stones, int n
 	}
 
 	// Best
-	printf("Score: %d, Zk: %d\n", best.score, best.zk);
+	printf("Best Score: %d, Zk: %d\n", best.score, best.zk);
 	dumpMap2(best.map);
 
 	// Send

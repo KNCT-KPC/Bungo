@@ -160,7 +160,7 @@ void dfs(int *map, int x, int y, int x1, int y1, int x2, int y2, int id)
 
 int isAccept(const int *map, int x1, int y1, int x2, int y2)
 {
-	int x, y, i, first = 256;
+	int x=0, y=0, i, first = 256;
 	int tmpmap[1024];
 
 	for (i=0; i<1024; i++) {
@@ -286,7 +286,7 @@ void sendAnswer(const int *map, const Stone *stones, const int *original_stone, 
 			continue;
 		}
 
-		int x, y, first_x, first_y;
+		int x=0, y=0, first_x, first_y;
 		char front = (idx % 2 == 0) ? 'F' : 'B';
 		int angle = idx / 2;
 

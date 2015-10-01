@@ -722,6 +722,7 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 					pStack.push(new PutPoint(kn, st, shitAry[kn][st], p));
 				}
 
+				delete p;
 				continue;
 			}
 		}
@@ -737,11 +738,12 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 			/*
 			printf("%d\n", kn);
 			DEBUG_printMap(map, width+1, height);
-			printf("%d\n", freeSize);
-
 			if(stonesNum/2 < kn){
 				printf("dead area : %d\n", CalcDeadArea(map, width+1, height, &(shitSizeAry[kn]), stonesNum-kn));
 			}
+			printf("free size : %d\n", freeSize);
+
+			DEBUG_waitKey();
 			*/
 
 			//次に配置予定の糞（ズク）が空き領域よりも大きいならスキップする
@@ -759,18 +761,14 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 			//if(stonesNum/2 < kn){
 			if(true){
 				int deadArea = CalcDeadArea(map, width+1, height, &(shitSizeAry[kn]), stonesNum-kn);
-				/*
-				printf("%d > \n", kn);
-				DEBUG_printMap(map, width+1, height);
-				printf("%d | %d\n", minScore, deadArea);
-				DEBUG_waitKey();
-				*/
+
 				if(minScore < deadArea){
 					//最良スコアを超えられないなら、終端へ
 					freeSize += RemoveShit(map, p->GetShitNumber(), width, height);
 
 					pStack.pop();	//ここいら怪しい
 					putShitNum--;	//怪しい
+					delete p;
 					goto TERMINAL;
 				}
 			}
@@ -812,6 +810,7 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 		freeSize += RemoveShit(map, pStack.top()->GetShitNumber(), width, height);	//コレ
 
 		if(pStack.top()->GetShitNumber() == stonesNum-1){	//置いた糞（ズク）が最後なら
+			delete pStack.top();
 			pStack.pop();	//今後どう置いてもスコアは変わらないのでポップ
 			freeSize += RemoveShit(map, pStack.top()->GetShitNumber(), width, height);	//コレ
 			putShitNum--;

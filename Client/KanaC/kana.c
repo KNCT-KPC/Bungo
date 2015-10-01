@@ -10,6 +10,7 @@
 #include <stdint.h>
 #include <sys/wait.h>
 #include "../SATubatu/common.h"
+#include <time.h>
 
 #define	CLIENT_NAME	"KanaC"
 #define	SERVER_IPADDR	"127.0.0.1"
@@ -140,6 +141,37 @@ void sendAnswer(const int *map, const Stone *stones, const int *original_stone, 
 	}
 }
 
+void putWrapper(Score *best, Stone *stones, int n, const int *map, int x1, int y1, int x2, int y2)
+{
+	// Score
+	int i;
+	Stone sorted[256];
+	static int counter = 0;
+
+	if (counter == 0) {
+		for (i=0; i<n; i++) stones[i].score = (((double)(n - i) / (double)n) * (double)stones[i].len) * 0.0625;
+	} else if (counter == 2) {
+		for (i=0; i<n; i++) stones[i].score = ((double)(n - i) / (double)n);
+	} else if (counter == 1 || counter == 3) {
+		for (i=0; i<n; i++) stones[i].score *= -1;
+	} else {
+		srand((unsigned)time(NULL));
+		for (i=0; i<n; i++) stones[i].score = rand();
+	}
+
+	counter++;
+	memcpy(sorted, stones, sizeof(Stone) * 256);
+	qsort(sorted, n, sizeof(Stone), sortByScore);
+
+	// Put
+	int tmpmap[1024];
+	for (i=0; i<n; i++) {
+		memcpy(tmpmap, map, sizeof(int) * 1024);
+		putStone(sorted, sorted[i].id, n, tmpmap, x1, y1, x2, y2);
+		bestScore(best, tmpmap);
+	}
+}
+
 int solver(int *map, int x1, int y1, int x2, int y2, int *original_stones, int n)
 {
 	int i, j;
@@ -153,21 +185,11 @@ int solver(int *map, int x1, int y1, int x2, int y2, int *original_stones, int n
 		map[i] = (tmp == 0) ? -1 : -2;
 	}
 
-	// Score
-	Stone sorted[256];
-	//for (i=0; i<n; i++) stones[i].score = (((double)(n - i) / (double)n) * (double)stones[i].len) * 0.0625;
-	for (i=0; i<n; i++) stones[i].score = ((double)(n - i) / (double)n);
-	memcpy(sorted, stones, sizeof(Stone) * 256);
-	qsort(sorted, n, sizeof(Stone), sortByScore);
-
-	// Put
+	// Search
 	Score best;
 	best.score = 1024;
-	int tmpmap[1024];
-	for (i=0; i<n; i++) {
-		memcpy(tmpmap, map, sizeof(int) * 1024);
-		putStone(sorted, sorted[i].id, n, tmpmap, x1, y1, x2, y2);
-		bestScore(&best, tmpmap);
+	for (i=0; i<10; i++) {
+		putWrapper(&best, stones, n, map, x1, y1, x2, y2);
 	}
 
 	// Best
@@ -178,12 +200,6 @@ int solver(int *map, int x1, int y1, int x2, int y2, int *original_stones, int n
 	sendMsg("S");
 	sendAnswer(best.map, stones, original_stones, n);
 	if (sendMsg("E") == EXIT_FAILURE) return EXIT_SUCCESS;
-
-	/*
-	sendMsg("S");
-	sendMsg("");
-	if (sendMsg("E") == EXIT_FAILURE) return EXIT_SUCCESS;
-	*/
 	return EXIT_FAILURE;
 }
 

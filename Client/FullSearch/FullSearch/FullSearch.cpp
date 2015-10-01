@@ -127,7 +127,7 @@ public :
 			}
 		}
 
-		i = 0;
+		this->i = 0;
 		this->s = s;
 		this->k = k;
 		this->start = false;
@@ -153,7 +153,7 @@ public :
 		}
 		neighborAry[neighborNum] = -1;
 
-		i = 0;
+		this->i = 0;
 		this->s = s;
 		this->k = k;
 		this->start = false;
@@ -176,7 +176,7 @@ public :
 		neighborAry = new int[1];
 		neighborAry[0] = -1;
 
-		i = 0;
+		this->i = 0;
 		this->s = s;
 		this->k = k;
 		this->start = true;
@@ -342,7 +342,7 @@ void Shit_MapToBaseAry(const int* stones, const int stoneNum, const int width, i
 		}
 	}
 	baseAry[0][bsIndex] = -1;	//-1は番兵
-	DEBUG_printBaseAryStone(baseAry[0]);
+	//DEBUG_printBaseAryStone(baseAry[0]);
 
 	//90°回転
 	min = -1;
@@ -364,7 +364,7 @@ void Shit_MapToBaseAry(const int* stones, const int stoneNum, const int width, i
 		baseAry[1] = 0;
 		goto REVERSE;
 	}
-	DEBUG_printBaseAryStone(baseAry[1]);
+	//DEBUG_printBaseAryStone(baseAry[1]);
 
 	//180°回転
 	min = -1;
@@ -386,7 +386,7 @@ void Shit_MapToBaseAry(const int* stones, const int stoneNum, const int width, i
 		baseAry[2] = 0;
 		goto REVERSE;
 	}
-	DEBUG_printBaseAryStone(baseAry[2]);
+	//DEBUG_printBaseAryStone(baseAry[2]);
 
 	//270°回転
 	min = -1;
@@ -403,7 +403,7 @@ void Shit_MapToBaseAry(const int* stones, const int stoneNum, const int width, i
 		}
 	}
 	baseAry[3][bsIndex] = -1;	//-1は番兵
-	DEBUG_printBaseAryStone(baseAry[3]);
+	//DEBUG_printBaseAryStone(baseAry[3]);
 
 
 REVERSE :;
@@ -430,7 +430,7 @@ REVERSE :;
 			}
 		}
 	}
-	DEBUG_printBaseAryStone(baseAry[4]);
+	//DEBUG_printBaseAryStone(baseAry[4]);
 
 
 	//90°回転
@@ -449,7 +449,7 @@ REVERSE :;
 		}
 	}
 	baseAry[5][bsIndex] = -1;	//-1は番兵
-	DEBUG_printBaseAryStone(baseAry[5]);
+	//DEBUG_printBaseAryStone(baseAry[5]);
 
 	//180°回転
 	if(baseAry[2] == 0) return;
@@ -467,7 +467,7 @@ REVERSE :;
 		}
 	}
 	baseAry[6][bsIndex] = -1;	//-1は番兵
-	DEBUG_printBaseAryStone(baseAry[6]);
+	//DEBUG_printBaseAryStone(baseAry[6]);
 
 	//270°回転
 	if(baseAry[2] == 0) return;
@@ -485,7 +485,7 @@ REVERSE :;
 		}
 	}
 	baseAry[7][bsIndex] = -1;	//-1は番兵
-	DEBUG_printBaseAryStone(baseAry[7]);
+	//DEBUG_printBaseAryStone(baseAry[7]);
 }
 
 int CountArrayAdd(const int* a, const int size, const int p){
@@ -496,12 +496,24 @@ int CountArrayAdd(const int* a, const int size, const int p){
 	return result;
 }
 
-int MaxSubSize(const int* map, const int width, const int height){
+void InsertSort(int num[], int n){
+    int i, j, temp;
+
+    for (i = 1; i < n; i++) {  
+        temp = num[i];         
+        for (j = i; j > 0 && num[j-1] > temp; j--) 
+            num[j] = num[j-1];
+        num[j] = temp;
+	}
+}
+
+int CheckSubArea(const int* map, const int width, const int height, int* areaSizeAry){
 	std::queue<int> queue;
 
 	int* check = new int[width*height];
 	for(int i = 0; i < width*height; i++) check[i] = 0;
 
+	int asaIndex = 0;
 	int areaNum;
 	int maxAreaNum = -1;
 	for(int i = 0; i < width*height; i++){
@@ -538,14 +550,53 @@ int MaxSubSize(const int* map, const int width, const int height){
 				}
 			}
 
+			areaSizeAry[asaIndex] = areaNum;
+			asaIndex++;
 			if(areaNum > maxAreaNum){
 				maxAreaNum = areaNum;
 			}
 		}
 	}
 
+	InsertSort(areaSizeAry, asaIndex);
+	areaSizeAry[asaIndex] = -1;
 	delete check;
 	return maxAreaNum;
+}
+
+int areaAry[1025];
+int CalcDeadArea(const int* map, const int width, const int height, const int* shitAry, const int shitNum){
+	CheckSubArea(map, width, height, areaAry);
+	/*
+	for(int as = 0; areaAry[as] != -1; as++){
+		printf("%d ", areaAry[as]);
+	} printf("\n");
+	*/
+
+
+	int* tempShit = new int[shitNum];
+	for(int i = 0; i < shitNum; i++){
+		tempShit[i] = shitAry[i];
+	}
+
+	for(int a = 0; areaAry[a] != -1; a++){
+		for(int i = 0; i < shitNum; i++){
+			if(tempShit[i] == -1) continue;
+
+			if(tempShit[i] <= areaAry[a]){
+				areaAry[a] = 0;
+				break;
+			}
+		}
+	}
+
+	int result = 0;
+	for(int a = 0; areaAry[a] != -1; a++){
+		result += areaAry[a];
+	}
+
+	delete tempShit;
+	return result;
 }
 
 void FullSearch(const int* Map, const int x1, const int y1, const int x2, const int y2, const int* stones, const int stonesNum, char* solution){
@@ -583,21 +634,26 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 	printf("%d %d\n", width, height); //DEBUG
 	DEBUG_printMap(map, width+1, height);
 
+	printf("free : %d\n", freeSize);
+	DEBUG_waitKey();
 
 		//糞（ズク）の再定義
 	int*** shitAry = new int**[stonesNum];	//起点配列表現をした糞（ズク）の配列
 	int* shitSizeAry = new int[stonesNum];
+	int totalSize = 0;
 	for(int s = 0; s < stonesNum; s++){
+		printf("\t%c\n", s+1+48);
 		shitAry[s] = new int*[8];
 
 		DEBUG_printMapStone(stones, s);
 		Shit_MapToBaseAry(stones, s, width, shitAry[s]);
 
 		shitSizeAry[s] = CountShitSize(shitAry[s][0]);	//サイズを計る
+		totalSize += shitSizeAry[s];
 		printf("\t size : %d\n", shitSizeAry[s]);
 	}
 
-	printf("\n");	//DEBUG
+	printf("total size : %d\n", totalSize);	//DEBUG
 	DEBUG_waitKey();
 	printf("\nStart : \n");	//DEBUG
 
@@ -628,6 +684,9 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 		//freeSize += RemoveShit(map, kn, width, height);	//コレ
 		//前回の配置点配列を保存しておいて、短縮する？
 		//ここでやる必要ある？
+		if(kn == 0){
+			printf("koko\n");
+		}
 
 		int nextBasePoint;
 		if(!p->GetNextValue(&nextBasePoint)){
@@ -644,16 +703,11 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 				if(st >= 8){	//すべての向きが終了
 					st = 0;	//向きをリセットして
 
-					int checkArea = freeSize;
-					if(stonesNum/2 < kn){
-						checkArea = MaxSubSize(map, width+1, height);
-					}
-
 					//残りの空き領域から、置けない糞（ズク）をスキップする。
 					int temp_kn = kn;
 					do{
 						kn++;
-					} while(kn < stonesNum && shitSizeAry[kn] > checkArea);
+					} while(kn < stonesNum && shitSizeAry[kn] > freeSize);
 
 					//もうコレ以上置けないなら、終端とする
 					if(kn >= stonesNum){
@@ -686,20 +740,15 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 			printf("%d\n", freeSize);
 
 			if(stonesNum/2 < kn){
-				printf("maxSize : %d\n", MaxSubSize(map, width+1, height));
+				printf("dead area : %d\n", CalcDeadArea(map, width+1, height, &(shitSizeAry[kn]), stonesNum-kn));
 			}
-			DEBUG_waitKey();
 			*/
 
-			int checkArea = freeSize;
-			if(stonesNum/2 < kn){
-				checkArea = MaxSubSize(map, width+1, height);
-			}
 			//次に配置予定の糞（ズク）が空き領域よりも大きいならスキップする
 			int temp_kn = kn;
 			do{
 				kn++;
-			} while(kn < stonesNum && shitSizeAry[kn] > checkArea);
+			} while(kn < stonesNum && shitSizeAry[kn] > freeSize);
 			
 			//糞（ズク）がもう無いなら
 			if(kn >= stonesNum){
@@ -707,16 +756,16 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 				goto TERMINAL;	//終端とする
 			}
 
-			//if(freeSize < maxFreeSize/2){
+			//if(stonesNum/2 < kn){
 			if(true){
-				int totalShitSize = 0;	//現実的に置ける糞（ズク）の合計
-				for(int i = kn; i < stonesNum; i++){
-					if(shitSizeAry[i] <= checkArea){	//置ける
-						totalShitSize += shitSizeAry[i];
-					}
-				}
-
-				if(minScore < checkArea - totalShitSize){
+				int deadArea = CalcDeadArea(map, width+1, height, &(shitSizeAry[kn]), stonesNum-kn);
+				/*
+				printf("%d > \n", kn);
+				DEBUG_printMap(map, width+1, height);
+				printf("%d | %d\n", minScore, deadArea);
+				DEBUG_waitKey();
+				*/
+				if(minScore < deadArea){
 					//最良スコアを超えられないなら、終端へ
 					freeSize += RemoveShit(map, p->GetShitNumber(), width, height);
 
@@ -734,12 +783,13 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 
 	TERMINAL:
 		//ポイント集計、解答作成
-		//int score = CalcScore(map, width, height);
-		int score = freeSize;	//ココ
+		int score = CalcScore(map, width, height);
+		//int score = freeSize;	//ココ
 		if(minScore > score){
 			minScore = score;
 			minScore_minShitNum = putShitNum;
 		
+			DEBUG_printMap(map, width+1, height);
 			printf("score(%d,%d)\n", minScore, minScore_minShitNum);
 			printf("\n");
 
@@ -747,6 +797,7 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 			if(minScore_minShitNum > putShitNum){
 				minScore_minShitNum = putShitNum;
 
+				DEBUG_printMap(map, width+1, height);
 				printf("score(%d,%d)\n", minScore, minScore_minShitNum);
 				printf("\n");
 			}

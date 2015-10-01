@@ -102,10 +102,8 @@ int sendMsg(char *msg)
 
 int solver(int *map, int x1, int y1, int x2, int y2, int *stones, int n)
 {
-	/* Range */
+	/*
 	printf("(%d, %d) ~ (%d, %d)\n\n", x1, y1, x2, y2);
-
-	/* Map */
 	int x, y;
 	printf("Map\n");
 	for (y=0; y<32; y++) {
@@ -114,8 +112,6 @@ int solver(int *map, int x1, int y1, int x2, int y2, int *stones, int n)
 		printf("\n");
 	}
 	printf("\n");
-
-	/* Stones */
 	int i;
 	printf("Stones\n");
 	for (i=0; i<n; i++) {
@@ -127,6 +123,7 @@ int solver(int *map, int x1, int y1, int x2, int y2, int *stones, int n)
 		}
 	}
 	printf("\n");
+	*/
 
 	char solution[25600] = {0};
 	FullSearch(map, x1, y1, x2, y2, stones, n, solution);

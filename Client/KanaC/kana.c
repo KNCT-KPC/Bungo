@@ -50,33 +50,33 @@ void putStone(const Stone *stones, int n, int *map, int x1, int y1, int x2, int 
 		if (stones[i].id < id) continue;
 		int8_t operation[256];
 		BlockDefineOperation(stones[i].list, operation);
-		
+
 		for (y=y1; y<y2; y++) {
 			for (x=x1; x<x2; x++) {
 				for (j=0; j<8; j++) {
 					int8_t *p = &operation[j << 5];
 					if (p[0] == INT8_MAX) continue;
-					
+
 					for (k=0; k<stones[i].len; k++) {
 						int xx = x + p[k << 1];
 						int yy = y + p[(k << 1) + 1];
-						
+
 						if (!((x1 <= xx) && (xx < x2)) || !((y1 <= yy) && (yy < y2))) goto DAMEDESU;
-						
+
 						int idx = (yy << 5) + xx;
 						if (tmpmap[idx] != -1) goto DAMEDESU;
 						tmpmap[idx] = stones[i].id;
 					}
-					
+
 					if (isAccept(tmpmap, x1, y1, x2, y2)) goto NEXT;
-					
+
 				DAMEDESU:
 					memcpy(tmpmap, map, sizeof(int) * 1024);
 					continue;
 				}
 			}
 		}
-		
+
 	NEXT:
 		memcpy(map, tmpmap, sizeof(int) * 1024);
 		continue;	// noop
@@ -86,27 +86,27 @@ void putStone(const Stone *stones, int n, int *map, int x1, int y1, int x2, int 
 void sendAnswer(const int *map, const Stone *stones, const int *original_stone, int n)
 {
 	int i, j, k;
-	
+
 	for (i=0; i<n; i++) {
 		int len = 0;
 		int zkmap[1024] = {};
-		
+
 		for (j=0; j<1024; j++) {
 			if (map[j] != i) continue;
 			zkmap[j] = map[j];
 			len++;
 		}
-		
+
 		if (len == 0) {
 			sendMsg("");
 			continue;
 		}
-		
+
 		int8_t tmp[32];
 		int8_t operation[256];
 		BlockDefineOperation(stones[i].list, operation);
 		s2s4z(zkmap, tmp);
-		
+
 		int idx = 0;
 		for (j=0; j<8; j++) {
 			int8_t *p = &operation[j << 5];
@@ -117,11 +117,11 @@ void sendAnswer(const int *map, const Stone *stones, const int *original_stone, 
 		NONO:
 			continue;
 		}
-		
+
 		int x, y, first_x, first_y;
 		char front = (idx % 2 == 0) ? 'F' : 'B';
 		int angle = idx / 2;
-		
+
 		mawareSetsugetsuka((front == 'F') ? 1 : 0, angle, &original_stone[i << 6], &first_x, &first_y);
 		for (j=0; j<32; j++) {
 			for (k=0; k<32; k++) {
@@ -131,7 +131,7 @@ void sendAnswer(const int *map, const Stone *stones, const int *original_stone, 
 				goto MATAGOTOKAYO;
 			}
 		}
-		
+
 	MATAGOTOKAYO:
 		sendPutMsg(front, angle * 90, x - first_x, y - first_y);
 	}
@@ -141,7 +141,7 @@ int solver(int *map, int x1, int y1, int x2, int y2, int *original_stones, int n
 {
 	int i, j;
 	dump(map, x1, y1, x2, y2, original_stones, n);
-	
+
 	// Prepare
 	Stone stones[256];
 	stoneEncode(stones, original_stones, n);
@@ -153,7 +153,7 @@ int solver(int *map, int x1, int y1, int x2, int y2, int *original_stones, int n
 	// Score
 	for (i=0; i<n; i++) stones[i].score = (((double)(n - i) / (double)n) * (double)stones[i].len) * 0.0625;
 	qsort(stones, n, sizeof(Stone), sortByScore);
-	
+
 	// Put
 	Score best;
 	best.score = 1024;
@@ -173,7 +173,7 @@ int solver(int *map, int x1, int y1, int x2, int y2, int *original_stones, int n
 	sendMsg("S");
 	sendAnswer(best.map, stones, original_stones, n);
 	if (sendMsg("E") == EXIT_FAILURE) return EXIT_SUCCESS;
-	
+
 	/*
 	sendMsg("S");
 	sendMsg("");
@@ -190,7 +190,7 @@ int main(int argc, char *argv[])
 {
 	int osfhandle, sd;
 	initClient(CLIENT_NAME, SERVER_IPADDR, &osfhandle, &sd);
-	
+
 	int x1, y1, x2, y2, n;
 	int map[1024];
 	int stones[16384];
@@ -198,7 +198,7 @@ int main(int argc, char *argv[])
 	while (ready(map, &x1, &y1, &x2, &y2, stones, &n)) {
 		if (solver(map, x1, y1, x2, y2, stones, n) == EXIT_FAILURE) break;
 	}
-	
+
 	finalClient(osfhandle, sd);
 	return EXIT_SUCCESS;
 }
@@ -217,7 +217,7 @@ int s2s(const int *stone, int8_t *dst)
 {
 	int idx = 0, len = 0;
 	int anc_x = -1, anc_y;
-				
+
 	int x, y;
 	for (y=0; y<8; y++) {
 		for (x=0; x<8; x++) {
@@ -226,13 +226,13 @@ int s2s(const int *stone, int8_t *dst)
 				anc_x = x;
 				anc_y = y;
 			}
-			
+
 			dst[idx++] = x - anc_x;
 			dst[idx++] = y - anc_y;
 			if (++len >= 16) return len;
 		}
 	}
-	
+
 	for (x=idx; x<32; x++) dst[x] = INT8_MAX;
 	return len;
 }
@@ -242,7 +242,7 @@ void s2s4z(const int *map, int8_t *dst)
 {
 	int idx = 0, len = 0;
 	int anc_x = -1, anc_y;
-				
+
 	int x, y;
 	for (y=0; y<32; y++) {
 		for (x=0; x<32; x++) {
@@ -251,13 +251,13 @@ void s2s4z(const int *map, int8_t *dst)
 				anc_x = x;
 				anc_y = y;
 			}
-			
+
 			dst[idx++] = x - anc_x;
 			dst[idx++] = y - anc_y;
 			if (++len >= 16) return;
 		}
 	}
-	
+
 	for (x=idx; x<32; x++) dst[x] = 0;
 }
 
@@ -282,7 +282,7 @@ void BlockNormalize(int8_t *zk)
 	for (i=0; i<32; i+=2) {
 		int x = zk[i];
 		if (x == INT8_MAX || x == -INT8_MAX) break;
-		
+
 		int y = zk[i+1];
 		offset[0] = MIN(offset[0], x);
 		offset[1] = MIN(offset[1], y);
@@ -298,14 +298,14 @@ void BlockNormalize(int8_t *zk)
 void BlockDefineOperation(const int8_t *zk, int8_t *dst)
 {
 	int i, j, k;
-	
+
 	// Front and Back
 	memcpy(dst, zk, sizeof(int8_t) << 5);
 	for (i=0; i<32; i+=2) {
 		dst[32 + i] = -zk[i];
 		dst[32 + i+1] = zk[i+1];
 	}
-	
+
 	// Rotate
 	for (i=2; i<8; i++) {
 		int idx = (i << 5);
@@ -341,10 +341,10 @@ void BlockDefineOperation(const int8_t *zk, int8_t *dst)
 void dfs(int *map, int x, int y, int x1, int y1, int x2, int y2, int id)
 {
 	if (!(((x1 <= x) && (x < x2)) && ((y1 <= y) && (y < y2)))) return;
-	
+
 	int idx = (y << 5) + x;
 	if (map[idx] < 0 || map[idx] < id) return;
-	
+
 	id = map[idx];
 	map[idx] = -1;
 	dfs(map, x, y - 1, x1, y1, x2, y2, id);
@@ -357,7 +357,7 @@ int isAccept(const int *map, int x1, int y1, int x2, int y2)
 {
 	int x, y, i, first = 256;
 	int tmpmap[1024];
-	
+
 	for (i=0; i<1024; i++) {
 		if (map[i] < 0) continue;
 		first = MIN(first, map[i]);
@@ -368,7 +368,7 @@ int isAccept(const int *map, int x1, int y1, int x2, int y2)
 		for (x=x1; x<x2; x++) {
 			if (tmpmap[(y << 5) + x] != first) continue;
 			dfs(tmpmap, x, y, x1, y1, x2, y2, first);
-			
+
 			for (i=0; i<1024; i++) if (tmpmap[i] >= 0) return 0;
 			return 1;
 		}
@@ -379,12 +379,12 @@ void bestScore(Score *best, const int *map)
 {
 	int i, j, len = 0, score = 0;
 	int zks[256] = {};
-	
+
 	for (i=0; i<1024; i++) {
 		int tmp = map[i];
 		if (tmp == -1) score++;
 		if (tmp < 0) continue;
-		
+
 		for (j=0; j<len; j++) {
 			if (tmp == zks[j]) goto NEXTNEXT;
 		}
@@ -393,7 +393,7 @@ void bestScore(Score *best, const int *map)
 	NEXTNEXT:
 		continue;
 	}
-	
+
 	if (score < best->score || (score == best->score && len < best->zk)) {
 		best->score = score;
 		best->zk = len;
@@ -406,7 +406,7 @@ void mawareSetsugetsuka(int front, int angle, const int *stone, int *x, int *y)
 {
 	int i, j, k, sidx, didx;
 	int dst[64], dst2[64];
-	
+
 	// Front or Back
 	for (i=0; i<8; i++) {
 		for (j=0; j<8; j++) {
@@ -415,12 +415,12 @@ void mawareSetsugetsuka(int front, int angle, const int *stone, int *x, int *y)
 			dst[didx] = stone[sidx];
 		}
 	}
-	
+
 	// Rotate
 	for (i=0; i<angle; i++) {
 		int tmp[64];
 		memcpy(tmp, dst, sizeof(int) * 64);
-		
+
 		for (j=0; j<8; j++) {
 			for (k=0; k<8; k++) {
 				sidx = (j << 3) + k;
@@ -428,10 +428,10 @@ void mawareSetsugetsuka(int front, int angle, const int *stone, int *x, int *y)
 				tmp[didx] = dst[sidx];
 			}
 		}
-		
+
 		memcpy(dst, tmp, sizeof(int) * 64);
 	}
-	
+
 	// Search
 	for (i=0; i<8; i++) {
 		for (j=0; j<8; j++) {

@@ -44,7 +44,7 @@ void putStone(const Stone *stones, int n, int *map, int x1, int y1, int x2, int 
 	int i, x, y, j, k;
 	int tmpmap[1024];
 	memcpy(tmpmap, map, sizeof(int) * 1024);
-	
+
 	int id = stones[0].id;
 	for (i=0; i<n; i++) {
 		if (stones[i].id < id) continue;
@@ -149,7 +149,7 @@ int solver(int *map, int x1, int y1, int x2, int y2, int *original_stones, int n
 		int tmp = map[i];
 		map[i] = (tmp == 0) ? -1 : -2;
 	}
-	
+
 	// Score
 	for (i=0; i<n; i++) stones[i].score = (((double)(n - i) / (double)n) * (double)stones[i].len) * 0.0625;
 	qsort(stones, n, sizeof(Stone), sortByScore);
@@ -276,7 +276,7 @@ void stoneEncode(Stone *dst, const int *stones_base, int n)
 /*----------------------------------------------------------------------------*/
 void BlockNormalize(int8_t *zk)
 {
-	int i, len = 2;
+	int i, len = 0;
 
 	int offset[] = {0, 0};
 	for (i=0; i<32; i+=2) {

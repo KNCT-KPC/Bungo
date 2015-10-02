@@ -205,7 +205,7 @@ int bestScore(Score *best, const int *map)
 	if (score < best->score || (score == best->score && len < best->zk)) {
 		best->score = score;
 		best->zk = len;
-		memcpy(best->map, map, sizeof(int) * 1024);
+		memcpy(best->map, map, sizeof(int) << 10);
 		return 1;
 	}
 

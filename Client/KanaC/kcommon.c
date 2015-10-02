@@ -183,7 +183,7 @@ KOKOYO:
 	return 1;
 }
 
-void bestScore(Score *best, const int *map)
+int bestScore(Score *best, const int *map)
 {
 	int i, j, len = 0, score = 0;
 	int zks[256] = {};
@@ -206,8 +206,10 @@ void bestScore(Score *best, const int *map)
 		best->score = score;
 		best->zk = len;
 		memcpy(best->map, map, sizeof(int) * 1024);
-		return;
+		return 1;
 	}
+
+	return 0;
 }
 
 void mawareSetsugetsuka(int front, int angle, const int *stone, int *x, int *y)

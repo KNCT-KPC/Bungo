@@ -26,7 +26,7 @@
 #ifndef	LOCAL
 	#define	SERVER_PORT	25252
 #else
-	#define	INPUT_FILENAME	"../../Problem/light/light-local.txt"
+	#define	INPUT_FILENAME	"../../Problem/27/27-local.txt"
 	#define	OUTPUT_FILENAME	"-"
 #endif
 #define	BUF_SIZE	1027

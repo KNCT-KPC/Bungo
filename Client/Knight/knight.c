@@ -16,109 +16,50 @@
 /*------------------------------------*/
 /*               Solver               */
 /*------------------------------------*/
-void putStone(const Stone *stones, int first, int n, int *map, int x1, int y1, int x2, int y2)
+void backTracking(Score *best, int id, Stone *stones, int n, int *map, int x1, int y1, int x2, int y2)
 {
-	int i, x, y, j, k;
-	int tmpmap[1024];
-	memcpy(tmpmap, map, sizeof(int) * 1024);
+	if (bestScore(best, map)) printf("Update best score: (%d, %d)\n", best->score, best->zk);
+	if (id == n) return;
 
-	int ids[256];
-	for (i=0; i<n; i++) ids[i] = (first + i) % n;
+	int x, y, i, j;
+	int8_t *operation = (int8_t *)malloc(sizeof(int8_t) * 256);
+	int *tmpmap = (int *)malloc(sizeof(int) * 1024);
 
-	for (i=0; i<n; i++) {
-		int id = ids[i];
-		int8_t operation[256];
-		BlockDefineOperation(stones[id].list, operation);
+	BlockDefineOperation(stones[id].list, operation);
+	for (y=y1; y<y2; y++) {
+		for (x=x1; x<x2; x++) {
+			for (i=0; i<8; i++) {
+				memcpy(tmpmap, map, sizeof(int) * 1024);
+				int8_t *p = &operation[i << 5];
+				if (p[0] == INT8_MAX) continue;
 
-		for (y=y1; y<y2; y++) {
-			for (x=x1; x<x2; x++) {
-				for (j=0; j<8; j++) {
-					int8_t *p = &operation[j << 5];
-					if (p[0] == INT8_MAX) continue;
+				for (j=0; j<stones[id].len; j++) {
+					int xx = x + p[j << 1];
+					int yy = y + p[(j << 1) + 1];
+					if (!((x1 <= xx) && (xx < x2)) || !((y1 <= yy) && (yy < y2))) goto DAMEDESU;
 
-					for (k=0; k<stones[id].len; k++) {
-						int xx = x + p[k << 1];
-						int yy = y + p[(k << 1) + 1];
-
-						if (!((x1 <= xx) && (xx < x2)) || !((y1 <= yy) && (yy < y2))) goto DAMEDESU;
-
-						int idx = (yy << 5) + xx;
-						if (tmpmap[idx] != -1) goto DAMEDESU;
-						tmpmap[idx] = stones[id].id;
-					}
-
-					if (isAccept(tmpmap, x1, y1, x2, y2)) goto NEXT;
-
-				DAMEDESU:
-					memcpy(tmpmap, map, sizeof(int) * 1024);
-					continue;
+					int idx = (yy << 5) + xx;
+					if (tmpmap[idx] != -1) goto DAMEDESU;
+					tmpmap[idx] = id;
 				}
+
+				if (!isAccept(tmpmap, x1, y1, x2, y2)) goto DAMEDESU;
+				backTracking(best, id+1, stones, n, tmpmap, x1, y1, x2, y2);
+			DAMEDESU:
+				continue;	// noop
 			}
 		}
-
-	NEXT:
-		memcpy(map, tmpmap, sizeof(int) * 1024);
-		continue;	// noop
-	}
-}
-
-void putWrapper(Score *best, Stone *stones, int n, const int *map, int x1, int y1, int x2, int y2)
-{
-	// Score
-	int i;
-	Stone sorted[256];
-	static int counter = 0;
-
-	if (counter == 0) {
-		for (i=0; i<n; i++) stones[i].score = (((double)(n - i) / (double)n) * (double)stones[i].len) * 0.0625;
-	} else if (counter == 2) {
-		for (i=0; i<n; i++) stones[i].score = ((double)(n - i) / (double)n);
-	} else if (counter == 1 || counter == 3) {
-		for (i=0; i<n; i++) stones[i].score *= -1;
-	} else {
-		srand((unsigned)time(NULL));
-		for (i=0; i<n; i++) stones[i].score = rand();
 	}
 
-	counter++;
-	memcpy(sorted, stones, sizeof(Stone) * 256);
-	qsort(sorted, n, sizeof(Stone), sortByScore);
-
-	// Put
-	int tmpmap[1024];
-	for (i=0; i<n; i++) {
-		memcpy(tmpmap, map, sizeof(int) * 1024);
-		putStone(sorted, sorted[i].id, n, tmpmap, x1, y1, x2, y2);
-		bestScore(best, tmpmap);
-
-		printf("Best Score(~%d): %d, Zk: %d\n", i, best->score, best->zk);
-		dumpMap2(best->map);
-		printf("\n");
-	}
+	backTracking(best, id+1, stones, n, map, x1, y1, x2, y2);
 }
 
 int solver(int *map, int x1, int y1, int x2, int y2, int *original_stones, int n)
 {
-	int i;
-	printf("ScoreSize = %d, StoneSize = %d\n", sizeof(Score), sizeof(Stone));
-
-	for (i=0; i<1000000; i++) {
-		Score *p = (Score *)malloc(sizeof(Score));
-		printf("%p\t%p\n", p, p->map);
-	}
-
-
-
-
-
-
-	return EXIT_FAILURE;
-
-
-
-	dump(map, x1, y1, x2, y2, original_stones, n);
+	//dump(map, x1, y1, x2, y2, original_stones, n);
 
 	// Prepare
+	int i;
 	Stone stones[256];
 	stoneEncode(stones, original_stones, n);
 	for (i=0; i<1024; i++) {
@@ -129,9 +70,7 @@ int solver(int *map, int x1, int y1, int x2, int y2, int *original_stones, int n
 	// Search
 	Score best;
 	best.score = 1024;
-	for (i=0; i<10; i++) {
-		putWrapper(&best, stones, n, map, x1, y1, x2, y2);
-	}
+	backTracking(&best, 0, stones, n, map, x1, y1, x2, y2);
 
 	// Best
 	printf("Best Score: %d, Zk: %d\n", best.score, best.zk);
@@ -158,7 +97,7 @@ int main(int argc, char *argv[])
 	int stones[16384];
 
 	while (ready(map, &x1, &y1, &x2, &y2, stones, &n)) {
-		if (solver(map, x1, y1, x2, y2, stones, n) == EXIT_FAILURE) break;
+		if (solver(map, x1, y1, x2+1, y2+1, stones, n) == EXIT_FAILURE) break;
 	}
 
 	finalClient(osfhandle, sd);

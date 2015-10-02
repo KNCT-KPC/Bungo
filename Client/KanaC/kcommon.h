@@ -27,7 +27,7 @@ extern void stoneEncode(Stone *dst, const int *stones_base, int n);
 extern void BlockDefineOperation(const int8_t *zk, int8_t *dst);
 
 extern int isAccept(const int *map, int x1, int y1, int x2, int y2);
-extern void bestScore(Score *best, const int *map);
+extern int bestScore(Score *best, const int *map);
 
 extern void sendAnswer(const int *map, const Stone *stones, const int *original_stone, int n);
 

@@ -90,11 +90,7 @@ void putWrapper(Score *best, Stone *stones, int n, const int *map, int x1, int y
 	for (i=0; i<n; i++) {
 		memcpy(tmpmap, map, sizeof(int) * 1024);
 		putStone(sorted, sorted[i].id, n, tmpmap, x1, y1, x2, y2);
-		bestScore(best, tmpmap);
-
-		printf("Best Score(~%d): %d, Zk: %d\n", i, best->score, best->zk);
-		dumpMap2(best->map);
-		printf("\n");
+		if (bestScore(best, tmpmap)) printf("Update best score: (%d, %d)\n", best->score, best->zk);
 	}
 }
 
@@ -143,7 +139,7 @@ int main(int argc, char *argv[])
 	int stones[16384];
 
 	while (ready(map, &x1, &y1, &x2, &y2, stones, &n)) {
-		if (solver(map, x1, y1, x2, y2, stones, n) == EXIT_FAILURE) break;
+		if (solver(map, x1, y1, x2+1, y2+1, stones, n) == EXIT_FAILURE) break;
 	}
 
 	finalClient(osfhandle, sd);

@@ -38,20 +38,25 @@ void backTracking(Score *best, int id, Stone *stones, int n, int *map, int x1, i
 			if (map[bidx] != -1) continue;
 
 			for (i=0; i<8; i++) {
-				memcpy(tmpmap, map, SIZE_OF_INT_1024);
+				// Check
 				int8_t *p = &operation[(id << 8) + (i << 5)];
 				if (p[0] == INT8_MAX) continue;
 
-				tmpmap[bidx] = id;
+				int idxes[16];
 				for (j=1; j<stones[id].len; j++) {
 					int xx = x + p[j << 1];
 					int yy = y + p[(j << 1) + 1];
 					if (!((x1 <= xx) && (xx < x2)) || !((y1 <= yy) && (yy < y2))) goto DAMEDESU;
 
 					int idx = (yy << 5) + xx;
-					if (tmpmap[idx] != -1) goto DAMEDESU;
-					tmpmap[idx] = id;
+					if (map[idx] != -1) goto DAMEDESU;
+					idxes[j] = idx;
 				}
+
+				// Put
+				memcpy(tmpmap, map, SIZE_OF_INT_1024);
+				tmpmap[bidx] = id;
+				for (j=1; j<stones[id].len; j++) tmpmap[idxes[j]] = id;
 
 				if (isAcceptSimple(tmpmap, x1, y1, x2, y2)) backTracking(best, id+1, stones, n, tmpmap, x1, y1, x2, y2, operation, sumlen, nowscore - stones[id].len);
 

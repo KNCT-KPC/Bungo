@@ -19,7 +19,7 @@ int sendMsg(char *msg)
 	fputc('\n', global_fpwrite);
 	fflush(global_fpwrite);
 	if (msg[0] != 'E') return EXIT_SUCCESS;
-	
+
 #ifdef	LOCAL
 	return EXIT_SUCCESS;
 #else
@@ -56,7 +56,7 @@ void initClient(char *name, char *server_ipaddr, int *osfhandle, int *sd)
 		}
 		setsockopt(INVALID_SOCKET, SOL_SOCKET, SO_OPENTYPE, (char *)&sockopt, sizeof(sockopt));
 	#endif
-	
+
 	// Connect to the server
 	*sd = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -64,7 +64,7 @@ void initClient(char *name, char *server_ipaddr, int *osfhandle, int *sd)
 	server.sin_family = AF_INET;
 	server.sin_port = htons(SERVER_PORT);
 	server.sin_addr.s_addr = inet_addr(server_ipaddr);
-			
+
 	if (connect(*sd, (struct sockaddr *)&server, sizeof(server)) != 0) {
 		perror(server_ipaddr);
 		return EXIT_FAILURE;
@@ -93,7 +93,7 @@ int ready(int *map, int *x1, int *y1, int *x2, int *y2, int *stones, int *n)
 
 	int i;
 	char buf[BUF_SIZE];
-	
+
 	*n = 1;
 	for (i=0; i<(*n+3); i++) {
 		if (fgets(buf, BUF_SIZE, global_fpread) == NULL) {
@@ -106,7 +106,7 @@ int ready(int *map, int *x1, int *y1, int *x2, int *y2, int *stones, int *n)
 			);
 			return 0;
 		}
-		
+
 		if (i == 0) {
 			sscanf(buf, "%2d %2d %2d %2d", x1, y1, x2, y2);
 			continue;
@@ -126,7 +126,7 @@ int ready(int *map, int *x1, int *y1, int *x2, int *y2, int *stones, int *n)
 				stones[((i - 3) << 6) + j] = buf[j] - '0';
 		}
 	}
-	
+
 	return 1;
 }
 
@@ -194,10 +194,10 @@ void dumpMap(int *map, int x1, int y1, int x2, int y2, int n)
 	printf("\n");
 }
 
-void dumpMap2(int *map)
+void dumpMap2(const int *map)
 {
 	int x, y;
-	
+
 	for (y=0; y<32; y++) {
 		printf("\t");
 		for (x=0; x<32; x++) {

@@ -9,6 +9,7 @@
 #include <time.h>
 #include "../SATubatu/common.h"
 #include "../KanaC/kcommon.h"
+#include <glib-2.0/glib.h>
 
 #define	CLIENT_NAME	"Knight"
 #define	SERVER_IPADDR	"127.0.0.1"
@@ -17,17 +18,20 @@
 #define	SIZE_OF_INT_1024	4096
 
 clock_t global_clock;
+GHashTable *global_memo;
 
 /*------------------------------------*/
 /*               Solver               */
 /*------------------------------------*/
 int isAcceptSimple(const int *map, int x1, int y1, int x2, int y2);
+int isTraveled(const int *map, int id, int x1, int y1, int x2, int y2);
 
 void backTracking(Score *best, int id, Stone *stones, int n, int *map, int x1, int y1, int x2, int y2, int8_t *operation, int *sumlen, int nowscore)
 {
 	if (id == n) return;
 	if (bestScore(best, map)) printf("[%.3fs]\tUpdate best score: (%d, %d)\n", (clock() - global_clock) / (double)CLOCKS_PER_SEC, best->score, best->zk);
 	if ((nowscore - sumlen[id]) > best->score) return;
+	//if (isTraveled(map, id, x1, y1, x2, y2)) return;
 
 	int x, y, i, j;
 	int *tmpmap = (int *)malloc(SIZE_OF_INT_1024);
@@ -118,6 +122,9 @@ int main(int argc, char *argv[])
 	int osfhandle, sd;
 	initClient(CLIENT_NAME, SERVER_IPADDR, &osfhandle, &sd);
 
+	global_memo = g_hash_table_new(g_str_hash, g_str_equal);
+
+
 	int x1, y1, x2, y2, n;
 	int map[1024];
 	int stones[16384];
@@ -166,3 +173,51 @@ int isAcceptSimple(const int *map, int x1, int y1, int x2, int y2)
 
 	return 1;
 }
+
+int isVertex(const int *map, int x, int y, int x1, int y1, int x2, int y2)
+{
+	int i, len = 0;
+	int dx[] = {0, 1, 0, -1};
+	int dy[] = {-1, 0, 1, 0};
+
+	for (i=0; i<4; i++) {
+		int xx = x + dx[i];
+		int yy = y + dy[i];
+
+		if (!((x1 <= xx) && (xx < x2)) || !((y1 <= yy) && (yy < y2)) || map[(yy << 5) + xx] == -1) len++;
+	}
+
+	return (len >= 2);
+}
+
+int isTraveled(const int *map, int id, int x1, int y1, int x2, int y2)
+{
+	char *str = (char *)malloc(sizeof(char) * 128);
+	char *p = &str[7], buf[8];
+	int x, y, len = 0;
+
+	for (y=y1; y<y2; y++) {
+		for (x=x1; x<x2; x++) {
+			int tmp = map[(y << 5) + x];
+			if (tmp == -1) len++;
+			if (tmp < 0 || !isVertex(map, x, y, x1, y1, x2, y2)) continue;
+			*(p++) = x + 32;
+			*(p++) = y + 32;
+		}
+	}
+
+	*p = '\0';
+	sprintf(buf, "%04d%03d", len, id);
+	memcpy(str, buf, sizeof(char) * 7);
+
+	if (g_hash_table_contains(global_memo, str)) {
+		free(str);
+		return 1;
+	}
+
+	int *val = g_new(int, 1);
+	*val = 1;
+	g_hash_table_insert(global_memo, str, val);
+	return 0;
+}
+

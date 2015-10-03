@@ -19,6 +19,7 @@
 
 clock_t global_clock;
 GHashTable *global_memo;
+unsigned int global_count;
 
 /*------------------------------------*/
 /*               Solver               */
@@ -28,10 +29,12 @@ int isTraveled(const int *map, int id, int x1, int y1, int x2, int y2);
 
 void backTracking(Score *best, int id, Stone *stones, int n, int *map, int x1, int y1, int x2, int y2, int8_t *operation, int *sumlen, int nowscore)
 {
+	global_count++;
+
 	if (id == n) return;
-	if (bestScore(best, map)) printf("[%.3fs]\tUpdate best score: (%d, %d)\n", (clock() - global_clock) / (double)CLOCKS_PER_SEC, best->score, best->zk);
+	if (bestScore(best, map)) printf("[%.3fs]\tUpdate best score: (%d, %d)\t[%u]\n", (clock() - global_clock) / (double)CLOCKS_PER_SEC, best->score, best->zk, global_count);
 	if ((nowscore - sumlen[id]) > best->score) return;
-	//if (isTraveled(map, id, x1, y1, x2, y2)) return;
+	if (isTraveled(map, id, x1, y1, x2, y2)) return;
 
 	int x, y, i, j;
 	int *tmpmap = (int *)malloc(SIZE_OF_INT_1024);
@@ -122,8 +125,8 @@ int main(int argc, char *argv[])
 	int osfhandle, sd;
 	initClient(CLIENT_NAME, SERVER_IPADDR, &osfhandle, &sd);
 
-	global_memo = g_hash_table_new(g_str_hash, g_str_equal);
-
+	global_memo = g_hash_table_new(g_str_hash, g_str_equal);	// 継続するならこの辺も考えないと
+	global_count = 0;
 
 	int x1, y1, x2, y2, n;
 	int map[1024];

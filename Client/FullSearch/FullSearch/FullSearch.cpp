@@ -103,7 +103,7 @@ private:
 	bool start;
 
 public :
-	PutPoint(const int k, const int s, const int* shit, PutPoint* prevP){
+	PutPoint(const int k, const int s, const int* shit, PutPoint* prevP, const int shitSize, const int* subArea){
 		int size;
 		for(size = 0; prevP->neighborAry[size] != -1; size++);
 
@@ -115,6 +115,9 @@ public :
 
 		for(int s = 0; shit[s] != -1; s++){
 			for(int n = 0; neighborAry[n] != -1; n++){
+				if(subArea != 0 && subArea[neighborAry[n]] < shitSize){
+					continue;
+				}
 				int value = neighborAry[n] - shit[s];
 				for(int i = 0; i < p.size(); i++){
 					if(value == p[i]){
@@ -132,10 +135,15 @@ public :
 		this->k = k;
 		this->start = false;
 	}
-	PutPoint(const int k, const int s, const int* shit, const int* neighbor, const int neighborNum){
+	PutPoint(const int k, const int s, const int* shit, const int* neighbor, const int neighborNum, const int shitSize, const int* subArea){
 		for(int s = 0; shit[s] != -1; s++){
 			for(int n = 0; neighbor[n] != -1; n++){
+				if(subArea != 0 && subArea[neighbor[n]] < shitSize){
+					continue;
+				}
 				int value = neighbor[n] - shit[s];
+
+				//すでに存在するかのチェック
 				for(int i = 0; i < p.size(); i++){
 					if(value == p[i]){
 						goto NEXT;
@@ -285,22 +293,22 @@ std::vector<int>* CalcNeighborPoint(const int* map, const int* prevNeighbor, con
 
 	for(int i = 0; i < putAryLength; i++){
 		int value = putPoints[i]+1;
-		if(putPoints[i] >= 0 && putPoints[i] < (width+1)*height && map[value] == 0 && !JudgeExistValue(neighbor->data(), neighbor->size(), value) && !JudgeExistValue(putPoints, putAryLength, value)){
+		if(value >= 0 && value < (width+1)*height && map[value] == 0 && !JudgeExistValue(neighbor->data(), neighbor->size(), value) && !JudgeExistValue(putPoints, putAryLength, value)){
 			neighbor->push_back(value);
 		}
 
 		value = putPoints[i]-1;
-		if(putPoints[i] >= 0 && putPoints[i] < (width+1)*height && map[value] == 0 && !JudgeExistValue(neighbor->data(), neighbor->size(), value) && !JudgeExistValue(putPoints, putAryLength, value)){
+		if(value >= 0 && value < (width+1)*height && map[value] == 0 && !JudgeExistValue(neighbor->data(), neighbor->size(), value) && !JudgeExistValue(putPoints, putAryLength, value)){
 			neighbor->push_back(value);
 		}
 
 		value = putPoints[i]+(width+1);
-		if(putPoints[i] >= 0 && putPoints[i] < (width+1)*height && map[value] == 0 && !JudgeExistValue(neighbor->data(), neighbor->size(), value) && !JudgeExistValue(putPoints, putAryLength, value)){
+		if(value >= 0 && value < (width+1)*height && map[value] == 0 && !JudgeExistValue(neighbor->data(), neighbor->size(), value) && !JudgeExistValue(putPoints, putAryLength, value)){
 			neighbor->push_back(value);
 		}
 
 		value = putPoints[i]-(width+1);
-		if(putPoints[i] >= 0 && putPoints[i] < (width+1)*height && map[value] == 0 && !JudgeExistValue(neighbor->data(), neighbor->size(), value) && !JudgeExistValue(putPoints, putAryLength, value)){
+		if(value >= 0 && value < (width+1)*height && map[value] == 0 && !JudgeExistValue(neighbor->data(), neighbor->size(), value) && !JudgeExistValue(putPoints, putAryLength, value)){
 			neighbor->push_back(value);
 		}
 	}
@@ -507,8 +515,9 @@ void InsertSort(int num[], int n){
 	}
 }
 
-int CheckSubArea(const int* map, const int width, const int height, const int freeSize, int* areaSizeAry){
+int CheckSubArea(const int* map, const int width, const int height, const int freeSize, int* areaSizeAry, int* subAreaMap){
 	std::queue<int> queue;
+	std::vector<int> area;
 
 	int free = freeSize;
 	int* check = new int[width*height];
@@ -521,9 +530,12 @@ int CheckSubArea(const int* map, const int width, const int height, const int fr
 		areaNum = 0;
 
 		if(map[i] == 0 && check[i] == 0){
+			area.clear();
+
 			queue.push(i);
 			check[i] = 1;
 			areaNum++;
+			area.push_back(i);
 
 			while(queue.size() != 0){
 				int p = queue.front();
@@ -533,26 +545,35 @@ int CheckSubArea(const int* map, const int width, const int height, const int fr
 					queue.push(p-width);
 					check[p-width] = 1;
 					areaNum++;
+					area.push_back(p-width);
 				}
 				if(p+width < width*height && map[p+width] == 0 && check[p+width] == 0){
 					queue.push(p+width);
 					check[p+width] = 1;
 					areaNum++;
+					area.push_back(p+width);
 				}
 				if(p-1 >= 0 && map[p-1] == 0 && check[p-1] == 0){
 					queue.push(p-1);
 					check[p-1] = 1;
 					areaNum++;
+					area.push_back(p-1);
 				}
 				if(p+1 < width*height && map[p+1] == 0 && check[p+1] == 0){
 					queue.push(p+1);
 					check[p+1] = 1;
 					areaNum++;
+					area.push_back(p+1);
 				}
 			}
 
 			if(areaSizeAry != 0){
 				areaSizeAry[asaIndex] = areaNum;
+			}
+			if(subAreaMap != 0){
+				for(int i = 0; i < area.size(); i++){
+					subAreaMap[area[i]] = areaNum;
+				}
 			}
 
 			asaIndex++;
@@ -577,8 +598,8 @@ int CheckSubArea(const int* map, const int width, const int height, const int fr
 }
 
 static int areaAry[1025];	//下の方でつかいまわしている
+static int subAreaMap[1025];
 int CalcDeadArea(const int* map, const int width, const int height, const int freeSize, const int* shitAry, const int shitNum, int* areaAry){
-
 	int* tempShit = new int[shitNum];
 	for(int i = 0; i < shitNum; i++){
 		tempShit[i] = shitAry[i];
@@ -709,23 +730,35 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 				if(st >= 8){	//すべての向きが終了
 					st = 0;	//向きをリセットして
 
+					int checkArea = freeSize;
+					//if(stonesNum/2 < kn)
+					if(true){
+						checkArea = CheckSubArea(map, width+1, height, freeSize, 0, subAreaMap);
+					}
+
 					//残りの空き領域から、置けない糞（ズク）をスキップする。
 					int temp_kn = kn;
 					do{
 						kn++;
-					} while(kn < stonesNum && shitSizeAry[kn] > freeSize);
+					} while(kn < stonesNum && shitSizeAry[kn] > checkArea);
 
 					//もうコレ以上置けないなら、終端とする
 					if(kn >= stonesNum){
 						kn = temp_kn;
 						goto TERMINAL;
 					}
-				}
 
-				if(p->isStart()){
-					pStack.push(new PutPoint(kn, st, shitAry[kn][st], &(startNeighbor[0])));
+					if(p->isStart()){
+						pStack.push(new PutPoint(kn, st, shitAry[kn][st], &(startNeighbor[0])));
+					} else {
+						pStack.push(new PutPoint(kn, st, shitAry[kn][st], p, shitSizeAry[kn], subAreaMap));
+					}
 				} else {
-					pStack.push(new PutPoint(kn, st, shitAry[kn][st], p));
+					if(p->isStart()){
+						pStack.push(new PutPoint(kn, st, shitAry[kn][st], &(startNeighbor[0])));
+					} else {
+						pStack.push(new PutPoint(kn, st, shitAry[kn][st], p, -1, 0));
+					}
 				}
 
 				delete p;
@@ -744,11 +777,13 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 			int checkArea = freeSize;
 //			if(stonesNum/2 < kn)
 			if(true){
-				checkArea = CheckSubArea(map, width+1, height, freeSize, areaAry);
+				for(int i = 0; i < 1025; i++) subAreaMap[i] = -1;
+				checkArea = CheckSubArea(map, width+1, height, freeSize, areaAry, subAreaMap);
 					//戻り値は部分領域のうち最大面積
 					//static定義されたareaAryには部分領域情報が入っている
-
+/*
 				if(stonesNum/2 < kn){
+					DEBUG_printMap(subAreaMap, width+1, height);printf("\n\n");
 					printf("%d\n", kn);
 					DEBUG_printMap(map, width+1, height);
 					printf("free size : %d\n", freeSize);
@@ -759,6 +794,7 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 					printf("\n");
 					DEBUG_waitKey();
 				}
+		*/
 			}
 
 			//次に配置予定の糞（ズク）が空き領域よりも大きいならスキップする
@@ -789,7 +825,7 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 			}
 			std::vector<int>* neighbor = CalcNeighborPoint(map, p->GetNeighborAry(), putPoints, putAryLength, width, height); //ココ
 
-			pStack.push(new PutPoint(kn, 0, shitAry[kn][0], neighbor->data(), neighbor->size()));
+			pStack.push(new PutPoint(kn, 0, shitAry[kn][0], neighbor->data(), neighbor->size(), shitSizeAry[kn], subAreaMap));
 			delete neighbor;
 		}
 		continue;
@@ -814,11 +850,6 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 				printf("score(%d,%d)\n", minScore, minScore_minShitNum);
 				printf("\n");
 			}
-		}
-
-		if(score == 0){
-			//DEBUG_printMap(map, width+1, height);
-			//printf("\n");
 		}
 
 		putShitNum--;

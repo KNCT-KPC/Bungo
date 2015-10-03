@@ -507,9 +507,10 @@ void InsertSort(int num[], int n){
 	}
 }
 
-int CheckSubArea(const int* map, const int width, const int height, int* areaSizeAry){
+int CheckSubArea(const int* map, const int width, const int height, const int freeSize, int* areaSizeAry){
 	std::queue<int> queue;
 
+	int free = freeSize;
 	int* check = new int[width*height];
 	for(int i = 0; i < width*height; i++) check[i] = 0;
 
@@ -550,29 +551,33 @@ int CheckSubArea(const int* map, const int width, const int height, int* areaSiz
 				}
 			}
 
-			areaSizeAry[asaIndex] = areaNum;
+			if(areaSizeAry != 0){
+				areaSizeAry[asaIndex] = areaNum;
+			}
+
 			asaIndex++;
 			if(areaNum > maxAreaNum){
 				maxAreaNum = areaNum;
 			}
+
+			free -= areaNum;
+			if(free == 0){
+				break;
+			}
 		}
 	}
 
-	InsertSort(areaSizeAry, asaIndex);
-	areaSizeAry[asaIndex] = -1;
+	if(areaSizeAry != 0){
+		InsertSort(areaSizeAry, asaIndex);
+		areaSizeAry[asaIndex] = -1;
+	}
+
 	delete check;
 	return maxAreaNum;
 }
 
-int areaAry[1025];
-int CalcDeadArea(const int* map, const int width, const int height, const int* shitAry, const int shitNum){
-	CheckSubArea(map, width, height, areaAry);
-	/*
-	for(int as = 0; areaAry[as] != -1; as++){
-		printf("%d ", areaAry[as]);
-	} printf("\n");
-	*/
-
+static int areaAry[1025];	//下の方でつかいまわしている
+int CalcDeadArea(const int* map, const int width, const int height, const int freeSize, const int* shitAry, const int shitNum, int* areaAry){
 
 	int* tempShit = new int[shitNum];
 	for(int i = 0; i < shitNum; i++){
@@ -674,6 +679,7 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 	LARGE_INTEGER liFreq, start;
 	QueryPerformanceFrequency( &liFreq );
 	QueryPerformanceCounter( &start );
+
 	//ここから繰り返し
 	while(1){
 		PutPoint* p = pStack.top();
@@ -734,23 +740,32 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 			PutShit(map, kn, putPoints, putAryLength);
 			freeSize -= shitSizeAry[kn];
 			putShitNum++;
+	
+			int checkArea = freeSize;
+//			if(stonesNum/2 < kn)
+			if(true){
+				checkArea = CheckSubArea(map, width+1, height, freeSize, areaAry);
+					//戻り値は部分領域のうち最大面積
+					//static定義されたareaAryには部分領域情報が入っている
 
-			/*
-			printf("%d\n", kn);
-			DEBUG_printMap(map, width+1, height);
-			if(stonesNum/2 < kn){
-				printf("dead area : %d\n", CalcDeadArea(map, width+1, height, &(shitSizeAry[kn]), stonesNum-kn));
+				if(stonesNum/2 < kn){
+					printf("%d\n", kn);
+					DEBUG_printMap(map, width+1, height);
+					printf("free size : %d\n", freeSize);
+
+					for(int i = 0; areaAry[i] != -1; i++){
+						printf("%d ", areaAry[i]);
+					}
+					printf("\n");
+					DEBUG_waitKey();
+				}
 			}
-			printf("free size : %d\n", freeSize);
-
-			DEBUG_waitKey();
-			*/
 
 			//次に配置予定の糞（ズク）が空き領域よりも大きいならスキップする
 			int temp_kn = kn;
 			do{
 				kn++;
-			} while(kn < stonesNum && shitSizeAry[kn] > freeSize);
+			} while(kn < stonesNum && shitSizeAry[kn] > checkArea);
 			
 			//糞（ズク）がもう無いなら
 			if(kn >= stonesNum){
@@ -760,7 +775,7 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 
 			//if(stonesNum/2 < kn){
 			if(true){
-				int deadArea = CalcDeadArea(map, width+1, height, &(shitSizeAry[kn]), stonesNum-kn);
+				int deadArea = CalcDeadArea(map, width+1, height, freeSize, &(shitSizeAry[kn]), stonesNum-kn, areaAry);
 
 				if(minScore < deadArea){
 					//最良スコアを超えられないなら、終端へ

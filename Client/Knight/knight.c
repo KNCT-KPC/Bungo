@@ -16,7 +16,6 @@
 
 #define	SIZE_OF_INT_1024	4096
 #define	SIZE_OF_CHAR_128	128
-#define	SIZE_OF_CHAR_7	7
 #define	SIZE_OF_UINT8_1024	1024
 
 clock_t global_clock;
@@ -212,12 +211,10 @@ static inline int isVertex(const int *map, int x, int y, int x1, int y1, int x2,
 int isTraveled(const int *map, int id, int x1, int y1, int x2, int y2, int len)
 {
 	char *str = (char *)malloc(SIZE_OF_CHAR_128);
-	char *p = &str[7], buf[8];
+	char *p = &str[7];
 	int x, y;
 
-	sprintf(buf, "%04d%03d", len, id);
-	memcpy(str, buf, SIZE_OF_CHAR_7);
-
+	sprintf(str, "%04d%03d", len, id);
 	for (y=y1; y<y2; y++) {
 		for (x=x1; x<x2; x++) {
 			int tmp = map[(y << 5) + x];
@@ -241,7 +238,7 @@ int isTraveled(const int *map, int id, int x1, int y1, int x2, int y2, int len)
 
 int neighborIdx(const int *map, int x1, int y1, int x2, int y2, uint8_t *neighbor)
 {
-	int x, y, i, idx;
+	int x, y, idx;
 	int first_flg = 1;
 
 	memset(neighbor, 0, SIZE_OF_UINT8_1024);

@@ -28,6 +28,7 @@
 #else
 	//#define	INPUT_FILENAME	"../../Problem/light/light-local.txt"
 	#define	INPUT_FILENAME	"../../Problem/27/27-local.txt"
+	//#define	INPUT_FILENAME	"../../Problem/41/41-local.txt"
 	#define	OUTPUT_FILENAME	"-"
 #endif
 #define	BUF_SIZE	1027

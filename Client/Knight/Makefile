@@ -2,7 +2,7 @@
 CFLAGS=-Wall
 
 knight: knight.o common.o kcommon.o
-	gcc $(CFLAGS) -lglib-2.0 knight.o common.o kcommon.o -o knight
+	gcc $(CFLAGS) knight.o common.o kcommon.o -o knight -lglib-2.0
 
 knight.o: knight.c ../SATubatu/common.h ../KanaC/kcommon.h
 	gcc -c $(CLAGS) `pkg-config --cflags glib-2.0` knight.c

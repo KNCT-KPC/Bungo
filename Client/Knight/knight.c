@@ -26,14 +26,17 @@ unsigned int global_count;
 /*------------------------------------*/
 int isAcceptSimple(const int *map, int x1, int y1, int x2, int y2);
 int isTraveled(const int *map, int id, int x1, int y1, int x2, int y2);
-int neighborIdx(const int *base, int *map, int x1, int y1, int x2, int y2, int *neighbor);
+int neighborIdx(const int *map, int x1, int y1, int x2, int y2, int *neighbor);
 
 void backTracking(Score *best, int id, Stone *stones, int n, int *map, int x1, int y1, int x2, int y2, int8_t *operation, int *sumlen, int nowscore)
 {
 	global_count++;
 
 	if (id == n) return;
-	if (bestScore(best, map)) printf("[%.3fs]\tUpdate best score: (%d, %d)\t[%u]\n", (clock() - global_clock) / (double)CLOCKS_PER_SEC, best->score, best->zk, global_count);
+	if (bestScore(best, map)) {
+		printf("[%.3fs]\tUpdate best score: (%d, %d)\t[%u]\n", (clock() - global_clock) / (double)CLOCKS_PER_SEC, best->score, best->zk, global_count);
+		//dumpMap2(map);
+	}
 	if ((nowscore - sumlen[id]) > best->score) return;
 	if (isTraveled(map, id, x1, y1, x2, y2)) return;
 
@@ -41,11 +44,8 @@ void backTracking(Score *best, int id, Stone *stones, int n, int *map, int x1, i
 	int *tmpmap = (int *)malloc(SIZE_OF_INT_1024);
 	memcpy(tmpmap, map, SIZE_OF_INT_1024);
 	
-	if (id == 2) {
-		int *neighbor = (int *)malloc(SIZE_OF_INT_1024);
-		int len = neighborIdx(map, x1, y1, x2, y2, neighbor);
-		exit(1);
-	}
+	int *neighbor = (int *)malloc(SIZE_OF_INT_1024);
+	int first = neighborIdx(map, x1, y1, x2, y2, neighbor);
 	
 	for (y=y1; y<y2; y++) {
 		for (x=x1; x<x2; x++) {
@@ -58,6 +58,7 @@ void backTracking(Score *best, int id, Stone *stones, int n, int *map, int x1, i
 				if (p[0] == INT8_MAX) continue;
 
 				int idxes[16];
+				int flg = 0;
 				for (j=1; j<stones[id].len; j++) {
 					int xx = x + p[j << 1];
 					int yy = y + p[(j << 1) + 1];
@@ -66,14 +67,18 @@ void backTracking(Score *best, int id, Stone *stones, int n, int *map, int x1, i
 					int idx = (yy << 5) + xx;
 					if (map[idx] != -1) goto DAMEDESU;
 					idxes[j] = idx;
+					if (neighbor[idx]) flg = 1;
 				}
+				
+				if (!flg && !first) goto DAMEDESU;
 
 				// Put
 				memcpy(tmpmap, map, SIZE_OF_INT_1024);
 				tmpmap[bidx] = id;
 				for (j=1; j<stones[id].len; j++) tmpmap[idxes[j]] = id;
 
-				if (isAcceptSimple(tmpmap, x1, y1, x2, y2)) backTracking(best, id+1, stones, n, tmpmap, x1, y1, x2, y2, operation, sumlen, nowscore - stones[id].len);
+				//if (isAcceptSimple(tmpmap, x1, y1, x2, y2))
+				backTracking(best, id+1, stones, n, tmpmap, x1, y1, x2, y2, operation, sumlen, nowscore - stones[id].len);
 
 			DAMEDESU:
 				continue;	// noop
@@ -82,6 +87,7 @@ void backTracking(Score *best, int id, Stone *stones, int n, int *map, int x1, i
 	}
 
 	free(tmpmap);
+	free(neighbor);
 	backTracking(best, id+1, stones, n, map, x1, y1, x2, y2, operation, sumlen, nowscore);
 }
 
@@ -237,128 +243,28 @@ int isTraveled(const int *map, int id, int x1, int y1, int x2, int y2)
 	return 0;
 }
 
-static inline int isMax(int x, int y, int x1, int y1, int x2, int y2, const int *map)
+int neighborIdx(const int *map, int x1, int y1, int x2, int y2, int *neighbor)
 {
-	return isValid(x, y, x1, y1, x2, y2) && (map[(y << 5) + x] == INT_MAX);
-}
-
-int neighborIdx(const int *base, int *map, int x1, int y1, int x2, int y2, int *neighbor)
-{
-	int x, y, i, xx, yy;
+	int x, y, i;
 	int dx[] = {0, 1, 0, -1};
 	int dy[] = {-1, 0, 1, 0};
+	int first = 1;
 	
-	// Dilate
-	for (y=y1; y<y2; y++) {
-		for (x=x1; x<x2; x++) {
-			if (base[(y << 5) + x] < 0) continue;
-
-			for (i=0; i<4; i++) {
-				xx = x + dx[i];
-				yy = y + dy[i];
-				if (!isValid(xx, yy, x1, y1, x2, y2) || base[(yy << 5) + xx] != -1) continue;
-				map[(yy << 5) + xx] = INT_MAX;
-			}
-		}
-	}
-	
-	return;
-	
-	// Detect outline
-	// http://homepage2.nifty.com/tsugu/sotuken/binedge/
-	int sx = 0, sy = 0;
+	memset(neighbor, 0, SIZE_OF_INT_1024);
 	for (y=y1; y<y2; y++) {
 		for (x=x1; x<x2; x++) {
 			if (map[(y << 5) + x] < 0) continue;
-			sx = x;
-			sy = y;
-			break;
+
+			for (i=0; i<4; i++) {
+				int xx = x + dx[i];
+				int yy = y + dy[i];
+				if (!isValid(xx, yy, x1, y1, x2, y2) || map[(yy << 5) + xx] != -1) continue;
+				neighbor[(yy << 5) + xx] = 1;
+			}
+			
+			first = 0;
 		}
 	}
 	
-	xx = sx;
-	yy = sy;
-	map[(yy << 5) + xx] = INT_MAX;
-	int vec = 2, first_flg = 1;
-	
-	while (xx != sx || yy != sy || first_flg) {
-		switch(vec) {
-		case 0:
-			if (isMax(xx-1, yy-1, x1, y1, x2, y2, map)) {
-				xx = xx - 1;
-				yy = yy - 1;
-				map[(yy << 5) + xx] = INT_MAX;
-				vec = 6;
-				break;
-			}
-		case 1:
-			if (isMax(xx-1, yy, x1, y1, x2, y2, map)) {
-				xx = xx - 1;
-				map[(yy << 5) + xx] = INT_MAX;
-				vec = 0;
-				break;
-			}
-		case 2:
-			if (isMax(xx-1, yy+1, x1, y1, x2, y2, map)) {
-				xx = xx - 1;
-				yy = yy + 1;
-				map[(yy << 5) + xx] = INT_MAX;
-				first_flg = 0;
-				vec = 0;
-				break;
-			}
-		case 3:
-			if (isMax(xx, yy+1, x1, y1, x2, y2, map)) {
-				yy = yy + 1;
-				map[(yy << 5) + xx] = INT_MAX;
-				first_flg = 0;
-				vec = 2;
-				break;
-			}
-		case 4:
-			if (isMax(xx+1, yy+1, x1, y1, x2, y2, map)) {
-				xx = xx + 1;
-				yy = yy + 1;
-				map[(yy << 5) + xx] = INT_MAX;
-				first_flg = 0;
-				vec = 2;
-				break;
-			}
-		case 5:
-			if (isMax(xx+1, yy, x1, y1, x2, y2, map)) {
-				xx = xx + 1;
-				map[(yy << 5) + xx] = INT_MAX;
-				first_flg = 0;
-				vec = 4;
-				break;
-			} else if (first_flg) {
-				first_flg = 0;
-				break;
-			}
-		case 6:
-			if (isMax(xx+1, yy-1, x1, y1, x2, y2, map)) {
-				xx = xx + 1;
-				yy = yy - 1;
-				map[(yy << 5) + xx] = INT_MAX;
-				vec = 4;
-				break;
-			}
-		case 7:
-			if (isMax(xx, yy-1, x1, y1, x2, y2, map)) {
-				yy = yy - 1;
-				map[(yy << 5) + xx] = INT_MAX;
-				vec = 6;
-				break;
-			}
-		default:
-			vec = 0;
-		}
-	}
-	
-	// Trim
-	for (y=y1; y<y2; y++) {
-		for (x=x1; x<x2; x++) {
-			map[(y << 5) + x] = (map[(y << 5) + x] == INT_MAX) ? -2 : -1;
-		}
-	}
+	return first;
 }

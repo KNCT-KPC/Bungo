@@ -58,7 +58,7 @@ void backTracking(Score *best, int id, Stone *stones, int n, int *map, int x1, i
 				if (p[0] == INT8_MAX) continue;
 
 				int idxes[16];
-				int flg = 0;
+				int flg = first || neighbor[bidx];
 				for (j=1; j<stones[id].len; j++) {
 					int xx = x + p[j << 1];
 					int yy = y + p[(j << 1) + 1];
@@ -70,14 +70,12 @@ void backTracking(Score *best, int id, Stone *stones, int n, int *map, int x1, i
 					if (neighbor[idx]) flg = 1;
 				}
 				
-				if (!flg && !first) goto DAMEDESU;
+				if (!flg) goto DAMEDESU;
 
 				// Put
 				memcpy(tmpmap, map, SIZE_OF_INT_1024);
 				tmpmap[bidx] = id;
 				for (j=1; j<stones[id].len; j++) tmpmap[idxes[j]] = id;
-
-				//if (isAcceptSimple(tmpmap, x1, y1, x2, y2))
 				backTracking(best, id+1, stones, n, tmpmap, x1, y1, x2, y2, operation, sumlen, nowscore - stones[id].len);
 
 			DAMEDESU:
@@ -158,39 +156,6 @@ int main(int argc, char *argv[])
 /*----------------------------------------------------------------------------*/
 /*                                     Sub                                    */
 /*----------------------------------------------------------------------------*/
-void dfsSimple(int *map, int x, int y, int x1, int y1, int x2, int y2)
-{
-	if (!(((x1 <= x) && (x < x2)) && ((y1 <= y) && (y < y2)))) return;
-
-	int idx = (y << 5) + x;
-	if (map[idx] < 0) return;
-
-	map[idx] = -1;
-	dfsSimple(map, x, y - 1, x1, y1, x2, y2);
-	dfsSimple(map, x - 1, y, x1, y1, x2, y2);
-	dfsSimple(map, x + 1, y, x1, y1, x2, y2);
-	dfsSimple(map, x, y + 1, x1, y1, x2, y2);
-}
-
-int isAcceptSimple(const int *map, int x1, int y1, int x2, int y2)
-{
-	int i, x=0, y=0;
-	int tmpmap[1024];
-
-	memcpy(tmpmap, map, SIZE_OF_INT_1024);
-	for (y=y1; y<y2; y++) {
-		for (x=x1; x<x2; x++) {
-			if (tmpmap[(y << 5) + x] < 0) continue;
-
-			dfsSimple(tmpmap, x, y, x1, y1, x2, y2);
-			for (i=0; i<1024; i++) if (tmpmap[i] >= 0) return 0;
-			return 1;
-		}
-	}
-
-	return 1;
-}
-
 static inline int isValid(int x, int y, int x1, int y1, int x2, int y2)
 {
 	return ((x1 <= x) && (x < x2)) && ((y1 <= y) && (y < y2));

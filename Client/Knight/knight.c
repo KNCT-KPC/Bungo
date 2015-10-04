@@ -24,7 +24,7 @@ unsigned int global_count;
 /*------------------------------------*/
 /*               Solver               */
 /*------------------------------------*/
-int isAcceptSimple(const int *map, int x1, int y1, int x2, int y2);
+static inline int isValid(int x, int y, int x1, int y1, int x2, int y2);
 int isTraveled(const int *map, int id, int x1, int y1, int x2, int y2);
 int neighborIdx(const int *map, int x1, int y1, int x2, int y2, int *neighbor);
 
@@ -39,53 +39,64 @@ void backTracking(Score *best, int id, Stone *stones, int n, int *map, int x1, i
 	}
 	if ((nowscore - sumlen[id]) > best->score) return;
 	if (isTraveled(map, id, x1, y1, x2, y2)) return;
-
-	int x, y, i, j;
-	int *tmpmap = (int *)malloc(SIZE_OF_INT_1024);
-	memcpy(tmpmap, map, SIZE_OF_INT_1024);
 	
-	int *neighbor = (int *)malloc(SIZE_OF_INT_1024);
-	int first = neighborIdx(map, x1, y1, x2, y2, neighbor);
-	
+	int x, y, len = 0;
 	for (y=y1; y<y2; y++) {
 		for (x=x1; x<x2; x++) {
-			int bidx = (y << 5) + x;
-			if (map[bidx] != -1) continue;
-
-			for (i=0; i<8; i++) {
-				// Check
-				int8_t *p = &operation[(id << 8) + (i << 5)];
-				if (p[0] == INT8_MAX) continue;
-
-				int idxes[16];
-				int flg = first || neighbor[bidx];
-				for (j=1; j<stones[id].len; j++) {
-					int xx = x + p[j << 1];
-					int yy = y + p[(j << 1) + 1];
-					if (!((x1 <= xx) && (xx < x2)) || !((y1 <= yy) && (yy < y2))) goto DAMEDESU;
-
-					int idx = (yy << 5) + xx;
-					if (map[idx] != -1) goto DAMEDESU;
-					idxes[j] = idx;
-					if (neighbor[idx]) flg = 1;
-				}
-				
-				if (!flg) goto DAMEDESU;
-
-				// Put
-				memcpy(tmpmap, map, SIZE_OF_INT_1024);
-				tmpmap[bidx] = id;
-				for (j=1; j<stones[id].len; j++) tmpmap[idxes[j]] = id;
-				backTracking(best, id+1, stones, n, tmpmap, x1, y1, x2, y2, operation, sumlen, nowscore - stones[id].len);
-
-			DAMEDESU:
-				continue;	// noop
-			}
+			if (map[(y << 5) + x] == -1) len++;
 		}
 	}
+	
+	if (len == 0) return;
+	if (len >= stones[id].len) {
+		int i, j;
+		int *tmpmap = (int *)malloc(SIZE_OF_INT_1024);
+		memcpy(tmpmap, map, SIZE_OF_INT_1024);
+		
+		int *neighbor = (int *)malloc(SIZE_OF_INT_1024);
+		int first = neighborIdx(map, x1, y1, x2, y2, neighbor);
+		
+		for (y=y1; y<y2; y++) {
+			for (x=x1; x<x2; x++) {
+				int bidx = (y << 5) + x;
+				if (map[bidx] != -1) continue;
 
-	free(tmpmap);
-	free(neighbor);
+				for (i=0; i<8; i++) {
+					// Check
+					int8_t *p = &operation[(id << 8) + (i << 5)];
+					if (p[0] == INT8_MAX) continue;
+
+					int idxes[16];
+					int flg = first || neighbor[bidx];
+					for (j=1; j<stones[id].len; j++) {
+						int xx = x + p[j << 1];
+						int yy = y + p[(j << 1) + 1];
+						if (!((x1 <= xx) && (xx < x2)) || !((y1 <= yy) && (yy < y2))) goto DAMEDESU;
+
+						int idx = (yy << 5) + xx;
+						if (map[idx] != -1) goto DAMEDESU;
+						idxes[j] = idx;
+						if (neighbor[idx]) flg = 1;
+					}
+					
+					if (!flg) continue;
+
+					// Put
+					memcpy(tmpmap, map, SIZE_OF_INT_1024);
+					tmpmap[bidx] = id;
+					for (j=1; j<stones[id].len; j++) tmpmap[idxes[j]] = id;
+					backTracking(best, id+1, stones, n, tmpmap, x1, y1, x2, y2, operation, sumlen, nowscore - stones[id].len);
+
+				DAMEDESU:
+					continue;	// noop
+				}
+			}
+		}
+
+		free(tmpmap);
+		free(neighbor);
+	}
+	
 	backTracking(best, id+1, stones, n, map, x1, y1, x2, y2, operation, sumlen, nowscore);
 }
 

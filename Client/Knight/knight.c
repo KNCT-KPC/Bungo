@@ -14,8 +14,10 @@
 #define	CLIENT_NAME	"Knight"
 #define	SERVER_IPADDR	"127.0.0.1"
 
-//#define	SIZE_OF_INT_1024	(sizeof(int) << 10)
 #define	SIZE_OF_INT_1024	4096
+#define	SIZE_OF_CHAR_128	128
+#define	SIZE_OF_CHAR_7	7
+#define	SIZE_OF_UINT8_1024	1024
 
 clock_t global_clock;
 GHashTable *global_memo;
@@ -26,45 +28,45 @@ unsigned int global_count;
 /*------------------------------------*/
 int bestScore2(Score *best, const int *map, int *freelen);
 static inline int isInValid(int x, int y, int x1, int y1, int x2, int y2);
-int isTraveled(const int *map, int id, int x1, int y1, int x2, int y2);
-int neighborIdx(const int *map, int x1, int y1, int x2, int y2, int *neighbor);
+int isTraveled(const int *map, int id, int x1, int y1, int x2, int y2, int len);
+int neighborIdx(const int *map, int x1, int y1, int x2, int y2, uint8_t *neighbor);
 
 void backTracking(Score *best, int id, Stone *stones, int n, int *map, int x1, int y1, int x2, int y2, int *operation, int *sumlen, int nowscore)
 {
 	int len;
 	global_count++;
-	
+
 	if (id == n) return;
 	if (bestScore2(best, map, &len)) printf("[%.3fs]\tUpdate best score: (%d, %d)\t[%u]\n", (clock() - global_clock) / (double)CLOCKS_PER_SEC, best->score, best->zk, global_count);
 	if ((nowscore - sumlen[id]) > best->score) return;
-	if (isTraveled(map, id, x1, y1, x2, y2)) return;
-	
+	if (isTraveled(map, id, x1, y1, x2, y2, len)) return;
+
 	if (len == 0) return;
 	if (len >= stones[id].len) {
 		int x, y, i, j;
 		int *tmpmap = (int *)malloc(SIZE_OF_INT_1024);
 		memcpy(tmpmap, map, SIZE_OF_INT_1024);
-		
-		int *neighbor = (int *)malloc(SIZE_OF_INT_1024);
+
+		uint8_t *neighbor = (uint8_t *)malloc(SIZE_OF_UINT8_1024);
 		int first = neighborIdx(map, x1, y1, x2, y2, neighbor);
-		
+
 		for (y=y1; y<y2; y++) {
 			for (x=x1; x<x2; x++) {
 				int bidx = (y << 5) + x;
 				if (map[bidx] != -1) continue;
-				
+
 				int *p = &operation[id << 7];
 				len = *p;
 				for (i=0; i<len; i++) {
 					int idxes[16];
 					int flg = first || neighbor[bidx];
 					int *pp = &p[i << 4];
-					
+
 					for (j=1; j<stones[id].len; j++) {
 						int idx = bidx + pp[j];
 						if (map[idx] != -1) goto DAMEDESU;
 						idxes[j] = idx;
-						if (neighbor[idx]) flg = 1;
+						flg |= neighbor[idx];
 					}
 					if (!flg) continue;
 
@@ -83,7 +85,7 @@ void backTracking(Score *best, int id, Stone *stones, int n, int *map, int x1, i
 		free(tmpmap);
 		free(neighbor);
 	}
-	
+
 	backTracking(best, id+1, stones, n, map, x1, y1, x2, y2, operation, sumlen, nowscore);
 }
 
@@ -117,7 +119,7 @@ int solver(int *map, int x1, int y1, int x2, int y2, int *original_stones, int n
 			(*base)++;
 		}
 	}
-		
+
 	int sumlen[257];
 	sumlen[n] = 0;
 	for (i=(n-1); i>=0; i--) sumlen[i] = sumlen[i+1] + stones[i].len;
@@ -166,28 +168,24 @@ int main(int argc, char *argv[])
 /*----------------------------------------------------------------------------*/
 int bestScore2(Score *best, const int *map, int *freelen)
 {
-	int i, j, len = 0, score = 0;
-	int zks[256] = {};
+	int i, len = 0, score = 0;
+	uint8_t zks[256] = {};
 
 	for (i=0; i<1024; i++) {
 		int tmp = map[i];
 		if (tmp == -1) score++;
 		if (tmp < 0) continue;
 
-		for (j=0; j<len; j++) {
-			if (tmp == zks[j]) goto NEXTNEXT;
-		}
-		zks[len++] = tmp;
-
-	NEXTNEXT:
-		continue;
+		if (zks[tmp] == 1) continue;
+		zks[tmp] = 1;
+		len++;
 	}
-	
+
 	*freelen = score;
 	if (score < best->score || (score == best->score && len < best->zk)) {
 		best->score = score;
 		best->zk = len;
-		memcpy(best->map, map, sizeof(int) << 10);
+		memcpy(best->map, map, SIZE_OF_INT_1024);
 		return 1;
 	}
 
@@ -211,25 +209,24 @@ static inline int isVertex(const int *map, int x, int y, int x1, int y1, int x2,
 	return (len >= 2);
 }
 
-int isTraveled(const int *map, int id, int x1, int y1, int x2, int y2)
+int isTraveled(const int *map, int id, int x1, int y1, int x2, int y2, int len)
 {
-	char *str = (char *)malloc(sizeof(char) * 128);
+	char *str = (char *)malloc(SIZE_OF_CHAR_128);
 	char *p = &str[7], buf[8];
-	int x, y, len = 0;
+	int x, y;
+
+	sprintf(buf, "%04d%03d", len, id);
+	memcpy(str, buf, SIZE_OF_CHAR_7);
 
 	for (y=y1; y<y2; y++) {
 		for (x=x1; x<x2; x++) {
 			int tmp = map[(y << 5) + x];
-			if (tmp == -1) len++;
 			if (tmp < 0 || !isVertex(map, x, y, x1, y1, x2, y2)) continue;
 			*(p++) = x + 32;
 			*(p++) = y + 32;
 		}
 	}
-
 	*p = '\0';
-	sprintf(buf, "%04d%03d", len, id);
-	memcpy(str, buf, sizeof(char) * 7);
 
 	if (g_hash_table_contains(global_memo, str)) {
 		free(str);
@@ -242,28 +239,26 @@ int isTraveled(const int *map, int id, int x1, int y1, int x2, int y2)
 	return 0;
 }
 
-int neighborIdx(const int *map, int x1, int y1, int x2, int y2, int *neighbor)
+int neighborIdx(const int *map, int x1, int y1, int x2, int y2, uint8_t *neighbor)
 {
-	int x, y, i;
-	int dx[] = {0, 1, 0, -1};
-	int dy[] = {-1, 0, 1, 0};
-	int first = 1;
-	
-	memset(neighbor, 0, SIZE_OF_INT_1024);
+	int x, y, i, idx;
+	int first_flg = 1;
+
+	memset(neighbor, 0, SIZE_OF_UINT8_1024);
 	for (y=y1; y<y2; y++) {
 		for (x=x1; x<x2; x++) {
 			if (map[(y << 5) + x] < 0) continue;
 
-			for (i=0; i<4; i++) {
-				int xx = x + dx[i];
-				int yy = y + dy[i];
-				if (isInValid(xx, yy, x1, y1, x2, y2) || map[(yy << 5) + xx] != -1) continue;
-				neighbor[(yy << 5) + xx] = 1;
-			}
-			
-			first = 0;
+			// manual loop unrolling
+			if (!isInValid(x, y-1, x1, y1, x2, y2) && map[(idx = ((y-1) << 5) + x)]) neighbor[idx] = 1;
+			if (!isInValid(x+1, y, x1, y1, x2, y2) && map[(idx = (y << 5) + (x+1))]) neighbor[idx] = 1;
+			if (!isInValid(x, y+1, x1, y1, x2, y2) && map[(idx = ((y+1) << 5) + x)]) neighbor[idx] = 1;
+			if (!isInValid(x-1, y, x1, y1, x2, y2) && map[(idx = (y << 5) + (x-1))]) neighbor[idx] = 1;
+
+			first_flg = 0;
 		}
 	}
-	
-	return first;
+
+	return first_flg;
 }
+

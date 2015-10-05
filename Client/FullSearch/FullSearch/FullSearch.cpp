@@ -649,6 +649,8 @@ int CalcDeadArea(const int* map, const int width, const int height, const int fr
 	return result;
 }
 
+#define CUTTING_THRESHOLD -1
+//#define CUTTING_THRESHOLD stonesNum/2
 void FullSearch(const int* Map, const int x1, const int y1, const int x2, const int y2, const int* stones, const int stonesNum, char* solution){
 	//strcat(solution, "H 0 2 2\n")
 	//-----初期化処理-----//（長い）
@@ -731,7 +733,7 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 		kn = p->GetShitNumber();
 		st = p->GetShitState();
 		const int* shit = shitAry[kn][st];
-	
+
 		if(kn == 0){	//DEBUG
 			printf("koko\n");
 		}
@@ -752,8 +754,8 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 					st = 0;	//向きをリセットして
 
 					int checkArea = freeSize;
-					//if(stonesNum/2 < kn)
-					if(true){
+					bool cutting = CUTTING_THRESHOLD < kn;
+					if(cutting){
 						checkArea = CheckSubArea(map, width+1, height, freeSize, 0, subAreaMap);
 					}
 
@@ -773,7 +775,11 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 					if(p->isStart()){
 						pStack.push(new PutPoint(kn, st, shitAry[kn][st], &(startNeighbor[0])));
 					} else {
-						pStack.push(new PutPoint(kn, st, shitAry[kn][st], p, shitSizeAry[kn], subAreaMap));
+						if(cutting){
+							pStack.push(new PutPoint(kn, st, shitAry[kn][st], p, shitSizeAry[kn], subAreaMap));
+						} else {
+							pStack.push(new PutPoint(kn, st, shitAry[kn][st], p, -1, 0));
+						}
 					}
 				} else {
 					if(p->isStart()){
@@ -795,10 +801,10 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 			PutShit(map, kn, putPoints, putAryLength);
 			freeSize -= shitSizeAry[kn];
 			putShitNum++;
-	
+
 			int checkArea = freeSize;
-//			if(stonesNum/2 < kn)
-			if(true){
+			bool cutting = CUTTING_THRESHOLD < kn;
+			if(cutting){
 				for(int i = 0; i < 1025; i++) subAreaMap[i] = -1;
 				checkArea = CheckSubArea(map, width+1, height, freeSize, areaAry, subAreaMap);
 					//戻り値は部分領域のうち最大面積
@@ -817,8 +823,7 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 				goto TERMINAL;	//終端とする
 			}
 
-			//if(stonesNum/2 < kn){
-			if(true){
+			if(cutting){
 				int deadArea = CalcDeadArea(map, width+1, height, freeSize, &(shitSizeAry[kn]), stonesNum-kn, areaAry);
 
 				if(minScore < deadArea){
@@ -835,7 +840,11 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 			}
 			std::vector<int>* neighbor = CalcNeighborPoint(map, p->GetNeighborAry(), putPoints, putAryLength, width, height); //ココ
 
-			pStack.push(new PutPoint(kn, 0, shitAry[kn][0], neighbor->data(), neighbor->size(), shitSizeAry[kn], subAreaMap));
+			if(cutting){
+				pStack.push(new PutPoint(kn, 0, shitAry[kn][0], neighbor->data(), neighbor->size(), shitSizeAry[kn], subAreaMap));
+			} else {
+				pStack.push(new PutPoint(kn, 0, shitAry[kn][0], neighbor->data(), neighbor->size(), -1, 0));
+			}
 			delete neighbor;
 		}
 		continue;

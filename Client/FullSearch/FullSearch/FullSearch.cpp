@@ -817,13 +817,7 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 			aStack.push_back(ans);
 				//‰ğ“šì¬
 
-			/*
-			for(int i = 0; i < aStack.size(); i++){
-				printf("\t%d %d %d\n", aStack[i].shitNumber, aStack[i].basePoint, aStack[i].state);
-			}
-			printf("\n");
-			DEBUG_waitKey();
-			*/
+
 
 			int checkArea = freeSize;
 			bool cutting = CUTTING_THRESHOLD < kn;
@@ -932,12 +926,16 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 	QueryPerformanceCounter( &end );
 	printf("time : %d\n", (end.QuadPart - start.QuadPart)/liFreq.QuadPart);
 
+	printf("\nEND : score(%d,%d)\n", minScore, minScore_minShitNum);
+	printf("\n");
+	for(int i = 0; i < bestAnsStack.size(); i++){
+		printf("\t%d %d %d\n", bestAnsStack[i].shitNumber, bestAnsStack[i].basePoint, bestAnsStack[i].state);
+	}
 	//-----I—¹ˆ—-----//
 	delete shitSizeAry;
 	delete map;
 	delete[] shitAry;
 
-	printf("\nEND : score(%d,%d)\n", minScore, minScore_minShitNum);
 
 	//DEBUG
 	DEBUG_waitKey();

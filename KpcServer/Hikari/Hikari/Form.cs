@@ -340,6 +340,8 @@ namespace Hikari
 
             textBox3.Text = this.config.PostPath;
             textBox4.Text = this.config.AnsParam;
+
+            linkLabel1.Text = "http://" + textBox10.Text + textBox1.Text + "?" + textBox9.Text + "=" + textBox5.Text;
         }
 
         private void Form_Closed(object sender, FormClosedEventArgs e)
@@ -419,6 +421,11 @@ namespace Hikari
         private void button2_Click(object sender, EventArgs e)
         {
             MessageBox.Show("未実装");
+        }
+
+        private void linkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            System.Diagnostics.Process.Start(linkLabel1.Text);
         }
     }
 }

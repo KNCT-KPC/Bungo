@@ -649,6 +649,12 @@ int CalcDeadArea(const int* map, const int width, const int height, const int fr
 	return result;
 }
 
+typedef struct {
+	int shitNumber;
+	int state;
+	int basePoint;
+} Answer_t;
+
 #define CUTTING_THRESHOLD -1
 //#define CUTTING_THRESHOLD stonesNum/2
 void FullSearch(const int* Map, const int x1, const int y1, const int x2, const int y2, const int* stones, const int stonesNum, char* solution){
@@ -714,6 +720,8 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 	int kn = 0;
 	int st = 0;
 	std::stack<PutPoint*> pStack;
+	std::vector<Answer_t> aStack;
+	std::vector<Answer_t> bestAnsStack;
 
 	pStack.push(new PutPoint(kn, st, shitAry[kn][st], &(startNeighbor[0])));
 	int putPoints[17];
@@ -802,6 +810,21 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 			freeSize -= shitSizeAry[kn];
 			putShitNum++;
 
+			Answer_t ans;
+			ans.basePoint = nextBasePoint;
+			ans.shitNumber = kn;
+			ans.state = st;
+			aStack.push_back(ans);
+				//解答作成
+
+			/*
+			for(int i = 0; i < aStack.size(); i++){
+				printf("\t%d %d %d\n", aStack[i].shitNumber, aStack[i].basePoint, aStack[i].state);
+			}
+			printf("\n");
+			DEBUG_waitKey();
+			*/
+
 			int checkArea = freeSize;
 			bool cutting = CUTTING_THRESHOLD < kn;
 			if(cutting){
@@ -833,6 +856,7 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 					freeSize += shitSizeAry[removeShitNumber];
 
 					pStack.pop();	//ここいら怪しい
+					aStack.pop_back();
 					putShitNum--;	//怪しい
 					delete p;
 					goto TERMINAL;
@@ -853,22 +877,32 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 		//ポイント集計、解答作成
 		int score = CalcScore(map, width, height);
 		//int score = freeSize;	//ココ
+
 		if(minScore > score){
 			minScore = score;
 			minScore_minShitNum = putShitNum;
 		
 			DEBUG_printMap(map, width+1, height);
 			printf("score(%d,%d)\n", minScore, minScore_minShitNum);
+			for(int i = 0; i < aStack.size(); i++){
+				printf("\t%d %d %d\n", aStack[i].shitNumber, aStack[i].basePoint, aStack[i].state);
+			}
 			printf("\n");
 
+			bestAnsStack = aStack;
 		} else if(minScore == score){
 			if(minScore_minShitNum > putShitNum){
 				minScore_minShitNum = putShitNum;
 
 				DEBUG_printMap(map, width+1, height);
 				printf("score(%d,%d)\n", minScore, minScore_minShitNum);
+				for(int i = 0; i < aStack.size(); i++){
+					printf("\t%d %d %d\n", aStack[i].shitNumber, aStack[i].basePoint, aStack[i].state);
+				}
 				printf("\n");
 			}
+
+			bestAnsStack = aStack;
 		}
 
 		putShitNum--;
@@ -876,6 +910,7 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 		int removeShitNumber = pStack.top()->GetShitNumber();
 		RemoveShit(map, removeShitNumber, shitSizeAry[removeShitNumber], width, height);	//コレ
 		freeSize += shitSizeAry[removeShitNumber];
+		aStack.pop_back();
 
 		if(pStack.top()->GetShitNumber() == stonesNum-1){	//置いた糞（ズク）が最後なら
 			delete pStack.top();
@@ -885,6 +920,7 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 			RemoveShit(map, removeShitNumber, shitSizeAry[removeShitNumber], width, height);	//コレ
 			freeSize += shitSizeAry[removeShitNumber];
 			putShitNum--;
+			aStack.pop_back();
 		}
 
 		continue;

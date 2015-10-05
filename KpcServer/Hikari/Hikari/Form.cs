@@ -12,11 +12,12 @@ namespace Hikari
     {
         private Server server;
         private List<Client> clients = new List<Client>();
-        private Problem.Problem problem;
+        private NewProblem.NewProblem problem;
         private bool playing = false;
         private DateTime stime;
         private Client best;
         private Config config;
+        private HttpClient httpclient;
 
         public Form()
         {
@@ -25,6 +26,7 @@ namespace Hikari
             initConfig();
             printIPaddr();
             initServer();
+            this.httpclient = new HttpClient();
         }
 
 
@@ -110,17 +112,35 @@ namespace Hikari
             button1.Text = "開始中";
             button1.Enabled = false;
 
-            await Task.Run(() => {
-                try
+            string filename_or_string = "";
+            bool local = !url.StartsWith("http://");
+            if (local)
+            {
+                filename_or_string = url;
+            } else
+            {
+                await Task.Run(() =>
                 {
-                    this.problem = new Problem.Problem(url);
-                }
-                catch (Exception ex)
+                    filename_or_string = this.httpclient.getProblem(url);
+                });
+                if (filename_or_string == null)
                 {
-                    this.problem = null;
-                    msg = ex.Message;
+                    textBox8.AppendText("[Hikari]\t" + "GET Error" + "\r\n");
+                    return;
                 }
-            });
+            }
+
+            try
+            {
+                this.problem = new NewProblem.NewProblem(filename_or_string, local);
+            }
+            catch (Exception ex)
+            {
+                this.problem = null;
+                msg = ex.Message;
+                textBox8.AppendText("[Hikari]\t" + msg + "\r\n");
+                return;
+            }
 
             button1.Enabled = true;
             if (msg != null)
@@ -242,13 +262,10 @@ namespace Hikari
 
         private async void postAnswerAsync(Client client, string[] ans)
         {
-            string proper = Answer.Kpc2Official(ans, this.problem.Stones.Length);
-            System.Collections.Specialized.NameValueCollection nv = new System.Collections.Specialized.NameValueCollection();
-            nv.Add(textBox9.Text, textBox5.Text);
-            nv.Add(textBox4.Text, proper);
-
             bool check = this.problem.isLocal();
+            string proper = Answer.Kpc2Official(ans, this.problem.Stones.Length);
             bool error = false;
+
             clientEvent("通信開始", "UNEI");
             string msg = await Task.Run(() =>
             {
@@ -260,27 +277,20 @@ namespace Hikari
                     return "書き込み完了";
                 }
 
-                WebClient wc = new WebClient();
-                string response;
-                try
+                string res = this.httpclient.sendAnswer("http://" + textBox10.Text + textBox3.Text, textBox5.Text, proper);
+                if (res == null)
                 {
-                    string url = "http://" + textBox10.Text + textBox3.Text;
-                    byte[] res = wc.UploadValues(url, nv);
-                    response = System.Text.Encoding.UTF8.GetString(res);
-                } catch(Exception ex)
-                {
+                    res = "error";
                     error = true;
-                    response = ex.Message;
                 }
-                wc.Dispose();
-                return response;
+
+                return res;
             });
 
             if (error)
                 client.Board.Pass = false;
             clientEvent(msg, "UNEI");
         }
-
 
         /* Config */
         private string configPath()
@@ -380,6 +390,7 @@ namespace Hikari
         {
             string url = "http://" + textBox10.Text + textBox1.Text + "quest" + numericUpDown1.Value + ".txt" + "?token=" + textBox5.Text;
             textBox2.Text = url;
+            linkLabel1.Text = "http://" + textBox10.Text + textBox1.Text + "?" + textBox9.Text + "=" + textBox5.Text;
         }
 
         private void clientEvent(string msg, string name = null)
@@ -418,9 +429,23 @@ namespace Hikari
                 this.board3.Copy(tmp[2].Board);
         }
 
-        private void button2_Click(object sender, EventArgs e)
+        private async void button2_Click(object sender, EventArgs e)
         {
-            MessageBox.Show("未実装");
+            string url = textBox2.Text;
+            if (!url.StartsWith("http://"))
+            {
+                textBox8.AppendText("[Hikari]\t" + "Local mode" + "\r\n");
+                return;
+            }
+
+            string str = "";
+
+            await Task.Run(() =>
+            {
+                str = this.httpclient.makeConnection(url);
+            });
+
+            textBox8.AppendText("[Hikari]\t" + str + "\r\n");
         }
 
         private void linkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)

@@ -35,8 +35,8 @@
     <Reference Include="Board">
       <HintPath>..\..\..\OfficialServer\Board\Board\obj\Debug\Board.dll</HintPath>
     </Reference>
-    <Reference Include="Problem">
-      <HintPath>..\..\..\OfficialServer\Problem\Problem\bin\Debug\Problem.dll</HintPath>
+    <Reference Include="NewProblem">
+      <HintPath>..\..\NewProblem\NewProblem\NewProblem\bin\Debug\NewProblem.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -60,6 +60,7 @@
     <Compile Include="Form.Designer.cs">
       <DependentUpon>Form.cs</DependentUpon>
     </Compile>
+    <Compile Include="HttpClient.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Server.cs" />

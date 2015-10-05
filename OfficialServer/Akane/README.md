@@ -1,6 +1,11 @@
 # Akane
 模擬運営サーバ
 
+## メンテナンスされていません
+
+* 示された仕様に一致していない
+* https://github.com/KNCT-KPC/Bungo/issues/7
+
 ## 特徴
 
 * 実行しやすいようにWindows上で動くようにした

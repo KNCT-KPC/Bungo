@@ -30,7 +30,7 @@ namespace Hikari
             GetAbsPath = null;
 
             PostPath = "/answer";
-            AnsParam = "ans";
+            AnsParam = "answer";
             TokenParam = "token";
           }
     }

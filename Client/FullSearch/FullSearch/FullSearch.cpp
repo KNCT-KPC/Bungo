@@ -676,10 +676,10 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 			}
 		}
 	}
+	startNeighbor.push_back(-1);	//-1は番兵
 	for(int h = 0; h < height; h++){
 		MAP(m, width, h) = -2;
 	}
-	startNeighbor.push_back(-1);	//-1は番兵
 
 	printf("%d %d\n", width, height); //DEBUG
 	DEBUG_printMap(map, width+1, height);
@@ -718,8 +718,8 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 	int putAryLength;
 
 	int minScore = 1025;
-	int putShitNum = 0;
 	int minScore_minShitNum = 1025;
+	int putShitNum = 0;
 
 	LARGE_INTEGER liFreq, start;
 	QueryPerformanceFrequency( &liFreq );
@@ -766,6 +766,7 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 					//もうコレ以上置けないなら、終端とする
 					if(kn >= stonesNum){
 						kn = temp_kn;
+						delete p;
 						goto TERMINAL;
 					}
 
@@ -802,20 +803,6 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 				checkArea = CheckSubArea(map, width+1, height, freeSize, areaAry, subAreaMap);
 					//戻り値は部分領域のうち最大面積
 					//static定義されたareaAryには部分領域情報が入っている
-/*
-				if(stonesNum/2 < kn){
-					DEBUG_printMap(subAreaMap, width+1, height);printf("\n\n");
-					printf("%d\n", kn);
-					DEBUG_printMap(map, width+1, height);
-					printf("free size : %d\n", freeSize);
-
-					for(int i = 0; areaAry[i] != -1; i++){
-						printf("%d ", areaAry[i]);
-					}
-					printf("\n");
-					DEBUG_waitKey();
-				}
-		*/
 			}
 
 			//次に配置予定の糞（ズク）が空き領域よりも大きいならスキップする
@@ -910,3 +897,19 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 	//DEBUG
 	DEBUG_waitKey();
 }
+
+//デバッグ用のテンプレート↓
+/*
+				if(stonesNum/2 < kn){
+					DEBUG_printMap(subAreaMap, width+1, height);printf("\n\n");
+					printf("%d\n", kn);
+					DEBUG_printMap(map, width+1, height);
+					printf("free size : %d\n", freeSize);
+
+					for(int i = 0; areaAry[i] != -1; i++){
+						printf("%d ", areaAry[i]);
+					}
+					printf("\n");
+					DEBUG_waitKey();
+				}
+*/

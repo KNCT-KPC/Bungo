@@ -687,7 +687,8 @@ void SendSolution(std::vector<Answer_t>* aStack, int stonesNum, int** shitDataAr
 
 		int turn = (*aStack)[i].state%4 * 90;
 
-		sprintf(buf, "%d %d %c %d", putX, putY, side, turn);
+		//sprintf(buf, "%d %d %c %d", putX, putY, side, turn);
+		sprintf(buf, "%c %d %d %d", side, turn, putX, putY);
 		sendMsg(buf);
 
 		line++;

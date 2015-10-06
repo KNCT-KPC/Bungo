@@ -130,8 +130,9 @@ int solver(int *map, int x1, int y1, int x2, int y2, int *stones, int n)
 	char solution[25600] = {0};
 	FullSearch(map, x1, y1, x2, y2, stones, n, solution);
 
-
+	return EXIT_FAILURE;
 	//send solution
+	/*
 	int j, line = 0;
 	for (j=0; (solution[j] != '\0'); j++) {
 		if (solution[j] == '\n') line++;
@@ -146,7 +147,6 @@ int solver(int *map, int x1, int y1, int x2, int y2, int *stones, int n)
 	}
 	return EXIT_FAILURE;
 
-	/*
 	char *solutions[] = {
 		"H 0 2 2\n",
 		"H 0 2 2\nT 0 -6 0\n",

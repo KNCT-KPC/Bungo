@@ -10,6 +10,8 @@
 #define	STONE(n, x, y)	stones[((n) << 6) + ((y) << 3) + (x)]
 #define MAP(m, x, y) map[(x) + (y)*(width+1)]
 
+int sendMsg(char *msg);
+
 void DEBUG_printMap(const int* map, const int width, const int height){
 	for(int y = 0; y < height; y++){
 		for(int x = 0; x < width; x++){
@@ -262,7 +264,7 @@ int CountShitSize(const int* a){
 }
 
 //マップ表現された糞（ズク）を配置点表現にする関数
-void Shit_MapToBaseAry(const int* stones, const int stoneNum, const int width, int** baseAry){
+void Shit_MapToBaseAry(const int* stones, const int stoneNum, const int width, int** baseAry, int* dataAry){
 	for(int i = 0; i < 8; i++) baseAry[i] = 0;
 
 	//普通の状態
@@ -280,6 +282,7 @@ void Shit_MapToBaseAry(const int* stones, const int stoneNum, const int width, i
 		}
 	}
 	baseAry[0][bsIndex] = -1;	//-1は番兵
+	dataAry[0] = min;
 	//DEBUG_printBaseAryStone(baseAry[0]);
 
 	//90°回転
@@ -303,6 +306,8 @@ void Shit_MapToBaseAry(const int* stones, const int stoneNum, const int width, i
 		goto REVERSE;
 	}
 	//DEBUG_printBaseAryStone(baseAry[1]);
+	dataAry[1] = min;
+
 
 	//180°回転
 	min = -1;
@@ -325,6 +330,7 @@ void Shit_MapToBaseAry(const int* stones, const int stoneNum, const int width, i
 		goto REVERSE;
 	}
 	//DEBUG_printBaseAryStone(baseAry[2]);
+	dataAry[2] = min;
 
 	//270°回転
 	min = -1;
@@ -342,6 +348,7 @@ void Shit_MapToBaseAry(const int* stones, const int stoneNum, const int width, i
 	}
 	baseAry[3][bsIndex] = -1;	//-1は番兵
 	//DEBUG_printBaseAryStone(baseAry[3]);
+	dataAry[3] = min;
 
 
 REVERSE :;
@@ -369,7 +376,7 @@ REVERSE :;
 		}
 	}
 	//DEBUG_printBaseAryStone(baseAry[4]);
-
+	dataAry[4] = min;
 
 	//90°回転
 	if(baseAry[1] == 0) return;
@@ -388,6 +395,7 @@ REVERSE :;
 	}
 	baseAry[5][bsIndex] = -1;	//-1は番兵
 	//DEBUG_printBaseAryStone(baseAry[5]);
+	dataAry[5] = min;
 
 	//180°回転
 	if(baseAry[2] == 0) return;
@@ -406,6 +414,7 @@ REVERSE :;
 	}
 	baseAry[6][bsIndex] = -1;	//-1は番兵
 	//DEBUG_printBaseAryStone(baseAry[6]);
+	dataAry[6] = min;
 
 	//270°回転
 	if(baseAry[2] == 0) return;
@@ -424,6 +433,7 @@ REVERSE :;
 	}
 	baseAry[7][bsIndex] = -1;	//-1は番兵
 	//DEBUG_printBaseAryStone(baseAry[7]);
+	dataAry[7] = min;
 }
 
 //糞（ズク）をマップからとりのぞく関数
@@ -655,10 +665,44 @@ typedef struct {
 	int basePoint;
 } Answer_t;
 
+void SendSolution(std::vector<Answer_t>* aStack, int stonesNum, int** shitDataAry, int width){
+	// Best
+	sendMsg("S");
+
+	//解答を書く
+	char buf[256];
+	int line = 0;
+	for(int i = 0; i < aStack->size(); i++){
+		for(;line < (*aStack)[i].shitNumber; line++){
+			sendMsg("");
+		}
+
+		int putX = (*aStack)[i].basePoint%width - shitDataAry[(*aStack)[i].shitNumber][(*aStack)[i].state]%8;
+		int putY = (*aStack)[i].basePoint/width - shitDataAry[(*aStack)[i].shitNumber][(*aStack)[i].state]/8;
+
+		char side = 'H';
+		if((*aStack)[i].state >= 4){
+			side = 'T';
+		}
+
+		int turn = (*aStack)[i].state%4 * 90;
+
+		sprintf(buf, "%d %d %c %d", putX, putY, side, turn);
+		sendMsg(buf);
+
+		line++;
+	}
+
+	for(;line < stonesNum; line++){
+		sendMsg("");
+	}
+	sendMsg("E");
+}
+
+
 #define CUTTING_THRESHOLD -1
 //#define CUTTING_THRESHOLD stonesNum/2
 void FullSearch(const int* Map, const int x1, const int y1, const int x2, const int y2, const int* stones, const int stonesNum, char* solution){
-	//strcat(solution, "H 0 2 2\n")
 	//-----初期化処理-----//（長い）
 		//短辺、長辺の調査
 	const int width = x2-x1+1;
@@ -697,18 +741,25 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 
 		//糞（ズク）の再定義
 	int*** shitAry = new int**[stonesNum];	//起点配列表現をした糞（ズク）の配列
+	int** shitDataAry = new int*[stonesNum];
 	int* shitSizeAry = new int[stonesNum];
 	int totalSize = 0;
 	for(int s = 0; s < stonesNum; s++){
 		printf("\t%c\n", s+1+48);
 		shitAry[s] = new int*[8];
+		shitDataAry[s] = new int[8];
 
 		DEBUG_printMapStone(stones, s);
-		Shit_MapToBaseAry(stones, s, width, shitAry[s]);
+		Shit_MapToBaseAry(stones, s, width, shitAry[s], shitDataAry[s]);
 
 		shitSizeAry[s] = CountShitSize(shitAry[s][0]);	//サイズを計る
 		totalSize += shitSizeAry[s];
 		printf("\t size : %d\n", shitSizeAry[s]);
+		/*
+		for(int i = 0; i < 8; i++){
+			printf("\t\t %d\n", shitDataAry[s][i]);
+		}
+		*/
 	}
 
 	printf("total size : %d\n", totalSize);	//DEBUG
@@ -872,20 +923,13 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 		int score = CalcScore(map, width, height);
 		//int score = freeSize;	//ココ
 
+		bool update = false;
 		if(minScore > score){
-			minScore = score;
-			minScore_minShitNum = putShitNum;
-		
-			DEBUG_printMap(map, width+1, height);
-			printf("score(%d,%d)\n", minScore, minScore_minShitNum);
-			for(int i = 0; i < aStack.size(); i++){
-				printf("\t%d %d %d\n", aStack[i].shitNumber, aStack[i].basePoint, aStack[i].state);
-			}
-			printf("\n");
-
-			bestAnsStack = aStack;
+			update = true;
 		} else if(minScore == score){
 			if(minScore_minShitNum > putShitNum){
+				update = true;
+				/*
 				minScore_minShitNum = putShitNum;
 
 				DEBUG_printMap(map, width+1, height);
@@ -894,9 +938,26 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 					printf("\t%d %d %d\n", aStack[i].shitNumber, aStack[i].basePoint, aStack[i].state);
 				}
 				printf("\n");
+				*/
 			}
 
+				//bestAnsStack = aStack;
+		}
+
+		if(update){
+			minScore = score;
+			minScore_minShitNum = putShitNum;
+		
+			DEBUG_printMap(map, width+1, height);
+			printf("score(%d,%d)\n", minScore, minScore_minShitNum);
+			/*	DEBUG
+			for(int i = 0; i < aStack.size(); i++){
+				printf("\t%d %d %d\n", aStack[i].shitNumber, aStack[i].basePoint, aStack[i].state);
+			}
+			*/
 			bestAnsStack = aStack;
+			SendSolution(&bestAnsStack, stonesNum, shitDataAry, width+1);
+			//printf("\n");
 		}
 
 		putShitNum--;
@@ -931,11 +992,12 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 	for(int i = 0; i < bestAnsStack.size(); i++){
 		printf("\t%d %d %d\n", bestAnsStack[i].shitNumber, bestAnsStack[i].basePoint, bestAnsStack[i].state);
 	}
+
+
 	//-----終了処理-----//
 	delete shitSizeAry;
 	delete map;
 	delete[] shitAry;
-
 
 	//DEBUG
 	DEBUG_waitKey();
@@ -943,16 +1005,16 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 
 //デバッグ用のテンプレート↓
 /*
-				if(stonesNum/2 < kn){
-					DEBUG_printMap(subAreaMap, width+1, height);printf("\n\n");
-					printf("%d\n", kn);
-					DEBUG_printMap(map, width+1, height);
-					printf("free size : %d\n", freeSize);
+	if(stonesNum/2 < kn){
+		DEBUG_printMap(subAreaMap, width+1, height);printf("\n\n");
+		printf("%d\n", kn);
+		DEBUG_printMap(map, width+1, height);
+		printf("free size : %d\n", freeSize);
 
-					for(int i = 0; areaAry[i] != -1; i++){
-						printf("%d ", areaAry[i]);
-					}
-					printf("\n");
-					DEBUG_waitKey();
-				}
+		for(int i = 0; areaAry[i] != -1; i++){
+			printf("%d ", areaAry[i]);
+		}
+		printf("\n");
+		DEBUG_waitKey();
+	}
 */

@@ -32,3 +32,15 @@ obj/
 !/Client/FullSearch/FullSearch/*.cpp
 !/Client/FullSearch/FullSearch/*.h
 !/Client/FullSearch/FullSearch/*.vcxproj
+
+/Client/ParallelSearch/ipch/*
+/Client/ParallelSearch/Debug/*
+!/Client/ParallelSearch/Debug/FullSearch.exe
+/Client/ParallelSearch/Release/*
+!/Client/ParallelSearch/Release/FullSearch.exe
+/Client/ParallelSearch/FullSearch/Debug/*
+/Client/ParallelSearch/FullSearch/Release/*
+!/Client/ParallelSearch/FullSearch/*.cpp
+!/Client/ParallelSearch/FullSearch/*.h
+!/Client/ParallelSearch/FullSearch/*.vcxproj
+/Client/ParallelSearch/FullSearch.sdf

@@ -905,7 +905,7 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 				int deadArea = CalcDeadArea(map, width+1, height, freeSize, &(shitSizeAry[kn]), stonesNum-kn, areaAry, &needShitNum);
 
 				//if(DEBUG_FLAG >= 2){
-				if(true){
+				if(false){
 					printf("now : %d\n", kn);
 					DEBUG_printMap(map, width+1, height);
 					printf("shit size : ");

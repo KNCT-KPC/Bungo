@@ -198,11 +198,7 @@ void delete(int col)
 	cols[col]->right->left = cols[col]->left;
 	
 	for (p=cols[col]->down; p!=cols[col]; p=p->down) {
-		
-		int c = 0;
-		int row = p->row;
-		for (q=p->right; (q!=p && q!=rows[p->row]); q=q->right) {
-			printf("COUNT = %d\n", c++);
+		for (q=p->right; q!=p; q=q->right) {
 			count_one[q->col]--;
 			q->up->down = q->down;
 			q->down->up = q->up;
@@ -220,7 +216,7 @@ void restore(int col)
 		p->left->right = p;
 		p->right->left = p;
 		
-		for (q=p->right; (q!=p && q!=rows[p->row]); q=q->right) {
+		for (q=p->right; q!=p; q=q->right) {
 			q->up->down = q;
 			q->down->up = q;
 			count_one[q->col]++;
@@ -271,12 +267,10 @@ void output(depth)
 	}
 	
 	//if (isAccept(map, g_x1, g_y1, g_x2, g_y2) && bestScore(&best, map)) {
-	/*
 	if (bestScore(&best, map)) {
 		printf("Update best score: (%d, %d)\n", best.score, best.zk);
 		dumpMap2(map);
-	}*/
-	dumpMap2(map);
+	}
 }
 
 int crossChannel(int depth, int n)
@@ -296,7 +290,7 @@ int crossChannel(int depth, int n)
 		if (min <= 1) break;
 	}
 	if (min == 0) return 0;	// 0は除いてみようか
-
+	
 	// Row
 	dlx_node *q, *r, *s;
 	delete(selected_col);
@@ -355,7 +349,7 @@ int crossChannel(int depth, int n)
 		
 		
 		p->left->right = p;
-		for (q=p->right; q!=p; q=q->right) {
+		for (q=q->right; q!=p; q->right) {
 			delete(q->col);
 		}
 		p->left->right = p->right;
@@ -431,7 +425,7 @@ int solver(int *map, int x1, int y1, int x2, int y2, int *original_stones, int n
 	g_y2 = y2;
 	
 	
-	//memset(solution, 0, sizeof(int) * ROW_MAX);
+	
 	
 	// Prepare
 	int i, j;

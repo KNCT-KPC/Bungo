@@ -304,6 +304,28 @@ int crossChannel(int depth, int n)
 		//dump1();
 
 		// Delete for Algorithm-X
+		int f1 = 1;
+		for(q=p; (f1 || q!=p); q=q->right) {
+			if (q == rows[p->row]) continue;
+			printf("%p, %d, %d, %d, %d\n", q, q == &head, q == rows[p->row], q->idx, q->id);
+
+			// こことかの「cols」は、ちゃんと消されたcolsかなぁ
+			for (r=cols[q->col]; r!=cols[q->col]; r=r->down) {
+				int f2 = 1;
+				for(s=r->right; (f2 || s!=r); s=s->right) {
+					s->up->down = s->down;
+					s->down->up = s->up;
+					count_one[q->col]--;
+					f2 = 0;
+				}
+			}
+
+			cols[q->col]->left->right = cols[q->col]->right;
+			cols[q->col]->right->left = cols[q->col]->left;
+			f1 = 0;
+		}
+
+		/*
 		for (q=rows[p->row]->right; q!=rows[p->row]; q=q->right) {
 			for (r=cols[q->col]->down; r!=cols[q->col]; r=r->down) {
 				if (r->row == p->row) {
@@ -330,6 +352,7 @@ int crossChannel(int depth, int n)
 			cols[q->col]->left->right = cols[q->col]->right;
 			cols[q->col]->right->left = cols[q->col]->left;
 		}
+		*/
 
 		//dump1();
 

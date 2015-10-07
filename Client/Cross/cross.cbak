@@ -22,7 +22,6 @@ unsigned int global_count;
 //#define	FRAGMENT	(((ROW_MAX + 1) * (COL_MAX + 1)) / FRAGMENT_SIZE)
 #define	FRAGMENT	(((ROW_MAX + 1) / 100) * (COL_MAX + 1))
 
-
 typedef struct __dancing_links_node {
 	uint8_t id;
 	unsigned int row, col, idx;
@@ -41,7 +40,8 @@ dlx_node *rows[ROW_MAX + 10];
 dlx_node *cols[COL_MAX + 10];
 
 int count_one[COL_MAX + 10];
-unsigned int solution[256 + 10];
+//unsigned int solution[256 + 10];
+int solution[ROW_MAX + 10];
 uint8_t isuse[256];
 int global_map[1024];
 Score best;
@@ -190,6 +190,47 @@ void dlx_link(const Stone *stones, int n, const int *map, int x1, int y1, int x2
 	}
 }
 
+void delete(int col)
+{
+	dlx_node *p, *q;
+	
+	cols[col]->left->right = cols[col]->right;
+	cols[col]->right->left = cols[col]->left;
+	
+	for (p=cols[col]->down; p!=cols[col]; p=p->down) {
+		
+		int c = 0;
+		int row = p->row;
+		for (q=p->right; (q!=p && q!=rows[p->row]); q=q->right) {
+			printf("COUNT = %d\n", c++);
+			count_one[q->col]--;
+			q->up->down = q->down;
+			q->down->up = q->up;
+		}
+		p->left->right = p->right;
+		p->right->left = p->left;
+	}
+}
+
+void restore(int col)
+{
+	dlx_node *p, *q;
+	
+	for (p=cols[col]->down; p!=cols[col]; p=p->down) {
+		p->left->right = p;
+		p->right->left = p;
+		
+		for (q=p->right; (q!=p && q!=rows[p->row]); q=q->right) {
+			q->up->down = q;
+			q->down->up = q;
+			count_one[q->col]++;
+		}
+	}
+	
+	cols[col]->left->right = cols[col];
+	cols[col]->right->left = cols[col];
+}
+
 void printColumn()
 {
 	dlx_node *p;
@@ -230,10 +271,12 @@ void output(depth)
 	}
 	
 	//if (isAccept(map, g_x1, g_y1, g_x2, g_y2) && bestScore(&best, map)) {
+	/*
 	if (bestScore(&best, map)) {
 		printf("Update best score: (%d, %d)\n", best.score, best.zk);
 		dumpMap2(map);
-	}
+	}*/
+	dumpMap2(map);
 }
 
 int crossChannel(int depth, int n)
@@ -241,7 +284,7 @@ int crossChannel(int depth, int n)
 	dlx_node *p;
 	int selected_col, min;
 
-	if (depth == n) return 1;
+	//if (depth == n) return 1;
 	if (head.right == &head) return 1;
 
 	// Col
@@ -253,9 +296,10 @@ int crossChannel(int depth, int n)
 		if (min <= 1) break;
 	}
 	if (min == 0) return 0;	// 0は除いてみようか
-	
+
 	// Row
 	dlx_node *q, *r, *s;
+	delete(selected_col);
 	for(p=cols[selected_col]->down; p!=cols[selected_col]; p=p->down) {
 		//if (isuse[p->id]) continue;
 		//isuse[p->id] = 1;
@@ -281,6 +325,7 @@ int crossChannel(int depth, int n)
 		}
 		*/
 
+		/*
 		// Delete for Algorithm-X
 		for (q=rows[p->row]->right; q!=rows[p->row]; q=q->right) {
 			for (r=cols[q->col]->down; r!=cols[q->col]; r=r->down) {
@@ -302,10 +347,32 @@ int crossChannel(int depth, int n)
 			cols[q->col]->left->right = cols[q->col]->right;
 			cols[q->col]->right->left = cols[q->col]->left;
 		}
+		*/
+		
+		
+		
+		
+		
+		
+		p->left->right = p;
+		for (q=p->right; q!=p; q=q->right) {
+			delete(q->col);
+		}
+		p->left->right = p->right;
 		
 		// Recursive
-		//if (crossChannel(depth + 1, n)) return 1;
-		crossChannel(depth + 1, n);
+		if (crossChannel(depth + 1, n)) return 1;
+		//crossChannel(depth + 1, n);
+		
+		p->right->left = p;
+		for (q=p->left; q!=p; q=q->left) {
+			restore(q->col);
+		}
+		p->right->left = p->right;
+		
+		
+		
+		
 		
 		// Restore for Z-Problem
 		/*
@@ -325,6 +392,7 @@ int crossChannel(int depth, int n)
 		*/
 
 		// Restore for Algorithm-X
+		/*
 		for (q=rows[p->row]->right; q!=rows[p->row]; q=q->right) {
 			cols[q->col]->left->right = cols[q->col];
 			cols[q->col]->right->left = cols[q->col];
@@ -345,8 +413,10 @@ int crossChannel(int depth, int n)
 				//rows[r->row]->id = 1;
 			}
 		}
+		*/
+		
 	}
-
+	restore(selected_col);
 	return 0;
 }
 
@@ -361,7 +431,7 @@ int solver(int *map, int x1, int y1, int x2, int y2, int *original_stones, int n
 	g_y2 = y2;
 	
 	
-	
+	//memset(solution, 0, sizeof(int) * ROW_MAX);
 	
 	// Prepare
 	int i, j;

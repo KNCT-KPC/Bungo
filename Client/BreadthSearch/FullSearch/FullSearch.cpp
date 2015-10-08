@@ -753,7 +753,10 @@ public :
 		this->bdIndex = 0;
 	}
 	~WideData(){
-		breadthData->clear();
+		for(int i = 0; i < breadthData->size(); i++){
+			delete breadthData->data()[i];
+		}
+
 		delete breadthData;
 	}
 
@@ -908,7 +911,7 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 				goto TERMINAL;
 			}
 
-			/*l
+			/*
 			printf("\tshit : %d(%c)\n", kn, kn+49);
 			DEBUG_printMap(map, width+1, height);
 			printf("free :%d\n", freeSize);
@@ -1027,6 +1030,7 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 			LARGE_INTEGER end;
 			QueryPerformanceCounter( &end );
 			printf("time : %d\n", (end.QuadPart - start.QuadPart)/liFreq.QuadPart);
+			printf("DEBUG : %d\n", bdStack.size());
 #endif
 
 			bestAnsStack = aStack;

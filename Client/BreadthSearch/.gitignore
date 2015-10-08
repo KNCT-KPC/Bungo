@@ -1,6 +1,6 @@
 # ゴミ掃除
 FullSearch.sdf
-BreadthSearchClient.ext
+!BreadthSearchClient.ext
 /ipch/*
 /Debug/*
 !Debug/FullSearch.exe

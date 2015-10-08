@@ -2,7 +2,7 @@
 FullSearch.sdf
 !BreadthSearchClient.exe
 !zero.exe
-!tow.exe
+!two.exe
 /ipch/*
 /Debug/*
 !Debug/FullSearch.exe

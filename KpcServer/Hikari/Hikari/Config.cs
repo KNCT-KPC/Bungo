@@ -22,8 +22,9 @@ namespace Hikari
         public Config()
         {
             // ほとんどの項目は Form.cs でセットし直す…はず
-            Token = "6e299e0d3f9f40f0";
-            Server = "192.168.1.10";
+            //Token = "6e299e0d3f9f40f0";
+            Token = "0123456789abcdef";
+            Server = "testform26.procon-online.net";
 
             Counter = 1;
             GetPath = "/";

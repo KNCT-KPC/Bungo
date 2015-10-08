@@ -39,13 +39,13 @@ namespace Hikari
             listenner.Stop();
         }
 
-        private async System.Threading.Tasks.Task accept()
+        async private System.Threading.Tasks.Task accept()
         {
             while (true)
             {
                 TcpClient client = await listenner.AcceptTcpClientAsync();
                 onConnect(client);
-                await acceptClient(client);
+                acceptClient(client);
             }
         }
 

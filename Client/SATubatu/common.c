@@ -67,7 +67,6 @@ void initClient(char *name, char *server_ipaddr, int *osfhandle, int *sd)
 
 	if (connect(*sd, (struct sockaddr *)&server, sizeof(server)) != 0) {
 		perror(server_ipaddr);
-		return EXIT_FAILURE;
 	}
 
 	// fdopen

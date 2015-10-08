@@ -21,9 +21,13 @@ namespace Hikari
             try {
                 req = (HttpWebRequest)WebRequest.Create(url);
                 req.KeepAlive = true;
+                req.Proxy = null;
 
                 HttpWebResponse res = (HttpWebResponse)req.GetResponse();
-                return res.StatusCode + " " + res.StatusDescription;
+                string str = res.StatusCode + " " + res.StatusDescription;
+
+                res.Close();
+                return str;
             } catch(System.Net.WebException ex)
             {
                 return ex.Message;
@@ -36,11 +40,18 @@ namespace Hikari
             {
                 req = (HttpWebRequest)WebRequest.Create(url);
                 req.KeepAlive = true;
+                req.Proxy = null;
 
                 HttpWebResponse res = (HttpWebResponse)req.GetResponse();
                 System.IO.Stream stream = res.GetResponseStream();
                 System.IO.StreamReader sr = new System.IO.StreamReader(stream, Encoding.UTF8);
-                return sr.ReadToEnd();
+                string str = sr.ReadToEnd();
+
+                sr.Close();
+                stream.Close();
+                res.Close();
+
+                return str;
             }
             catch (System.Net.WebException)
             {
@@ -51,12 +62,13 @@ namespace Hikari
         public string sendAnswer(string url, string token, string answer)
         {
             string boundary = System.Environment.TickCount.ToString();
-            System.Text.Encoding enc = System.Text.Encoding.GetEncoding("UTF8");
+            System.Text.Encoding enc = System.Text.Encoding.GetEncoding("utf-8");
 
             try
             {
                 req = (HttpWebRequest)WebRequest.Create(url);
                 req.KeepAlive = true;
+                req.Proxy = null;
                 req.Method = "POST";
                 req.ContentType = "multipart/form-data; boundary=" + boundary;
 
@@ -81,6 +93,10 @@ namespace Hikari
                 System.IO.StreamReader sr = new System.IO.StreamReader(stream, enc);
 
                 string str = sr.ReadToEnd();
+                sr.Close();
+                stream.Close();
+                res.Close();
+
                 return str.Contains("error") ? null : str;
             }
             catch (System.Net.WebException)

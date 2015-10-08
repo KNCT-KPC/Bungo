@@ -63,25 +63,31 @@ void putStone(const Stone *stones, int first, int n, int *map, int x1, int y1, i
 	}
 }
 
-void putWrapper(Score *best, Stone *stones, int n, const int *map, int x1, int y1, int x2, int y2)
+void putWrapper(Score *best, Stone *stones, int n, const int *map, int x1, int y1, int x2, int y2, int *original_stones)
 {
 	// Score
 	int i;
 	Stone sorted[256];
 	static int counter = 0;
 
-	if (counter == 0) {
-		for (i=0; i<n; i++) stones[i].score = (((double)(n - i) / (double)n) * (double)stones[i].len) * 0.0625;
-	} else if (counter == 2) {
+	switch(counter++) {
+	case 0:
 		for (i=0; i<n; i++) stones[i].score = ((double)(n - i) / (double)n);
-	} else if (counter == 1 || counter == 3) {
-		for (i=0; i<n; i++) stones[i].score *= -1;
-	} else {
+		break;
+	case 1:
+		for (i=0; i<n; i++) stones[i].score = (((double)(n - i) / (double)n) * (double)stones[i].len) * 0.0625;
+		break;	
+	case 2:
+		for (i=0; i<n; i++) stones[i].score = ((double)(n - i) / (double)n) * -1;
+		break;
+	case 3:
+		for (i=0; i<n; i++) stones[i].score = (((double)(n - i) / (double)n) * (double)stones[i].len) * -0.0625;
+		break;
+	default:
 		srand((unsigned)time(NULL));
 		for (i=0; i<n; i++) stones[i].score = rand();
 	}
-
-	counter++;
+	
 	memcpy(sorted, stones, sizeof(Stone) * 256);
 	qsort(sorted, n, sizeof(Stone), sortByScore);
 
@@ -90,7 +96,12 @@ void putWrapper(Score *best, Stone *stones, int n, const int *map, int x1, int y
 	for (i=0; i<n; i++) {
 		memcpy(tmpmap, map, sizeof(int) * 1024);
 		putStone(sorted, sorted[i].id, n, tmpmap, x1, y1, x2, y2);
-		if (bestScore(best, tmpmap)) printf("Update best score: (%d, %d)\n", best->score, best->zk);
+		if (bestScore(best, tmpmap)) {
+			printf("Update best score: (%d, %d)\n", best->score, best->zk);
+			sendMsg("S");
+			sendAnswer(best->map, stones, original_stones, n);
+			if (sendMsg("E") == EXIT_FAILURE) return;
+		}
 	}
 }
 
@@ -111,7 +122,7 @@ int solver(int *map, int x1, int y1, int x2, int y2, int *original_stones, int n
 	Score best;
 	best.score = 1024;
 	for (i=0; i<10; i++) {
-		putWrapper(&best, stones, n, map, x1, y1, x2, y2);
+		putWrapper(&best, stones, n, map, x1, y1, x2, y2, original_stones);
 	}
 
 	// Best

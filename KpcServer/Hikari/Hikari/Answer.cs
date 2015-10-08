@@ -10,7 +10,7 @@ namespace Hikari
     {
         static public string Kpc2Official(string[] kpc, int len)
         {
-            string str = "";
+            List<string> lst = new List<string>();
             int count = 0;
 
             foreach(string k in kpc)
@@ -18,16 +18,28 @@ namespace Hikari
                 count++;
                 if (String.IsNullOrEmpty(k))
                 {
-                    str += "\r\n";
+                    lst.Add("");
                     continue;
                 }
                 string[] tmp = k.Split(' ');
-                str += String.Format("{0} {1} {2} {3}\r\n", tmp[2], tmp[3], tmp[0], tmp[1]);
+                lst.Add(String.Format("{0} {1} {2} {3}", tmp[2], tmp[3], tmp[0], tmp[1]));
             }
 
             for (int i=count; i<len; i++)
             {
-                str += "\r\n";
+                lst.Add("");
+            }
+
+            string str = "";
+            string[] strlst = lst.ToArray();
+
+            for (int i=0; i<len; i++)
+            {
+                str += strlst[i];
+                if (i != (len - 1))
+                {
+                    str += "\r\n";
+                }
             }
 
             return str;

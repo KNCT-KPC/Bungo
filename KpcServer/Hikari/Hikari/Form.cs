@@ -18,6 +18,10 @@ namespace Hikari
         private Client best;
         private Config config;
         private HttpClient httpclient;
+        private System.Timers.Timer timer;
+
+        private Client tmpclient = null;
+        private string[] tmpans = null;
 
         public Form()
         {
@@ -26,7 +30,13 @@ namespace Hikari
             initConfig();
             printIPaddr();
             initServer();
+
             this.httpclient = new HttpClient();
+
+            this.timer = new System.Timers.Timer();
+            this.timer.AutoReset = false;
+            this.timer.Elapsed += new System.Timers.ElapsedEventHandler(postAnswerWrapper);
+            this.timer.SynchronizingObject = this;
         }
 
 
@@ -126,6 +136,8 @@ namespace Hikari
                 if (filename_or_string == null)
                 {
                     textBox8.AppendText("[Hikari]\t" + "GET Error" + "\r\n");
+                    button1.Enabled = true;
+                    button1.Text = "試合開始";
                     return;
                 }
             }
@@ -257,7 +269,22 @@ namespace Hikari
             this.best = client;
 
             // 送信処理
-            postAnswerAsync(client, kpc);
+            this.tmpclient = client;
+            this.tmpans = kpc;
+
+            if (this.timer.Enabled)
+            {
+                this.timer.Stop();
+            }
+
+            this.timer.Interval = 500;
+            this.timer.Start();
+            //postAnswerAsync(client, kpc);
+        }
+
+        private void postAnswerWrapper(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            postAnswerAsync(this.tmpclient, this.tmpans);
         }
 
         private async void postAnswerAsync(Client client, string[] ans)
@@ -266,7 +293,7 @@ namespace Hikari
             string proper = Answer.Kpc2Official(ans, this.problem.Stones.Length);
             bool error = false;
 
-            clientEvent("通信開始", "UNEI");
+            clientEvent("通信開始(" + client.Name + ")", "UNEI");
             string msg = await Task.Run(() =>
             {
                 if (check)
@@ -438,6 +465,7 @@ namespace Hikari
                 return;
             }
 
+            url = "http://" + textBox10.Text + "/?token=" + textBox5.Text;
             string str = "";
 
             await Task.Run(() =>

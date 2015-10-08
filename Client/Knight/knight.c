@@ -30,13 +30,19 @@ static inline int isInValid(int x, int y, int x1, int y1, int x2, int y2);
 int isTraveled(const int *map, int id, int x1, int y1, int x2, int y2, int len);
 int neighborIdx(const int *map, int x1, int y1, int x2, int y2, uint8_t *neighbor);
 
-void backTracking(Score *best, int id, Stone *stones, int n, int *map, int x1, int y1, int x2, int y2, int *operation, int *sumlen, int nowscore)
+void backTracking(Score *best, int id, Stone *stones, int n, int *map, int x1, int y1, int x2, int y2, int *operation, int *sumlen, int nowscore, int *original_stones)
 {
 	int len;
 	global_count++;
-
+	
 	if (id == n) return;
-	if (bestScore2(best, map, &len)) printf("[%.3fs]\tUpdate best score: (%d, %d)\t[%u]\n", (clock() - global_clock) / (double)CLOCKS_PER_SEC, best->score, best->zk, global_count);
+	if (bestScore2(best, map, &len)) {
+		printf("[%.3fs]\tUpdate best score: (%d, %d)\t[%u]\n", (clock() - global_clock) / (double)CLOCKS_PER_SEC, best->score, best->zk, global_count);
+		
+		sendMsg("S");
+		sendAnswer(best->map, stones, original_stones, n);
+		if (sendMsg("E") == EXIT_FAILURE) return;
+	}
 	if ((nowscore - sumlen[id]) > best->score) return;
 	if (isTraveled(map, id, x1, y1, x2, y2, len)) return;
 
@@ -73,7 +79,7 @@ void backTracking(Score *best, int id, Stone *stones, int n, int *map, int x1, i
 					memcpy(tmpmap, map, SIZE_OF_INT_1024);
 					tmpmap[bidx] = id;
 					for (j=1; j<stones[id].len; j++) tmpmap[idxes[j]] = id;
-					backTracking(best, id+1, stones, n, tmpmap, x1, y1, x2, y2, operation, sumlen, nowscore - stones[id].len);
+					backTracking(best, id+1, stones, n, tmpmap, x1, y1, x2, y2, operation, sumlen, nowscore - stones[id].len, original_stones);
 
 				DAMEDESU:
 					continue;	// noop
@@ -85,7 +91,7 @@ void backTracking(Score *best, int id, Stone *stones, int n, int *map, int x1, i
 		free(neighbor);
 	}
 
-	backTracking(best, id+1, stones, n, map, x1, y1, x2, y2, operation, sumlen, nowscore);
+	backTracking(best, id+1, stones, n, map, x1, y1, x2, y2, operation, sumlen, nowscore, original_stones);
 }
 
 int solver(int *map, int x1, int y1, int x2, int y2, int *original_stones, int n)
@@ -124,7 +130,7 @@ int solver(int *map, int x1, int y1, int x2, int y2, int *original_stones, int n
 	for (i=(n-1); i>=0; i--) sumlen[i] = sumlen[i+1] + stones[i].len;
 
 	global_clock = clock();
-	backTracking(&best, 0, stones, n, map, x1, y1, x2, y2, operation, sumlen, best.score);
+	backTracking(&best, 0, stones, n, map, x1, y1, x2, y2, operation, sumlen, best.score, original_stones);
 
 	// Best
 	printf("Best Score: %d, Zk: %d\n", best.score, best.zk);

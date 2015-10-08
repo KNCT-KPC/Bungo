@@ -1021,15 +1021,16 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 		if(update){
 			minScore = score;
 			minScore_minShitNum = putShitNum;
-		
+#ifdef DEBUG_CODE
 			DEBUG_printMap(map, width+1, height);
 			printf("score(%d,%d)\n", minScore, minScore_minShitNum);
 			LARGE_INTEGER end;
 			QueryPerformanceCounter( &end );
 			printf("time : %d\n", (end.QuadPart - start.QuadPart)/liFreq.QuadPart);
+#endif
 
 			bestAnsStack = aStack;
-			//SendSolution(&bestAnsStack, stonesNum, shitDataAry, width+1);
+			SendSolution(&bestAnsStack, stonesNum, shitDataAry, width+1);
 		}
 
 		if(bdStack.top()->GetShitNumber() == stonesNum-1){	//置いた糞（ズク）が最後なら

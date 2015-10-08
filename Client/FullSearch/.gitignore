@@ -1,0 +1,12 @@
+# ゴミ掃除
+FullSearch.sdf
+/ipch/*
+/Debug/*
+!Debug/FullSearch.exe
+/Release/*
+!/Release/FullSearch.exe
+/FullSearch/Debug/*
+/FullSearch/Release/*
+!/FullSearch/*.cpp
+!/FullSearch/*.h
+!/FullSearch/*.vcxproj

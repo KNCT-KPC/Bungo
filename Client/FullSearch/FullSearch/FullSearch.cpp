@@ -783,7 +783,7 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 	int putPoints[17];
 	int putAryLength;
 
-	int minScore = 1025;
+	int minScore = 0;
 	int minScore_minShitNum = 1025;
 	int putShitNum = 0;
 
@@ -926,7 +926,6 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 					int removeShitNumber = p->GetShitNumber();
 					RemoveShit(map, removeShitNumber, shitSizeAry[removeShitNumber], width, height);
 					freeSize += shitSizeAry[removeShitNumber];
-
 					aStack.pop_back();
 					putShitNum--;
 					/*
@@ -976,13 +975,11 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 			SendSolution(&bestAnsStack, stonesNum, shitDataAry, width+1);
 		}
 
-		putShitNum--;
-
-
 		int removeShitNumber = pStack.top()->GetShitNumber();
 		RemoveShit(map, removeShitNumber, shitSizeAry[removeShitNumber], width, height);
 		freeSize += shitSizeAry[removeShitNumber];
 		aStack.pop_back();
+		putShitNum--;
 
 		if(pStack.top()->GetShitNumber() == stonesNum-1){	//置いた糞（ズク）が最後なら
 			delete pStack.top();

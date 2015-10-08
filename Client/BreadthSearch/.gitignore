@@ -1,6 +1,8 @@
 # ゴミ掃除
 FullSearch.sdf
 !BreadthSearchClient.exe
+!zero.exe
+!tow.exe
 /ipch/*
 /Debug/*
 !Debug/FullSearch.exe

@@ -584,6 +584,36 @@ void SendSolution(std::vector<Answer_t>* aStack, int stonesNum, int** shitDataAr
 	sendMsg("E");
 }
 
+/*
+class wdElement{
+public:
+	int st;
+	int basePoint;
+	int fit;
+	int fit2;
+	int deadArea;
+	int maxAreaSize;
+	int needShitNum;
+
+	int* areaAry;
+	int areaSize;
+	wdElement(){
+		this->areaAry = 0;
+	}
+	wdElement(int* areaAry){
+		int i;
+		for(i = 0; areaAry[i] != -1; i++);
+
+		areaSize = i;
+		this->areaAry = new int[areaSize];
+		for(i = 0; i < areaSize; i++) this->areaAry[i] = areaAry[i];
+	}
+	~wdElement(){
+		if(this->areaAry != 0){
+			delete areaAry;
+		}
+	}
+};*/
 class wdElement{
 public:
 	int st;
@@ -664,6 +694,57 @@ void InsertSort(std::vector<wdElement*>* breadthData, int n){
 #define DEBUG_CODE
 //#define CHECK_CODE
 
+/*
+class PartData{
+public :
+	int x;
+	int y;
+	int w;
+	int h;
+
+	PartData(int x, int y, int w, int h){
+		this->x = x;
+		this->y = y;
+		this->w = w;
+		this->h = h;
+	}
+};
+*/
+
+class Map{
+private:
+	int width;
+	int height;
+	int* map;
+
+public :
+	Map(const int* srcMap, const int width, const int height){
+		/*map = new int[(width+1) * height];	//対象領域だけを考慮したマップ
+		std::vector<int> startNeighbor;
+
+		int freeSize = width*height;
+		const int maxFreeSize = freeSize;
+		for(int h = 0; h < height; h++){
+			for(int w = 0; w < width; w++){
+				int value = Map[(w+x1) + (h+y1)*32];
+
+				//入力では 壁 = 1 になっているが、ここでは 壁 = -1 とする。
+				if(value == 0){
+					MAP(m, w, h) = 0;
+				} else {
+					MAP(m, w, h) = -1;
+					freeSize--;
+				}
+				startNeighbor.push_back(w+h*(width+1));	//置ける地点として記憶
+			}
+		}
+		for(int h = 0; h < height; h++){
+			MAP(m, width, h) = -2;
+		}*/		
+	}
+
+};
+
 #define CUTTING_THRESHOLD -1
 //#define CUTTING_THRESHOLD stonesNum/2
 void FullSearch(const int* Map, const int x1, const int y1, const int x2, const int y2, const int* stones, const int stonesNum, char* solution){
@@ -739,7 +820,7 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 
 	int putPoints[17];
 	int putAryLength;
-	int minScore = 1025;
+	int minScore = 0;
 	int minScore_minShitNum = 1025;
 	int putShitNum = 0;
 
@@ -754,6 +835,8 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 
 	int DEBUG_COUNT = 0;
 	int kn = 0;
+	//PartData data(0,0,width;
+
 	while(1){
 		//幅優先探索用のコード
 		bool startFlag = false;
@@ -762,6 +845,7 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 			kn = startKn;
 			startFlag = true;
 			startKn++;
+			if(startKn == stonesNum) break;
 		} else {
 			kn = bdStack.top()->GetShitNumber();
 			int remove = RemoveShit(map, kn, shitSizeAry[kn], width, height);
@@ -799,6 +883,11 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 			DEBUG_printMap(map, width+1, height);
 			printf("free : %d\n", freeSize);
 			printf("dead : %d\n", data->deadArea);
+			/*
+			for(int i = 0; i < data->areaSize; i++){
+				printf("%d ", data->areaAry[i]);
+			}	//koko
+			*/
 			DEBUG_waitKey();
 #endif
 #endif
@@ -815,12 +904,6 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 			if(kn == stonesNum) {
 				goto TERMINAL;
 			}
-
-			//int deadArea = CalcDeadArea(map, width+1, height, freeSize, &(shitSizeAry[kn]), stonesNum-kn, areaAry, &needShitNum);
-			/*
-			if(minScore < data->deadArea || (minScore == data->deadArea && minScore_minShitNum <= data->needShitNum+putShitNum)){
-				continue;
-			}*/
 		}
 
 
@@ -859,13 +942,6 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 			for(int i = 0; i < baseAry.size(); i++){
 				int basePoint = baseAry[i];
 
-				/*
-				printf("%d\n", basePoint);
-				bool a = DEBUG_JudgePutable(map, shit, basePoint, width, height, putPoints, &putAryLength);
-				DEBUG_printPutShitOnMap(map, putPoints, putAryLength, width, height);
-				DEBUG_waitKey();
-				*/
-
 				if(JudgePutable(map, shit, basePoint, width, height)){
 					int neighborNum;
 					PutShit(map, kn, shitAry[kn][st], basePoint, width+1, height, &neighborNum);
@@ -873,24 +949,27 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 
 					int needShitNum = 0;
 					int fit;
-					int checkArea = CheckSubArea(map, width+1, height, freeSize, areaAry, subAreaMap, &fit);
+
+					//int buf[1025];
+					int checkArea = CheckSubArea(map, width+1, height, freeSize, areaAry, subAreaMap, &fit); //for(int j = 0; j < 1025; j++) buf[j] = areaAry[j];
 					int deadArea = CalcDeadArea(map, width+1, height, freeSize, &(shitSizeAry[kn]), stonesNum-kn, areaAry, &needShitNum);
 
 					RemoveShit(map, kn, shitSizeAry[kn], width, height);
 					freeSize += shitSizeAry[kn];
 
-					//ここでやれるだろ
 					if(minScore < deadArea || (minScore == deadArea && minScore_minShitNum <= needShitNum+putShitNum)){
 						continue;
 					}
 
 					int areaNum;
-					for(areaNum = 0; areaAry[areaNum] != -1; areaNum++);
+					for(areaNum = 0; areaAry[areaNum] != -1; areaNum++);/*{
+						printf("%d ", areaAry[areaNum]);
+					} DEBUG_waitKey();*/
 
 					wdElement* temp = new wdElement();
 					temp->st = st;
 					temp->basePoint = basePoint;
-					temp->fit = fit;//1024-areaNum;
+					temp->fit = fit;
 					temp->fit2 = neighborNum;
 					temp->deadArea = deadArea;
 					temp->maxAreaSize = checkArea;
@@ -916,8 +995,8 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 				wdElement* elm = breadthData->data()[i];
 #ifdef DEBUG_CODE
 #ifdef CHECK_CODE
-				printf("%d %d : %d [%d %d]", elm->st, elm->basePoint, elm->deadArea, elm->fit, elm->fit2);
-				DEBUG_waitKey();
+//				printf("%d %d : %d [%d %d]", elm->st, elm->basePoint, elm->deadArea, elm->fit, elm->fit2);
+//				DEBUG_waitKey();
 #endif
 #endif
 			}
@@ -954,7 +1033,7 @@ TERMINAL:
 			printf("time : %d\n", (end.QuadPart - start.QuadPart)/liFreq.QuadPart);
 #endif
 			bestAnsStack = aStack;
-//			SendSolution(&bestAnsStack, stonesNum, shitDataAry, width+1);
+			SendSolution(&bestAnsStack, stonesNum, shitDataAry, width+1);
 		}
 
 		if(bdStack.top()->GetShitNumber() == stonesNum-1){	//置いた糞（ズク）が最後なら

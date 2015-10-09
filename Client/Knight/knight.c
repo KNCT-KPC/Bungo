@@ -34,11 +34,11 @@ void backTracking(Score *best, int id, Stone *stones, int n, int *map, int x1, i
 {
 	int len;
 	global_count++;
-	
+
 	if (id == n) return;
 	if (bestScore2(best, map, &len)) {
 		printf("[%.3fs]\tUpdate best score: (%d, %d)\t[%u]\n", (clock() - global_clock) / (double)CLOCKS_PER_SEC, best->score, best->zk, global_count);
-		
+
 		sendMsg("S");
 		sendAnswer(best->map, stones, original_stones, n);
 		if (sendMsg("E") == EXIT_FAILURE) return;

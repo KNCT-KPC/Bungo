@@ -31,9 +31,10 @@
 	#define	SERVER_PORT	25252
 #else
 //	#define	INPUT_FILENAME	"../../../Problem/light/light-local.txt"
-	#define	INPUT_FILENAME	"../../../Problem/27/27-local.txt"
+//	#define	INPUT_FILENAME	"../../../Problem/27/27-local.txt"
 //	#define	INPUT_FILENAME	"../../../Problem/pentomino/8x8-local.txt"
 //	#define	INPUT_FILENAME	"../../../Problem/41/41-local.txt"
+	#define INPUT_FILENAME  "../../../Problem/official/quest1-local.txt"
 	#define	OUTPUT_FILENAME	"-"
 	/* KORE => if (OUTPUT_FILENAME[0] == '-') { global_fpwrite = stdout; } <== */
 #endif

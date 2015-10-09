@@ -23,7 +23,11 @@ void DEBUG_printMap(const int* map, const int width, const int height){
 			} else if(value == -3){
 				printf("* ");
 			} else {
-				printf("%c ", value+48);
+				if(value < 30){
+					printf("%c ", value+48);
+				} else {
+					printf("ｱ ");
+				}
 			}
 		}
 		printf("\n");
@@ -94,133 +98,6 @@ bool DEBUG_JudgePutable(const int* map, const int* shit, const int basePoint, co
 	}
 	return result;
 }
-
-//配置点配列を保持するクラス
-class PutPoint{
-private:
-	int pointIndex;
-	int shitNumber;
-	int shitState;
-	std::vector<int> p;
-	int* neighborAry;
-	bool start;
-
-public :
-	PutPoint(const int shitNumber, const int shitState, const int* shit, PutPoint* prevP, const int shitSize, const int* subArea){
-		int size;
-		for(size = 0; prevP->neighborAry[size] != -1; size++);
-
-		neighborAry = new int[size+1];
-		for(int i = 0; i < size; i++){
-			neighborAry[i] = prevP->neighborAry[i];
-		}
-		neighborAry[size] = -1;
-
-		for(int s = 0; shit[s] != -1; s++){
-			for(int n = 0; neighborAry[n] != -1; n++){
-				if(subArea != 0 && subArea[neighborAry[n]] < shitSize){
-					continue;
-				}
-
-				int value = neighborAry[n] - shit[s];
-				for(int i = 0; i < p.size(); i++){
-					if(value == p[i]){
-						goto NEXT;
-					}
-				}
-				p.push_back(value);
-
-			NEXT:;
-			}
-		}
-
-		this->pointIndex = 0;
-		this->shitState = shitState;
-		this->shitNumber = shitNumber;
-		this->start = false;
-	}
-	PutPoint(const int shitNumber, const int shitState, const int* shit, const int* neighbor, const int neighborNum, const int shitSize, const int* subArea){
-		for(int s = 0; shit[s] != -1; s++){
-			for(int n = 0; neighbor[n] != -1; n++){
-				if(subArea != 0 && subArea[neighbor[n]] < shitSize){
-					continue;
-				}
-				int value = neighbor[n] - shit[s];
-
-				for(int i = 0; i < p.size(); i++){
-					if(value == p[i]){
-						goto NEXT;
-					}
-				}
-				p.push_back(value);
-
-			NEXT:;
-			}
-		}
-
-		neighborAry = new int[neighborNum+1];
-		for(int i = 0; i < neighborNum; i++){
-			neighborAry[i] = neighbor[i];
-		}
-		neighborAry[neighborNum] = -1;
-
-		this->pointIndex = 0;
-		this->shitState = shitState;
-		this->shitNumber = shitNumber;
-		this->start = false;
-	}
-	PutPoint(const int shitNumber, const int shitState, const int* shit, const int* startMap){
-		for(int s = 0; shit[s] != -1; s++){
-			for(int n = 0; startMap[n] != -1; n++){
-				int value = startMap[n] - shit[s];
-				for(int i = 0; i < p.size(); i++){
-					if(value == p[i]){
-						goto NEXT;
-					}
-				}
-				p.push_back(value);
-
-			NEXT:;
-			}
-		}
-
-		neighborAry = new int[1];
-		neighborAry[0] = -1;
-
-		this->pointIndex = 0;
-		this->shitState = shitState;
-		this->shitNumber = shitNumber;
-		this->start = true;
-	}
-	~PutPoint(){
-		delete neighborAry;
-	}
-
-	const int* GetNeighborAry(){
-		return neighborAry;
-	}
-	const int* GetPointAry(){
-		return &(p[0]);
-	}
-	bool GetNextValue(int* value){
-		if(pointIndex < p.size()){
-			*value = p[pointIndex];
-			pointIndex++;
-			return true;
-		}
-
-		return false;
-	}
-	bool isStart(){
-		return start;
-	}
-	int GetShitNumber(){
-		return shitNumber;
-	}
-	int GetShitState(){
-		return shitState;
-	}
-};
 
 //２つの配列が同じものかをチェックする関数
 bool JudgeSameAry(const int* a, const int* b, const int size){
@@ -455,9 +332,28 @@ int RemoveShit(int* map, const int shitNumber, const int shitSize, const int wid
 }
 
 //マップに糞（ズク）を配置する関数
-void PutShit(int* map, const int shitNumber, const int* shit, const int basePoint){
+void PutShit(int* map, const int shitNumber, const int* shit, const int basePoint, const int width, const int height, int* neighborNum){
+	*neighborNum = 0;
 	for(int i = 0; shit[i] != -1; i++){
-		map[shit[i]+basePoint] = shitNumber+1;
+		int p = shit[i]+basePoint;
+		map[p] = shitNumber+1;
+
+		int value = p+1;	//左
+		if(!(value >= 0 && value < width*height && (map[value] == 0 || map[value] == shitNumber+1))){
+			(*neighborNum)++;
+		} 
+		value = p-1;	//左
+		if(!(value >= 0 && value < width*height && (map[value] == 0 || map[value] == shitNumber+1))){
+			(*neighborNum)++;
+		} 
+		value = p+width;	//上
+		if(!(value >= 0 && value < width*height && (map[value] == 0 || map[value] == shitNumber+1))){
+			(*neighborNum)++;
+		} 
+		value = p-width;	//下
+		if(!(value >= 0 && value < width*height && (map[value] == 0 || map[value] == shitNumber+1))){
+			(*neighborNum)++;
+		} 	
 	}
 }
 
@@ -521,45 +417,6 @@ std::vector<int>* CalcNeighborPoint(const int* map, const int width, const int h
 	}
 
 	return neighbor;
-	/*
-	std::vector<int> *neighbor = new std::vector<int>();
-
-	//前回までの隣接点を引き継ぐ
-	for(int i = 0; prevNeighbor[i] != -1; i++){
-		if(map[prevNeighbor[i]] == 0){	
-			neighbor->push_back(prevNeighbor[i]);
-		}
-	}
-
-	//新しく糞（ズク）を置いた点の四近傍をチェック
-	for(int i = 0; i < putAryLength; i++){
-		//putPoints[i] は 新しく糞（ズク）を置いた点
-		//高速化 putPointsに要素が存在するかどうかをチェックする必要？
-
-		int value = putPoints[i]+1;	//左
-		if(value >= 0 && value < (width+1)*height && map[value] == 0 && !JudgeExistValue(neighbor->data(), neighbor->size(), value) && !JudgeExistValue(putPoints, putAryLength, value)){
-			neighbor->push_back(value);
-		}
-
-		value = putPoints[i]-1;	//右
-		if(value >= 0 && value < (width+1)*height && map[value] == 0 && !JudgeExistValue(neighbor->data(), neighbor->size(), value) && !JudgeExistValue(putPoints, putAryLength, value)){
-			neighbor->push_back(value);
-		}
-
-		value = putPoints[i]+(width+1);	//上
-		if(value >= 0 && value < (width+1)*height && map[value] == 0 && !JudgeExistValue(neighbor->data(), neighbor->size(), value) && !JudgeExistValue(putPoints, putAryLength, value)){
-			neighbor->push_back(value);
-		}
-
-		value = putPoints[i]-(width+1);	//下
-		if(value >= 0 && value < (width+1)*height && map[value] == 0 && !JudgeExistValue(neighbor->data(), neighbor->size(), value) && !JudgeExistValue(putPoints, putAryLength, value)){
-			neighbor->push_back(value);
-		}
-	}
-
-	neighbor->push_back(-1);	//番兵
-	return neighbor;
-	*/
 }
 
 //部分領域を検出する関数
@@ -727,26 +584,26 @@ void SendSolution(std::vector<Answer_t>* aStack, int stonesNum, int** shitDataAr
 	sendMsg("E");
 }
 
-void InsertSort(std::vector<int*>* breadthData, int n){
-	int i, j;
-	int* temp;
-
-	for (i = 1; i < n; i++) {  
-		temp = ((*breadthData)[i]);
-		for (j = i; j > 0 && ((*breadthData)[j-1])[2] < temp[2]; j--) ((*breadthData)[j]) = ((*breadthData)[j-1]);
-		((*breadthData)[j]) = temp;
-	}
-}
+class wdElement{
+public:
+	int st;
+	int basePoint;
+	int fit;
+	int fit2;
+	int deadArea;
+	int maxAreaSize;
+	int needShitNum;
+};
 
 class WideData{
 private:
 	int kn;
-	std::vector<int*>* breadthData;
+	std::vector<wdElement*>* breadthData;
 	int bdIndex;
 	bool start;
 
 public :
-	WideData(int kn, std::vector<int*>* breadthData, bool start){
+	WideData(int kn, std::vector<wdElement*>* breadthData, bool start){
 		this->kn = kn;
 		this->breadthData = breadthData;
 		this->start = start;
@@ -766,7 +623,7 @@ public :
 		}
 		return true;
 	}
-	int* GetNext(){
+	wdElement* GetNext(){
 		bdIndex++;
 		return (*breadthData)[bdIndex-1];
 	}
@@ -775,7 +632,37 @@ public :
 	}
 };
 
+
+//bの方が良いならtrueを返す
+bool Compare(wdElement* a, wdElement* b){
+	if(a->deadArea > b->deadArea){
+		return true;
+	} else if(a->deadArea == b->deadArea){
+		if(a->fit < b->fit){
+			return true;
+		} else if(a->fit == b->fit){
+			if(a->fit2 < b->fit2){
+				return true;
+			}
+		}
+	}
+	return false;
+} 
+
+void InsertSort(std::vector<wdElement*>* breadthData, int n){
+	int i, j;
+	wdElement* temp;
+
+	for (i = 1; i < n; i++) {  
+		temp = ((*breadthData)[i]);
+		for (j = i; j > 0 && Compare(((*breadthData)[j-1]), temp); j--) ((*breadthData)[j]) = ((*breadthData)[j-1]);
+		((*breadthData)[j]) = temp;
+	}
+}
+//for (j = i; j > 0 && ((*breadthData)[j-1])[2] < temp[2]; j--) ((*breadthData)[j]) = ((*breadthData)[j-1]);
+
 #define DEBUG_CODE
+//#define CHECK_CODE
 
 #define CUTTING_THRESHOLD -1
 //#define CUTTING_THRESHOLD stonesNum/2
@@ -891,11 +778,12 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 			}
 
 			//実配置処理
-			int* data = bdStack.top()->GetNext();
-			int st = data[0];
-			int placePoint = data[1];
+			wdElement* data = bdStack.top()->GetNext();
+			int st = data->st;
+			int placePoint = data->basePoint;
 
-			PutShit(map, kn, shitAry[kn][st], placePoint);
+			int DUMMY;
+			PutShit(map, kn, shitAry[kn][st], placePoint, width+1, height, &DUMMY);
 			putShitNum++;
 			freeSize -= shitSizeAry[kn];
 			Answer_t ans; ans.basePoint=placePoint; ans.state=st; ans.shitNumber=kn;
@@ -905,37 +793,39 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 				goto TERMINAL;
 			}
 
+#ifdef DEBUG_CODE
+#ifdef CHECK_CODE
 			printf("\tshit : %d(%c)\n", kn, kn+49);
 			DEBUG_printMap(map, width+1, height);
-			printf("free : %d\n", freeSize);int a;
-			CheckSubArea(map, width+1, height, freeSize, areaAry, subAreaMap, &a); 
-			int deadArea = CalcDeadArea(map, width+1, height, freeSize, &(shitSizeAry[kn]), stonesNum-kn, areaAry, &a);
-			printf("dead : %d\n", deadArea);
+			printf("free : %d\n", freeSize);
+			printf("dead : %d\n", data->deadArea);
 			DEBUG_waitKey();
-			kn++;	//ココ
-		}
-			
-		int fit, needShitNum;
-		for(int i = 0; i < 1025; i++) subAreaMap[i] = -1;
-		int checkArea = CheckSubArea(map, width+1, height, freeSize, areaAry, subAreaMap, &fit);
-
-		//サイズ的に置けない糞（ズク）をスキップ
-		while(kn < stonesNum && shitSizeAry[kn] > checkArea){
-			printf("%d skipped\n\n", kn);
+#endif
+#endif
 			kn++;
-		}
-		if(kn == stonesNum) {
-			goto TERMINAL;
+			while(kn < stonesNum && shitSizeAry[kn] > data->maxAreaSize){
+				//サイズ的に置けない糞（ズク）をスキップ
+				kn++;
+#ifdef DEBUG_CODE
+#ifdef CHECK_CODE
+				printf("%d skipped\n\n", kn);
+#endif
+#endif
+			}
+			if(kn == stonesNum) {
+				goto TERMINAL;
+			}
+
+			//int deadArea = CalcDeadArea(map, width+1, height, freeSize, &(shitSizeAry[kn]), stonesNum-kn, areaAry, &needShitNum);
+			/*
+			if(minScore < data->deadArea || (minScore == data->deadArea && minScore_minShitNum <= data->needShitNum+putShitNum)){
+				continue;
+			}*/
 		}
 
-		int deadArea = CalcDeadArea(map, width+1, height, freeSize, &(shitSizeAry[kn]), stonesNum-kn, areaAry, &needShitNum);
-		if(minScore < deadArea || (minScore == deadArea && minScore_minShitNum <= needShitNum+putShitNum)){
-			continue;
-		}
 
 	BREADTH_MAKE:
-		std::vector<int*>* breadthData = new std::vector<int*>();
-
+		std::vector<wdElement*>* breadthData = new std::vector<wdElement*>();
 		for(int st = 0; st < 8; st++){
 			const int* shit = shitAry[kn][st];
 			if(shitAry[kn][st] == 0) continue;
@@ -977,43 +867,71 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 				*/
 
 				if(JudgePutable(map, shit, basePoint, width, height)){
-					PutShit(map, kn, shitAry[kn][st], basePoint);
+					int neighborNum;
+					PutShit(map, kn, shitAry[kn][st], basePoint, width+1, height, &neighborNum);
 					freeSize -= shitSizeAry[kn];
-					int needShitNum = 0;
 
+					int needShitNum = 0;
+					int fit;
 					int checkArea = CheckSubArea(map, width+1, height, freeSize, areaAry, subAreaMap, &fit);
-					//int deadArea = CalcDeadArea(map, width+1, height, freeSize, &(shitSizeAry[kn]), stonesNum-kn, areaAry, &needShitNum);
+					int deadArea = CalcDeadArea(map, width+1, height, freeSize, &(shitSizeAry[kn]), stonesNum-kn, areaAry, &needShitNum);
+
+					RemoveShit(map, kn, shitSizeAry[kn], width, height);
+					freeSize += shitSizeAry[kn];
+
+					//ここでやれるだろ
+					if(minScore < deadArea || (minScore == deadArea && minScore_minShitNum <= needShitNum+putShitNum)){
+						continue;
+					}
 
 					int areaNum;
 					for(areaNum = 0; areaAry[areaNum] != -1; areaNum++);
 
-					int* temp = new int[3];
-					temp[0] = st;
-					temp[1] = basePoint;
-					temp[2] = 1024-areaNum;	//大きいほどよい  //maxFreeSize - deadArea;
+					wdElement* temp = new wdElement();
+					temp->st = st;
+					temp->basePoint = basePoint;
+					temp->fit = fit;//1024-areaNum;
+					temp->fit2 = neighborNum;
+					temp->deadArea = deadArea;
+					temp->maxAreaSize = checkArea;
+					temp->needShitNum = needShitNum;
 					breadthData->push_back(temp);
-
-					RemoveShit(map, kn, shitSizeAry[kn], width, height);
-					freeSize += shitSizeAry[kn];
 				}
 			}
 		}
 
 		if(breadthData->size() == 0){	//置けないなら
+#ifdef DEBUG_CODE
+#ifdef CHECK_CODE
 			printf("%d cannot place\n\n", kn);
-
+#endif
+#endif
 			delete breadthData;
 			kn++;
 			if(kn == stonesNum) goto TERMINAL;
 			goto BREADTH_MAKE;
 		} else {
 			InsertSort(breadthData, breadthData->size());
+			for(int i = 0; i < breadthData->size(); i++){
+				wdElement* elm = breadthData->data()[i];
+#ifdef DEBUG_CODE
+#ifdef CHECK_CODE
+				printf("%d %d : %d [%d %d]", elm->st, elm->basePoint, elm->deadArea, elm->fit, elm->fit2);
+				DEBUG_waitKey();
+#endif
+#endif
+			}
+
 			bdStack.push(new WideData(kn, breadthData, startFlag));
 		}
 		continue;
 
 TERMINAL:
+#ifdef DEBUG_CODE
+#ifdef CHECK_CODE
 		printf("\t<<<terminal>>>\n\n");
+#endif
+#endif
 		int score = CalcScore(map, width, height);
 
 		bool update = false;
@@ -1029,13 +947,12 @@ TERMINAL:
 			minScore = score;
 			minScore_minShitNum = putShitNum;
 #ifdef DEBUG_CODE
-//			DEBUG_printMap(map, width+1, height);
+			DEBUG_printMap(map, width+1, height);
 			LARGE_INTEGER end;
 			QueryPerformanceCounter( &end );
-			printf("time : %d\n", (end.QuadPart - start.QuadPart)/liFreq.QuadPart);
 			printf("score(%d,%d)\n", minScore, minScore_minShitNum);
+			printf("time : %d\n", (end.QuadPart - start.QuadPart)/liFreq.QuadPart);
 #endif
-
 			bestAnsStack = aStack;
 //			SendSolution(&bestAnsStack, stonesNum, shitDataAry, width+1);
 		}
@@ -1051,202 +968,7 @@ TERMINAL:
 			aStack.pop_back();
 		}
 	}
-	
-	/*
-	//ここから繰り返し
-	while(1){
-		PutPoint* p = pStack.top();
-		kn = p->GetShitNumber();
-		st = p->GetShitState();
-		const int* shit = shitAry[kn][st];
 
-		if(kn == 0){	//DEBUG
-			printf("koko\n");
-			DEBUG_FLAG++;
-		}
-
-		int nextBasePoint;
-		if(!p->GetNextValue(&nextBasePoint)){
-			if(pStack.size() == 1){
-				break;	//the end
-			} else {
-				//重複している向きにはnullが入っているので、スキップする。
-				do {
-					st++;
-				} while(st < 8 && shitAry[kn][st] == 0);
-
-				pStack.pop();	//現在の配置点配列をポップ（糞×向き）
-
-				if(st >= 8){	//すべての向きが終了
-					st = 0;	//向きをリセットして
-
-					int checkArea = freeSize;
-					bool cutting = CUTTING_THRESHOLD < kn;
-					if(cutting){
-						for(int i = 0; i < 1025; i++) subAreaMap[i] = -1;
-						checkArea = CheckSubArea(map, width+1, height, freeSize, 0, subAreaMap);
-					}
-
-					//残りの空き領域から、置けない糞（ズク）をスキップする。
-					int temp_kn = kn;
-					do{
-						kn++;
-					} while(kn < stonesNum && shitSizeAry[kn] > checkArea);
-
-					//もうコレ以上置けないなら、終端とする
-					if(kn >= stonesNum){
-						kn = temp_kn;
-						delete p;
-						goto TERMINAL;
-					}
-
-					if(p->isStart()){
-						pStack.push(new PutPoint(kn, st, shitAry[kn][st], &(startNeighbor[0])));
-					} else {
-						if(cutting){
-							pStack.push(new PutPoint(kn, st, shitAry[kn][st], p, shitSizeAry[kn], subAreaMap));
-						} else {
-							pStack.push(new PutPoint(kn, st, shitAry[kn][st], p, -1, 0));
-						}
-					}
-				} else {
-					if(p->isStart()){
-						pStack.push(new PutPoint(kn, st, shitAry[kn][st], &(startNeighbor[0])));
-					} else {
-						pStack.push(new PutPoint(kn, st, shitAry[kn][st], p, -1, 0));
-					}
-				}
-
-				delete p;
-				continue;
-			}
-		}
-
-		bool result = JudgePutable(map, shit, nextBasePoint, width, height, putPoints, &putAryLength);
-
-		if(result){	//おけるなら
-			//配置処理
-			PutShit(map, kn, putPoints, putAryLength);
-			freeSize -= shitSizeAry[kn];
-			putShitNum++;
-
-			Answer_t ans;
-			ans.basePoint = nextBasePoint;
-			ans.shitNumber = kn;
-			ans.state = st;
-			aStack.push_back(ans);
-				//解答作成
-
-			int checkArea = freeSize;
-			bool cutting = CUTTING_THRESHOLD < kn;
-			if(cutting){
-				for(int i = 0; i < 1025; i++) subAreaMap[i] = -1;
-				checkArea = CheckSubArea(map, width+1, height, freeSize, areaAry, subAreaMap);
-					//戻り値は部分領域のうち最大面積
-					//static定義されたareaAryには部分領域情報が入っている
-			}
-
-			//次に配置予定の糞（ズク）が空き領域よりも大きいならスキップする
-			int temp_kn = kn;
-			do{
-				kn++;
-			} while(kn < stonesNum && shitSizeAry[kn] > checkArea);
-			
-			//糞（ズク）がもう無いなら
-			if(kn >= stonesNum){
-				kn = temp_kn;
-				goto TERMINAL;	//終端とする
-			}
-
-			if(cutting){
-				int needShitNum = 0;
-				int deadArea = CalcDeadArea(map, width+1, height, freeSize, &(shitSizeAry[kn]), stonesNum-kn, areaAry, &needShitNum);
-
-				//if(DEBUG_FLAG >= 2){
-				if(false){
-					printf("now : %d\n", kn);
-					DEBUG_printMap(map, width+1, height);
-					printf("shit size : ");
-					for(int i = kn; i < stonesNum; i++){
-						printf("%d ", shitSizeAry[i]);
-					} printf("\n");
-					printf("area size : ");
-					for(int i = 0; areaAry[i] != -1; i++){
-						printf("%d ", areaAry[i]);
-					} printf("\n");
-					printf("%d < %d\n", minScore, deadArea);
-					printf("\n");
-					DEBUG_waitKey();
-				}
-
-				if(minScore < deadArea || (minScore == deadArea && minScore_minShitNum <= needShitNum+putShitNum)){
-					//最良スコアを超えられないなら、却下
-					int removeShitNumber = p->GetShitNumber();
-					RemoveShit(map, removeShitNumber, shitSizeAry[removeShitNumber], width, height);
-					freeSize += shitSizeAry[removeShitNumber];
-					aStack.pop_back();
-					putShitNum--;
-					continue;
-				}
-			}
-			std::vector<int>* neighbor = CalcNeighborPoint(map, p->GetNeighborAry(), putPoints, putAryLength, width, height); //ココ
-
-			if(cutting){
-				pStack.push(new PutPoint(kn, 0, shitAry[kn][0], neighbor->data(), neighbor->size(), shitSizeAry[kn], subAreaMap));
-			} else {
-				pStack.push(new PutPoint(kn, 0, shitAry[kn][0], neighbor->data(), neighbor->size(), -1, 0));
-			}
-			delete neighbor;
-		}
-		continue;
-
-	TERMINAL:
-		//ポイント集計、解答作成
-		int score = CalcScore(map, width, height);
-
-		bool update = false;
-		if(minScore > score){
-			update = true;
-		} else if(minScore == score){
-			if(minScore_minShitNum > putShitNum){
-				update = true;
-			}
-		}
-
-		if(update){
-			minScore = score;
-			minScore_minShitNum = putShitNum;
-		
-			DEBUG_printMap(map, width+1, height);
-			printf("score(%d,%d)\n", minScore, minScore_minShitNum);
-			LARGE_INTEGER end;
-			QueryPerformanceCounter( &end );
-			printf("time : %d\n", (end.QuadPart - start.QuadPart)/liFreq.QuadPart);
-
-			bestAnsStack = aStack;
-			SendSolution(&bestAnsStack, stonesNum, shitDataAry, width+1);
-		}
-
-		int removeShitNumber = pStack.top()->GetShitNumber();
-		RemoveShit(map, removeShitNumber, shitSizeAry[removeShitNumber], width, height);
-		freeSize += shitSizeAry[removeShitNumber];
-		aStack.pop_back();
-		putShitNum--;
-
-		if(pStack.top()->GetShitNumber() == stonesNum-1){	//置いた糞（ズク）が最後なら
-			delete pStack.top();
-			pStack.pop();	//今後どう置いてもスコアは変わらないのでポップ
-	
-			removeShitNumber = pStack.top()->GetShitNumber();
-			RemoveShit(map, removeShitNumber, shitSizeAry[removeShitNumber], width, height);
-			freeSize += shitSizeAry[removeShitNumber];
-			putShitNum--;
-			aStack.pop_back();
-		}
-
-		continue;
-	}
-	*/
 	//ここまで繰り返し
 #ifdef DEBUG_CODE
 	printf("\nEND : score(%d,%d)\n", minScore, minScore_minShitNum);

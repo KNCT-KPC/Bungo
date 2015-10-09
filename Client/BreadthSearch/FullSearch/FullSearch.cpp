@@ -589,36 +589,6 @@ void SendSolution(std::vector<Answer_t>* aStack, int stonesNum, int** shitDataAr
 	sendMsg("E");
 }
 
-/*
-class wdElement{
-public:
-	int st;
-	int basePoint;
-	int fit;
-	int fit2;
-	int deadArea;
-	int maxAreaSize;
-	int needShitNum;
-
-	int* areaAry;
-	int areaSize;
-	wdElement(){
-		this->areaAry = 0;
-	}
-	wdElement(int* areaAry){
-		int i;
-		for(i = 0; areaAry[i] != -1; i++);
-
-		areaSize = i;
-		this->areaAry = new int[areaSize];
-		for(i = 0; i < areaSize; i++) this->areaAry[i] = areaAry[i];
-	}
-	~wdElement(){
-		if(this->areaAry != 0){
-			delete areaAry;
-		}
-	}
-};*/
 class wdElement{
 public:
 	int st;
@@ -721,6 +691,19 @@ private:
 	int freeSize;
 	int* map;	//TEMP
 
+	class PartData{
+	public :
+		int x;
+		int y;
+		int w;
+		int h;
+	};
+
+	std::stack<PartData> partStack;
+	int PartInit(){
+		return partStack.top().x + partStack.top().y*(width+1);
+	}
+
 public :
 	Map(const int* srcMap, const int x1, const int y1, const int x2, const int y2){
 		width = x2-x1+1;
@@ -747,9 +730,11 @@ public :
 		}
 	}
 
+	/*
 	(const int)* GetMap(){
 		return map;
 	}
+	*/
 	int GetWidth(){
 		return width;
 	}
@@ -771,6 +756,26 @@ public :
 		freeSize += value;
 
 		return value != 0;
+	}
+
+	std::vector<int>* onCalcNeighborPoint(){
+		return CalcNeighborPoint(map[, map.GetWidth()+1, map.GetHeight());
+	}
+
+	void Partition(int x, int y, int w, int h){
+		PartData part;
+		part.x = x; part.y = y;
+		part.w = w; part.h = h;
+
+		partStack.push(part);
+	}
+	void Backtrack(){
+		if(this->isParted()){
+			partStack.pop();
+		}
+	}
+	bool isParted(){
+		return partStack.size() != 1;
 	}
 
 	void printMap(){

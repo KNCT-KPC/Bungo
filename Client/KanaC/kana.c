@@ -143,7 +143,7 @@ int solver(int *map, int x1, int y1, int x2, int y2, int *original_stones, int n
 int main(int argc, char *argv[])
 {
 	int osfhandle, sd;
-	initClient(CLIENT_NAME, SERVER_IPADDR, &osfhandle, &sd);
+	initClient(CLIENT_NAME, (argc == 2) ? argv[1] : SERVER_IPADDR, &osfhandle, &sd);
 
 	int x1, y1, x2, y2, n;
 	int map[1024];

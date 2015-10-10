@@ -169,7 +169,7 @@ int solver(int *map, int x1, int y1, int x2, int y2, int *original_stones, int n
 int main(int argc, char *argv[])
 {
 	int osfhandle, sd;
-	initClient(CLIENT_NAME, SERVER_IPADDR, &osfhandle, &sd);
+	initClient(CLIENT_NAME, (argc == 2) ? argv[1] : SERVER_IPADDR, &osfhandle, &sd);
 
 	global_memo = g_hash_table_new(g_str_hash, g_str_equal);	// 継続するならこの辺も考えないと
 	global_count = 0;

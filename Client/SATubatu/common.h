@@ -12,7 +12,7 @@
 #ifndef LOCAL
 	#define LOCAL
 #endif
-//#undef LOCAL
+#undef LOCAL
 
 // Windows or Linux
 #if defined(_WIN32) || defined(_WIN64)
@@ -28,8 +28,8 @@
 #else
 	//#define	INPUT_FILENAME	"../../Problem/light/light-local.txt"
 	//#define	INPUT_FILENAME	"../../Problem/27/27-local.txt"
-	#define	INPUT_FILENAME	"../../Problem/41/41-local.txt"
-	//#define	INPUT_FILENAME	"../../Problem/pentomino/8x8-local.txt"
+	//#define	INPUT_FILENAME	"../../Problem/41/41-local.txt"
+	#define	INPUT_FILENAME	"../../Problem/pentomino/8x8-local.txt"
 	#define	OUTPUT_FILENAME	"-"
 #endif
 #define	BUF_SIZE	1027

@@ -49,8 +49,8 @@ void backTracking(Score *best, int id, Stone *stones, int n, int *map, int x1, i
 	if (len == 0) return;
 	if (len >= stones[id].len) {
 		int x, y, i, j;
-		int *tmpmap = (int *)malloc(SIZE_OF_INT_1024);
-		memcpy(tmpmap, map, SIZE_OF_INT_1024);
+		//int *tmpmap = (int *)malloc(SIZE_OF_INT_1024);
+		//memcpy(tmpmap, map, SIZE_OF_INT_1024);
 
 		uint8_t *neighbor = (uint8_t *)malloc(SIZE_OF_UINT8_1024);
 		int first = neighborIdx(map, x1, y1, x2, y2, neighbor);
@@ -76,10 +76,17 @@ void backTracking(Score *best, int id, Stone *stones, int n, int *map, int x1, i
 					if (!flg) continue;
 
 					// Put
-					memcpy(tmpmap, map, SIZE_OF_INT_1024);
-					tmpmap[bidx] = id;
-					for (j=1; j<stones[id].len; j++) tmpmap[idxes[j]] = id;
-					backTracking(best, id+1, stones, n, tmpmap, x1, y1, x2, y2, operation, sumlen, nowscore - stones[id].len, original_stones);
+					map[bidx] = id;
+					for (j=1; j<stones[id].len; j++) map[idxes[j]] = id;
+
+					//memcpy(tmpmap, map, SIZE_OF_INT_1024);
+					//tmpmap[bidx] = id;
+					//for (j=1; j<stones[id].len; j++) tmpmap[idxes[j]] = id;
+					backTracking(best, id+1, stones, n, map, x1, y1, x2, y2, operation, sumlen, nowscore - stones[id].len, original_stones);
+
+					// Restore
+					map[bidx] = -1;
+					for (j=1; j<stones[id].len; j++) map[idxes[j]]= -1;
 
 				DAMEDESU:
 					continue;	// noop
@@ -87,7 +94,7 @@ void backTracking(Score *best, int id, Stone *stones, int n, int *map, int x1, i
 			}
 		}
 
-		free(tmpmap);
+		//free(tmpmap);
 		free(neighbor);
 	}
 
@@ -103,6 +110,46 @@ int solver(int *map, int x1, int y1, int x2, int y2, int *original_stones, int n
 	Stone stones[256];
 	stoneEncode(stones, original_stones, n);
 	for (i=0; i<1024; i++) map[i] = (map[i] == 0) ? -1 : -2;
+
+
+
+
+	// KENSHO
+	int x, y, idx;
+
+	dumpMap2(map);
+	printf("aaaaaaaaaaaaaaaaaaaaaaaa\n");
+	int tmpmap[1024];
+	memcpy(tmpmap, map, sizeof(int) * 1024);
+	for (y=y1; y<y2; y++) {
+		for (x=x1; x<x2; x++) {
+			if (map[(y << 5) + x] < 0) continue;
+
+			// manual loop unrolling
+			if (!isInValid(x, y-1, x1, y1, x2, y2) && map[(idx = ((y-1) << 5) + x)]) tmpmap[idx] = 1;
+			if (!isInValid(x+1, y, x1, y1, x2, y2) && map[(idx = (y << 5) + (x+1))]) tmpmap[idx] = 1;
+			if (!isInValid(x, y+1, x1, y1, x2, y2) && map[(idx = ((y+1) << 5) + x)]) tmpmap[idx] = 1;
+			if (!isInValid(x-1, y, x1, y1, x2, y2) && map[(idx = (y << 5) + (x-1))]) tmpmap[idx] = 1;
+
+			//first_flg = 0;
+		}
+	}
+	memcpy(map, tmpmap, sizeof(int) * 1024);
+
+	dumpMap2(map);
+
+	exit(1);
+
+
+
+
+
+
+
+
+
+
+
 
 	// Search
 	Score best;

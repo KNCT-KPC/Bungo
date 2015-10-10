@@ -68,6 +68,9 @@ namespace Hikari
         {
             Client client = clients.Find(x => x.Equals(new Client(socket)));
 
+            //clientEvent(msg, client.Name);
+
+
             switch (client.NowState)
             {
                 case Client.State.Connected:
@@ -246,12 +249,17 @@ namespace Hikari
             bool flg = true;
             for (int i=0; (flg && i<kpc.Length); i++)
             {
+                //clientEvent((kpc[i] == "") ? "LINE" : kpc[i], i+"");
+
+
                 if (kpc[i] == "")
                     continue;
 
                 string[] tmp = kpc[i].Split(' ');
                 flg = client.Board.place(this.problem.Stones[i], (tmp[0] == "H"), int.Parse(tmp[1]), int.Parse(tmp[2]), int.Parse(tmp[3]));
             }
+
+            //MessageBox.Show("AAAAAAAAAAAAAAAAAAAAA");
 
             if (!flg)
             {

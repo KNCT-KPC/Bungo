@@ -43,11 +43,9 @@ void backTracking(Score *best, int id, Stone *stones, int n, int *map, int x1, i
 		printf("[%.3fs]\tUpdate best score: (%d, %d)\t[%u]\n", (clock() - global_clock) / (double)CLOCKS_PER_SEC, best->score, best->zk, global_count);
 
 		dumpMap2(map);
-		/*
 		sendMsg("S");
 		sendAnswer(best->map, stones, original_stones, n);
 		if (sendMsg("E") == EXIT_FAILURE) return;
-		*/
 	}
 	if ((nowscore - sumlen[id]) > best->score) return;
 	//if (isTraveled(map, id, x1, y1, x2, y2, len)) return;
@@ -64,6 +62,7 @@ void backTracking(Score *best, int id, Stone *stones, int n, int *map, int x1, i
 
 				int *p = &operation[id << 8];
 				len = *p;
+
 				for (i=0; i<len; i++) {
 					int xy[32];
 					int *pp = &p[i << 5];
@@ -112,6 +111,8 @@ int solver(int *map, int x1, int y1, int x2, int y2, int *original_stones, int n
 	int i, j, k;
 	Stone stones[256];
 	stoneEncode(stones, original_stones, n);
+
+	#pragma omp parallel for
 	for (i=0; i<1024; i++) map[i] = (map[i] == 0) ? -1 : -2;
 
 	// Search
@@ -120,6 +121,8 @@ int solver(int *map, int x1, int y1, int x2, int y2, int *original_stones, int n
 	bestScore(&best, map);
 
 	int operation[65536];
+
+	#pragma omp parallel for
 	for (i=0; i<n; i++) {
 		int8_t op[256];
 		BlockDefineOperation(stones[i].list, op);
@@ -192,6 +195,7 @@ int bestScore2(Score *best, const int *map, int *freelen)
 	int i, len = 0, score = 0;
 	uint8_t zks[256] = {};
 
+	//#pragma omp parallel for
 	for (i=0; i<1024; i++) {
 		int tmp = map[i];
 		if (tmp == -1 || tmp < -2) score++;
@@ -213,35 +217,6 @@ int bestScore2(Score *best, const int *map, int *freelen)
 	return 0;
 }
 
-int bestScore3(Score *best, const int *map)
-{
-	int i, j, len = 0, score = 0;
-	int zks[256] = {};
-
-	for (i=0; i<1024; i++) {
-		int tmp = map[i];
-		if (tmp == -1 || tmp < -2) score++;
-		if (tmp < 0) continue;
-
-		for (j=0; j<len; j++) {
-			if (tmp == zks[j]) goto NEXTNEXT;
-		}
-		zks[len++] = tmp;
-
-	NEXTNEXT:
-		continue;
-	}
-
-	if (score < best->score || (score == best->score && len < best->zk)) {
-		best->score = score;
-		best->zk = len;
-		memcpy(best->map, map, sizeof(int) << 10);
-		return 1;
-	}
-
-	return 0;
-}
-
 static inline int isInValid(int x, int y, int x1, int y1, int x2, int y2)
 {
 	return (x1 > x) || (x >= x2) || (y1 > y) || (y >= y2);
@@ -251,10 +226,10 @@ static inline int isVertex(const int *map, int x, int y, int x1, int y1, int x2,
 {
 	int len = 0;
 
-	if (isInValid(x, y-1, x1, y1, x2, y2) || map[((y-1) << 5) + x] == -1) len++;
-	if (isInValid(x+1, y, x1, y1, x2, y2) || map[(y << 5) + (x+1)] == -1) len++;
-	if (isInValid(x, y+1, x1, y1, x2, y2) || map[((y+1) << 5) + x] == -1) len++;
-	if (isInValid(x-1, y, x1, y1, x2, y2) || map[(y << 5) + (x-1)] == -1) len++;
+	if (isInValid(x, y-1, x1, y1, x2, y2) || (map[((y-1) << 5) + x] == -1) || (map[((y-1) << 5) + x] < -2)) len++;
+	if (isInValid(x+1, y, x1, y1, x2, y2) || (map[(y << 5) + (x+1)] == -1) || (map[(y << 5) + (x+1)] < -2)) len++;
+	if (isInValid(x, y+1, x1, y1, x2, y2) || (map[((y+1) << 5) + x] == -1) || (map[((y+1) << 5) + x] < -2)) len++;
+	if (isInValid(x-1, y, x1, y1, x2, y2) || (map[(y << 5) + (x-1)] == -1) || (map[((y+1) << 5) + x] < -2)) len++;
 
 	return (len >= 2);
 }

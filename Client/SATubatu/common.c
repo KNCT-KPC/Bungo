@@ -205,6 +205,8 @@ void dumpMap2(const int *map)
 				printf("-");
 			} else if (tmp == -2) {
 				printf("|");
+			} else if (tmp < 0) {
+				printf("%%");
 			} else if (tmp < 10){
 				printf("%d", tmp);
 			} else if (tmp < 36){

@@ -1,4 +1,4 @@
-CFLAGS=-Wall -O2 -march=native
+CFLAGS=-Wall -O2 -march=native -fopenmp
 #CFLAGS=-Wall -g -O0
 #CFLAGS=-Wall
 

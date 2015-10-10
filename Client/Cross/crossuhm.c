@@ -79,11 +79,31 @@ void nodeAllFree()
 	pool.idx = 0;
 }
 
+void dump1()
+{
+	dlx_node *p, *q;
+
+	printf("-------------------------------------\n");
+	for (p=head.right; p!=&head; p=p->right) {
+		printf("{%d}", p->col);
+	}
+	printf("\n++++++++++++++\n");
+	for (p=head.down; p!=&head; p=p->down) {
+		printf("[%d]\t", p->row);
+		for (q=p->right; q!=p; q=q->right) {
+			printf("%d,", q->col);
+		}
+		printf("\n");
+	}
+	printf("-------------------------------------\n");
+}
+
 void dlx_init()
 {
+	memset(isuse, 0, sizeof(uint8_t) * 256);
+	memset(count_one, 0, sizeof(int) * (COL_MAX + 10));
 	pool.count = 0;
 	pool.idx = 0;
-	memset(count_one, 0, sizeof(int) * (COL_MAX + 10));
 
 	head.row = head.col = 0;
 	head.left = head.right = head.up = head.down = &head;
@@ -155,9 +175,8 @@ void dlx_link(const Stone *stones, int n, const int *map, int x1, int y1, int x2
 					}
 
 					if (flg) {
-						// これいる？
-						//rows[row]->up->down = rows[row]->down;
-						//rows[row]->down->up = rows[row]->up;
+						rows[row]->up->down = rows[row]->down;
+						rows[row]->down->up = rows[row]->up;
 						continue;
 					}
 
@@ -170,16 +189,16 @@ void dlx_link(const Stone *stones, int n, const int *map, int x1, int y1, int x2
 						p->id = i;
 						p->idx = idxes[k] + bidx;
 
-						p->up = cols[col];	// うーん
+						p->up = cols[col];
 						p->down = cols[col]->down;
 						cols[col]->down->up = p;
 						cols[col]->down = p;
 
-						p->left = rows[row];	// うーん
+						p->left = rows[row];
 						p->right = rows[row]->right;
 						rows[row]->right->left = p;
 						rows[row]->right = p;
-						rows[row]->id = 1;	// うーん
+						rows[row]->id = 1;
 
 						operation[row][k] = idxes[k] + bidx;
 						count_one[col]++;
@@ -190,9 +209,31 @@ void dlx_link(const Stone *stones, int n, const int *map, int x1, int y1, int x2
 	}
 }
 
+void printColumn()
+{
+	dlx_node *p;
+
+	for (p=head.right->right; p!=&head; p=p->right) {
+		printf("%d, ", p->col);
+	}
+	printf("\n");
+}
+
+void printRow(int col)
+{
+	dlx_node *p;
+
+	printf("COL: %d[count: %d?]\n", col, count_one[col]);
+	for (p=cols[col]->down; p!=cols[col]; p=p->down) {
+		printf("\t%d\n", p->row);
+	}
+	printf("\n");
+}
+
+
 void output(int depth)
 {
-	//dlx_node *p;
+	dlx_node *p;
 	int i, map[1024];
 
 	memcpy(map, global_map, sizeof(int) * 1024);
@@ -231,16 +272,14 @@ void delete(int col)
 	cols[col]->left->right = cols[col]->right;
 	cols[col]->right->left = cols[col]->left;
 
-	for(p=cols[col]->down; p!=cols[col]; p=p->down) {
+	for (p=cols[col]->down; p!=cols[col]; p=p->down) {
 		for (q=p->right; q!=p; q=q->right) {
 			count_one[q->col]--;
 			q->up->down = q->down;
 			q->down->up = q->up;
 		}
-
 		p->left->right = p->right;
 		p->right->left = p->left;
-		rows[p->row]->id = 2;
 	}
 }
 
@@ -248,28 +287,27 @@ void restore(int col)
 {
 	dlx_node *p, *q;
 
-	for(p=cols[col]->up; p!=cols[col]; p=p->up) {
-		rows[p->row]->id = 1;
+	for (p=cols[col]->down; p!=cols[col]; p=p->down) {
 		p->left->right = p;
 		p->right->left = p;
 
-		for (q=p->left; q!=p; q=q->left) {
-			count_one[q->col]++;
+		for (q=p->right; q!=p; q=q->right) {
 			q->up->down = q;
 			q->down->up = q;
+			count_one[q->col]++;
 		}
 	}
 
-	cols[col]->left->right = cols[col];
-	cols[col]->right->left = cols[col];
+	cols[col]->left->right = cols[col]->right;
+	cols[col]->right->left = cols[col]->left;
 }
 
 int crossChannel(int depth, int n)
 {
-	dlx_node *p, *q, *s;
+	dlx_node *p;
 	int selected_col, min;
 
-	printf("depth = %d\n", depth);
+	//if (depth == n) return 1;
 	if (head.right == &head) return 1;
 
 	// Col
@@ -281,69 +319,42 @@ int crossChannel(int depth, int n)
 		if (min <= 1) break;
 	}
 	if (min == 0) return 0;	// 0は除いてみようか
-	// 最小でないものも選んでみようか
-	// 基本最小だけど、正規分布に従うとか
+
 
 	printf("Select: %d(min:%d)\n", selected_col, min);
 
+
 	// Row
 	delete(selected_col);
+	dlx_node *q, *r, *s;
 	for(p=cols[selected_col]->down; p!=cols[selected_col]; p=p->down) {
 		solution[depth] = p->row;
 		//output(depth);
 
-		// Delete
 		p->left->right = p;
-		for (q=p->right; q!=p; q=q->right) delete(q->col);
+		for(q = p->right; q != p; q = q->right) {
+			delete(q->col);
+		}
 		p->left->right = p->right;
 
-		// DeleteZk
-		int i, offset = (p->id << 13);
-		for (i=0; i<8192; i++) {
-			int r = i + offset;
-			if (rows[r]->id != 1) continue;
-			rows[r]->id = 3;
-
-			q = rows[r]->right;
-			q->left->right = q;
-			for (s=q->right; s!=q; s=s->right) {
-				q->up->down = q->down;
-				q->down->up = q->up;
-				//count_one[q->col]--;
-			}
-			q->left->right = q->right;
-		}
-
 		// Recursive
+		//output(depth);
 		//if (crossChannel(depth + 1, n)) return 1;
 		if (crossChannel(depth + 1, n)) {
 			printf("OK, output....\n");
 			output(depth);
 			printf("END\n");
 		}
-
-		//printf("RESTORE\n");
 		//exit(1);
 
-		for (i=0; i<8192; i++) {
-			int r = i + offset;
-			if (rows[r]->id != 3) continue;
-			rows[r]->id = 1;
-
-			q = rows[r]->right;
-			q->right->left = q;
-			for (s=q->right; s!=q; s=s->right) {
-				q->up->down = q->down;
-				q->down->up = q->up;
-				//count_one[q->col]--;
-			}
-			q->right->left = q->left;
-		}
-
-		// Restore
 		p->right->left = p;
-		for (q=p->left; q!=p; q=q->left) restore(q->col);
+		for(q = p->left; q != p; q = q->left) {
+			restore(q->col);
+		}
 		p->right->left = p->left;
+
+		//printf("TORITORI\n");
+		//exit(1);
 	}
 	restore(selected_col);
 
@@ -378,24 +389,17 @@ int solver(int *map, int x1, int y1, int x2, int y2, int *original_stones, int n
 		}
 	}
 
-
-
 	// Node Link
 	dlx_init();
 	dlx_link(stones, n, map, x1, y1, x2, y2);
+
 
 	for (j=0; j<ROW_MAX; j++) {
 		rows[j]->left->right = rows[j]->right;
 		rows[j]->right->left = rows[j]->left;
 	}
 
-	/*
-	dlx_node *p;
-	for (p=head.right; p!=&head; p=p->right) {
-		printf("{%d}", p->col);
-	}
-	printf("\n");
-	*/
+
 
 
 /*

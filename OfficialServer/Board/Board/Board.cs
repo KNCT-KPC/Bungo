@@ -165,6 +165,7 @@ namespace Board
             }
 
             // 本当に受理できるか
+            //return true;
             return this.isAccept();
         }
 
@@ -229,6 +230,7 @@ namespace Board
 
         private bool isAccept()
         {
+            /*
             int x = 0, y = 0;
 
             for (int i = 0; i < 32; i++)
@@ -243,11 +245,13 @@ namespace Board
                     y = i;
                 }
             }
+            */
 
             int[] map = new int[1024];
             Array.Copy(this.nowmap, map, 1024);
-            dfs(map, x, y);
-            return (Array.IndexOf(map, 2) != -1);
+            //dfs(map, x, y);
+            //return (Array.IndexOf(map, 2) != -1);
+            return true;
         }
 
         // GitHub Identicons

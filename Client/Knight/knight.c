@@ -13,6 +13,7 @@
 
 #define	CLIENT_NAME	"Knight"
 #define	SERVER_IPADDR	"127.0.0.1"
+// 本番で時間計測は不要
 
 #define	SIZE_OF_INT_1024	4096
 #define	SIZE_OF_CHAR_128	128
@@ -28,9 +29,10 @@ unsigned int global_count;
 int bestScore2(Score *best, const int *map, int *freelen);
 static inline int isInValid(int x, int y, int x1, int y1, int x2, int y2);
 int isTraveled(const int *map, int id, int x1, int y1, int x2, int y2, int len);
-int neighborIdx(const int *map, int x1, int y1, int x2, int y2, uint8_t *neighbor);
+void putStone(int *map, const int *xy, int len, int id, int *org, int x1, int y1, int x2, int y2);
+void restoreStone(int *map, const int *xy, int len, int id, const int *org, int x1, int y1, int x2, int y2);
 
-void backTracking(Score *best, int id, Stone *stones, int n, int *map, int x1, int y1, int x2, int y2, int *operation, int *sumlen, int nowscore, int *original_stones)
+void backTracking(Score *best, int id, Stone *stones, int n, int *map, int x1, int y1, int x2, int y2, int *operation, int *sumlen, int nowscore, int *original_stones, int first_space)
 {
 	int len;
 	global_count++;
@@ -49,44 +51,44 @@ void backTracking(Score *best, int id, Stone *stones, int n, int *map, int x1, i
 	if (len == 0) return;
 	if (len >= stones[id].len) {
 		int x, y, i, j;
-		//int *tmpmap = (int *)malloc(SIZE_OF_INT_1024);
-		//memcpy(tmpmap, map, SIZE_OF_INT_1024);
-
-		uint8_t *neighbor = (uint8_t *)malloc(SIZE_OF_UINT8_1024);
-		int first = neighborIdx(map, x1, y1, x2, y2, neighbor);
+		int first = (len == first_space);
 
 		for (y=y1; y<y2; y++) {
 			for (x=x1; x<x2; x++) {
 				int bidx = (y << 5) + x;
-				if (map[bidx] != -1) continue;
+				if (map[bidx] == -2 || map[bidx] >= 0) continue;
 
-				int *p = &operation[id << 7];
+				int *p = &operation[id << 8];
 				len = *p;
 				for (i=0; i<len; i++) {
-					int idxes[16];
-					int flg = first || neighbor[bidx];
-					int *pp = &p[i << 4];
+					int xy[32];
+					int *pp = &p[i << 5];
+					int flg = first || (map[bidx] < -2);
 
 					for (j=1; j<stones[id].len; j++) {
-						int idx = bidx + pp[j];
-						if (map[idx] != -1) goto DAMEDESU;
-						idxes[j] = idx;
-						flg |= neighbor[idx];
+						int xx = x + pp[j << 1];
+						int yy = y + pp[(j << 1) + 1];
+						if (isInValid(xx, yy, x1, y1, x2, y2)) goto DAMEDESU;
+
+						int idx = (yy << 5) + xx;
+						if (map[idx] == -2 || map[idx] >= 0) goto DAMEDESU;
+
+						xy[j << 1] = xx;
+						xy[(j << 1) + 1] = yy;
+						flg |= (map[idx] < -2);
 					}
 					if (!flg) continue;
 
 					// Put
-					map[bidx] = id;
-					for (j=1; j<stones[id].len; j++) map[idxes[j]] = id;
+					xy[0] = x;
+					xy[1] = y;
+					int org[16];
+					putStone(map, xy, stones[id].len, id, org, x1, y1, x2, y2);
 
-					//memcpy(tmpmap, map, SIZE_OF_INT_1024);
-					//tmpmap[bidx] = id;
-					//for (j=1; j<stones[id].len; j++) tmpmap[idxes[j]] = id;
-					backTracking(best, id+1, stones, n, map, x1, y1, x2, y2, operation, sumlen, nowscore - stones[id].len, original_stones);
-
+					// Recursive
+					backTracking(best, id+1, stones, n, map, x1, y1, x2, y2, operation, sumlen, nowscore - stones[id].len, original_stones, first_space);
 					// Restore
-					map[bidx] = -1;
-					for (j=1; j<stones[id].len; j++) map[idxes[j]]= -1;
+					restoreStone(map, xy, stones[id].len, id, org, x1, y1, x2, y2);
 
 				DAMEDESU:
 					continue;	// noop
@@ -95,10 +97,10 @@ void backTracking(Score *best, int id, Stone *stones, int n, int *map, int x1, i
 		}
 
 		//free(tmpmap);
-		free(neighbor);
+		//free(neighbor);
 	}
 
-	backTracking(best, id+1, stones, n, map, x1, y1, x2, y2, operation, sumlen, nowscore, original_stones);
+	backTracking(best, id+1, stones, n, map, x1, y1, x2, y2, operation, sumlen, nowscore, original_stones, first_space);
 }
 
 int solver(int *map, int x1, int y1, int x2, int y2, int *original_stones, int n)
@@ -111,63 +113,29 @@ int solver(int *map, int x1, int y1, int x2, int y2, int *original_stones, int n
 	stoneEncode(stones, original_stones, n);
 	for (i=0; i<1024; i++) map[i] = (map[i] == 0) ? -1 : -2;
 
-
-
-
-	// KENSHO
-	int x, y, idx;
-
-	dumpMap2(map);
-	printf("aaaaaaaaaaaaaaaaaaaaaaaa\n");
-	int tmpmap[1024];
-	memcpy(tmpmap, map, sizeof(int) * 1024);
-	for (y=y1; y<y2; y++) {
-		for (x=x1; x<x2; x++) {
-			if (map[(y << 5) + x] < 0) continue;
-
-			// manual loop unrolling
-			if (!isInValid(x, y-1, x1, y1, x2, y2) && map[(idx = ((y-1) << 5) + x)]) tmpmap[idx] = 1;
-			if (!isInValid(x+1, y, x1, y1, x2, y2) && map[(idx = (y << 5) + (x+1))]) tmpmap[idx] = 1;
-			if (!isInValid(x, y+1, x1, y1, x2, y2) && map[(idx = ((y+1) << 5) + x)]) tmpmap[idx] = 1;
-			if (!isInValid(x-1, y, x1, y1, x2, y2) && map[(idx = (y << 5) + (x-1))]) tmpmap[idx] = 1;
-
-			//first_flg = 0;
-		}
-	}
-	memcpy(map, tmpmap, sizeof(int) * 1024);
-
-	dumpMap2(map);
-
-	exit(1);
-
-
-
-
-
-
-
-
-
-
-
-
 	// Search
 	Score best;
 	best.score = 1024;
 	bestScore(&best, map);
 
-	int operation[33024];
+	int operation[65536];	// 石操作を事前に行う、[LEN][x][y]....の形式
 	for (i=0; i<n; i++) {
 		int8_t op[256];
 		BlockDefineOperation(stones[i].list, op);
-		int *base = &operation[i << 7];
 
+		int *base = &operation[i << 8];
 		*base = 0;
+
 		for (j=0; j<8; j++) {
 			int8_t *pp = &op[j << 5];
 			if (pp[0] == INT8_MAX) continue;
-			int *p = &base[(*base) << 4];
-			for (k=1; k<stones[i].len; k++) p[k] = (pp[(k << 1) + 1] << 5) + pp[k << 1];
+			int *p = &base[(*base) << 5];
+
+			for (k=1; k<stones[i].len; k++) {
+				p[k << 1] = pp[k << 1];				// x
+				p[(k << 1) + 1] = pp[(k << 1) + 1];	// y
+			}
+
 			(*base)++;
 		}
 	}
@@ -177,7 +145,7 @@ int solver(int *map, int x1, int y1, int x2, int y2, int *original_stones, int n
 	for (i=(n-1); i>=0; i--) sumlen[i] = sumlen[i+1] + stones[i].len;
 
 	global_clock = clock();
-	backTracking(&best, 0, stones, n, map, x1, y1, x2, y2, operation, sumlen, best.score, original_stones);
+	backTracking(&best, 0, stones, n, map, x1, y1, x2, y2, operation, sumlen, best.score, original_stones, best.score);
 
 	// Best
 	printf("Best Score: %d, Zk: %d\n", best.score, best.zk);
@@ -225,7 +193,7 @@ int bestScore2(Score *best, const int *map, int *freelen)
 
 	for (i=0; i<1024; i++) {
 		int tmp = map[i];
-		if (tmp == -1) score++;
+		if (tmp == -1 || tmp < -2) score++;
 		if (tmp < 0) continue;
 
 		if (zks[tmp] == 1) continue;
@@ -289,26 +257,61 @@ int isTraveled(const int *map, int id, int x1, int y1, int x2, int y2, int len)
 	return 0;
 }
 
-int neighborIdx(const int *map, int x1, int y1, int x2, int y2, uint8_t *neighbor)
+void putStone(int *map, const int *xy, int len, int id, int *org, int x1, int y1, int x2, int y2)
 {
-	int x, y, idx;
-	int first_flg = 1;
+	int i, j;
+	int dx[] = {0, 1, 0, -1};
+	int dy[] = {-1, 0, 1, 0};
 
-	memset(neighbor, 0, SIZE_OF_UINT8_1024);
-	for (y=y1; y<y2; y++) {
-		for (x=x1; x<x2; x++) {
-			if (map[(y << 5) + x] < 0) continue;
-
-			// manual loop unrolling
-			if (!isInValid(x, y-1, x1, y1, x2, y2) && map[(idx = ((y-1) << 5) + x)]) neighbor[idx] = 1;
-			if (!isInValid(x+1, y, x1, y1, x2, y2) && map[(idx = (y << 5) + (x+1))]) neighbor[idx] = 1;
-			if (!isInValid(x, y+1, x1, y1, x2, y2) && map[(idx = ((y+1) << 5) + x)]) neighbor[idx] = 1;
-			if (!isInValid(x-1, y, x1, y1, x2, y2) && map[(idx = (y << 5) + (x-1))]) neighbor[idx] = 1;
-
-			first_flg = 0;
-		}
+	// Put stone
+	for (i=0; i<len; i++) {
+		int x = xy[i << 1];
+		int y = xy[(i << 1) + 1];
+		int idx = (y << 5) + x;
+		org[i] = map[idx];
+		map[idx] = id;
 	}
 
-	return first_flg;
+	// Neighbor
+	for (i=0; i<len; i++) {
+		int x = xy[i << 1];
+		int y = xy[(i << 1) + 1];
+		int idx = (y << 5) + x;
+
+		for (j=0; j<4; j++) {
+			int xx = x + dx[j];
+			int yy = y + dy[j];
+
+			if (isInValid(xx, yy, x1, y1, x2, y2)) continue;
+			idx = (yy << 5) + xx;
+
+			if (map[idx] == -2 || map[idx] >= 0) continue;
+			map[idx] -= (2 + id);
+		}
+	}
+}
+
+void restoreStone(int *map, const int *xy, int len, int id, const int *org, int x1, int y1, int x2, int y2)
+{
+	int i, j;
+	int dx[] = {0, 1, 0, -1};
+	int dy[] = {-1, 0, 1, 0};
+
+	for (i=0; i<len; i++) {
+		int x = xy[i << 1];
+		int y = xy[(i << 1) + 1];
+		map[(y << 5) + x] = org[i];
+
+		for (j=0; j<4; j++) {
+			int xx = x + dx[j];
+			int yy = y + dy[j];
+
+			if (isInValid(xx, yy, x1, y1, x2, y2)) continue;
+			int idx = (yy << 5) + xx;
+
+			if (map[idx] == -2 || map[idx] >= 0) continue;
+			map[idx] += (2 + id);
+		}
+	}
 }
 

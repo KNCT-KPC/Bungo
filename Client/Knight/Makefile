@@ -1,5 +1,5 @@
-CFLAGS=-Wall -O2 -march=native
-#CFLAGS=-Wall -g -O0
+#CFLAGS=-Wall -O2 -march=native
+CFLAGS=-Wall -g -O0
 #CFLAGS=-Wall
 
 knight: knight.o common.o kcommon.o

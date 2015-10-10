@@ -27,6 +27,7 @@ unsigned int global_count;
 /*               Solver               */
 /*------------------------------------*/
 int bestScore2(Score *best, const int *map, int *freelen);
+int bestScore3(Score *best, const int *map);
 static inline int isInValid(int x, int y, int x1, int y1, int x2, int y2);
 int isTraveled(const int *map, int id, int x1, int y1, int x2, int y2, int len);
 void putStone(int *map, const int *xy, int len, int id, int *org, int x1, int y1, int x2, int y2);
@@ -41,12 +42,15 @@ void backTracking(Score *best, int id, Stone *stones, int n, int *map, int x1, i
 	if (bestScore2(best, map, &len)) {
 		printf("[%.3fs]\tUpdate best score: (%d, %d)\t[%u]\n", (clock() - global_clock) / (double)CLOCKS_PER_SEC, best->score, best->zk, global_count);
 
+		dumpMap2(map);
+		/*
 		sendMsg("S");
 		sendAnswer(best->map, stones, original_stones, n);
 		if (sendMsg("E") == EXIT_FAILURE) return;
+		*/
 	}
 	if ((nowscore - sumlen[id]) > best->score) return;
-	if (isTraveled(map, id, x1, y1, x2, y2, len)) return;
+	//if (isTraveled(map, id, x1, y1, x2, y2, len)) return;
 
 	if (len == 0) return;
 	if (len >= stones[id].len) {
@@ -83,21 +87,18 @@ void backTracking(Score *best, int id, Stone *stones, int n, int *map, int x1, i
 					xy[0] = x;
 					xy[1] = y;
 					int org[16];
+
 					putStone(map, xy, stones[id].len, id, org, x1, y1, x2, y2);
 
 					// Recursive
 					backTracking(best, id+1, stones, n, map, x1, y1, x2, y2, operation, sumlen, nowscore - stones[id].len, original_stones, first_space);
 					// Restore
 					restoreStone(map, xy, stones[id].len, id, org, x1, y1, x2, y2);
-
 				DAMEDESU:
 					continue;	// noop
 				}
 			}
 		}
-
-		//free(tmpmap);
-		//free(neighbor);
 	}
 
 	backTracking(best, id+1, stones, n, map, x1, y1, x2, y2, operation, sumlen, nowscore, original_stones, first_space);
@@ -118,7 +119,7 @@ int solver(int *map, int x1, int y1, int x2, int y2, int *original_stones, int n
 	best.score = 1024;
 	bestScore(&best, map);
 
-	int operation[65536];	// 石操作を事前に行う、[LEN][x][y]....の形式
+	int operation[65536];
 	for (i=0; i<n; i++) {
 		int8_t op[256];
 		BlockDefineOperation(stones[i].list, op);
@@ -132,8 +133,8 @@ int solver(int *map, int x1, int y1, int x2, int y2, int *original_stones, int n
 			int *p = &base[(*base) << 5];
 
 			for (k=1; k<stones[i].len; k++) {
-				p[k << 1] = pp[k << 1];				// x
-				p[(k << 1) + 1] = pp[(k << 1) + 1];	// y
+				p[k << 1] = pp[k << 1];
+				p[(k << 1) + 1] = pp[(k << 1) + 1];
 			}
 
 			(*base)++;
@@ -212,6 +213,35 @@ int bestScore2(Score *best, const int *map, int *freelen)
 	return 0;
 }
 
+int bestScore3(Score *best, const int *map)
+{
+	int i, j, len = 0, score = 0;
+	int zks[256] = {};
+
+	for (i=0; i<1024; i++) {
+		int tmp = map[i];
+		if (tmp == -1 || tmp < -2) score++;
+		if (tmp < 0) continue;
+
+		for (j=0; j<len; j++) {
+			if (tmp == zks[j]) goto NEXTNEXT;
+		}
+		zks[len++] = tmp;
+
+	NEXTNEXT:
+		continue;
+	}
+
+	if (score < best->score || (score == best->score && len < best->zk)) {
+		best->score = score;
+		best->zk = len;
+		memcpy(best->map, map, sizeof(int) << 10);
+		return 1;
+	}
+
+	return 0;
+}
+
 static inline int isInValid(int x, int y, int x1, int y1, int x2, int y2)
 {
 	return (x1 > x) || (x >= x2) || (y1 > y) || (y >= y2);
@@ -259,24 +289,26 @@ int isTraveled(const int *map, int id, int x1, int y1, int x2, int y2, int len)
 
 void putStone(int *map, const int *xy, int len, int id, int *org, int x1, int y1, int x2, int y2)
 {
-	int i, j;
-	int dx[] = {0, 1, 0, -1};
-	int dy[] = {-1, 0, 1, 0};
+	int i, j, idx, x, y;
+	int dx[] = {1, 0, -1, 0};
+	int dy[] = {0, 1, 0, -1};
 
 	// Put stone
 	for (i=0; i<len; i++) {
-		int x = xy[i << 1];
-		int y = xy[(i << 1) + 1];
-		int idx = (y << 5) + x;
+		x = xy[i << 1];
+		y = xy[(i << 1) + 1];
+
+		idx = (y << 5) + x;
 		org[i] = map[idx];
-		map[idx] = id;
 	}
 
 	// Neighbor
 	for (i=0; i<len; i++) {
-		int x = xy[i << 1];
-		int y = xy[(i << 1) + 1];
-		int idx = (y << 5) + x;
+		x = xy[i << 1];
+		y = xy[(i << 1) + 1];
+
+		idx = (y << 5) + x;
+		map[idx] = id;
 
 		for (j=0; j<4; j++) {
 			int xx = x + dx[j];
@@ -294,13 +326,12 @@ void putStone(int *map, const int *xy, int len, int id, int *org, int x1, int y1
 void restoreStone(int *map, const int *xy, int len, int id, const int *org, int x1, int y1, int x2, int y2)
 {
 	int i, j;
-	int dx[] = {0, 1, 0, -1};
-	int dy[] = {-1, 0, 1, 0};
+	int dx[] = {1, 0, -1, 0};
+	int dy[] = {0, 1, 0, -1};
 
 	for (i=0; i<len; i++) {
 		int x = xy[i << 1];
 		int y = xy[(i << 1) + 1];
-		map[(y << 5) + x] = org[i];
 
 		for (j=0; j<4; j++) {
 			int xx = x + dx[j];
@@ -309,9 +340,16 @@ void restoreStone(int *map, const int *xy, int len, int id, const int *org, int 
 			if (isInValid(xx, yy, x1, y1, x2, y2)) continue;
 			int idx = (yy << 5) + xx;
 
-			if (map[idx] == -2 || map[idx] >= 0) continue;
+			if (map[idx] >= -2) continue;
 			map[idx] += (2 + id);
 		}
+	}
+
+	for (i=0; i<len; i++) {
+		int x = xy[i << 1];
+		int y = xy[(i << 1) + 1];
+
+		map[(y << 5) + x] = org[i];
 	}
 }
 

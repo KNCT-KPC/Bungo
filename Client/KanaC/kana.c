@@ -12,7 +12,7 @@
 #include "kcommon.h"
 
 #define	CLIENT_NAME	"KanaC"
-#define	SERVER_IPADDR	"127.0.0.1"
+#define	SERVER_IPADDR	"192.168.1.117"
 
 /*------------------------------------*/
 /*               Solver               */
@@ -76,7 +76,7 @@ void putWrapper(Score *best, Stone *stones, int n, const int *map, int x1, int y
 		break;
 	case 1:
 		for (i=0; i<n; i++) stones[i].score = (((double)(n - i) / (double)n) * (double)stones[i].len) * 0.0625;
-		break;	
+		break;
 	case 2:
 		for (i=0; i<n; i++) stones[i].score = ((double)(n - i) / (double)n) * -1;
 		break;
@@ -87,7 +87,7 @@ void putWrapper(Score *best, Stone *stones, int n, const int *map, int x1, int y
 		srand((unsigned)time(NULL));
 		for (i=0; i<n; i++) stones[i].score = rand();
 	}
-	
+
 	memcpy(sorted, stones, sizeof(Stone) * 256);
 	qsort(sorted, n, sizeof(Stone), sortByScore);
 

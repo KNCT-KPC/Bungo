@@ -309,12 +309,7 @@ namespace Hikari
                 }
 
                 string res = this.httpclient.sendAnswer("http://" + textBox10.Text + textBox3.Text, textBox5.Text, proper);
-                if (res == null)
-                {
-                    res = "error";
-                    error = true;
-                }
-
+                error = res.Contains("error");
                 return res;
             });
 

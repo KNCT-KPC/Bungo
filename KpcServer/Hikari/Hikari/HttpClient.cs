@@ -97,7 +97,7 @@ namespace Hikari
                 stream.Close();
                 res.Close();
 
-                return str.Contains("error") ? null : str;
+                return str;
             }
             catch (System.Net.WebException)
             {

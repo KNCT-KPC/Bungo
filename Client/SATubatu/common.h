@@ -12,7 +12,7 @@
 #ifndef LOCAL
 	#define LOCAL
 #endif
-//#undef LOCAL
+#undef LOCAL
 
 // Windows or Linux
 #if defined(_WIN32) || defined(_WIN64)

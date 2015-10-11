@@ -1,0 +1,45 @@
+@echo off
+
+rem
+rem このバッチの説明
+rem
+
+rem 設定事項
+set solve1=%1 %9
+set solve2=%2 %9
+set solve3=%3 %9
+set solve4=%4 %9
+set solve5=%5 %9
+set solve6=%6 %9
+set solve7=%7 %9
+set solve8=%8 %9
+
+rem このバッチが存在するフォルダをカレントに
+pushd %0\..
+cls
+
+start "" "%solve1%"
+start "" "%solve2%"
+start "" "%solve3%"
+start "" "%solve4%"
+
+if %solve1%=="0" if %solve2%=="0" if %solve3%=="0" if %solve4%=="0" (
+	taskkill \F \T \IM %solve1%
+	taskkill \F \T \IM %solve2%
+	taskkill \F \T \IM %solve3%
+	taskkill \F \T \IM %solve4% 
+	start "" "%solve5%"
+	start "" "%solve6%"
+	start "" "%solve7%"
+	start "" "%solve8%"
+) else (
+	echo error発生。ただちに、いや、焦らずに頑張ろう!!
+)
+
+taskkill \F \T \IM %solve5%
+taskkill \F \T \IM %solve6%
+taskkill \F \T \IM %solve7%
+taskkill \F \T \IM %solve8% 
+
+pause
+exit

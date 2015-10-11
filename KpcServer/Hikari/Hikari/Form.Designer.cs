@@ -1102,10 +1102,10 @@
         0,
         0};
             this.board3.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.board3.Location = new System.Drawing.Point(578, 297);
+            this.board3.Location = new System.Drawing.Point(590, 308);
             this.board3.Name = "board3";
             this.board3.Pass = false;
-            this.board3.Size = new System.Drawing.Size(292, 289);
+            this.board3.Size = new System.Drawing.Size(298, 300);
             this.board3.TabIndex = 5;
             this.board3.TabStop = false;
             // 
@@ -2146,7 +2146,7 @@
             this.board1.Name = "board1";
             this.board1.Pass = false;
             this.tableLayoutPanel2.SetRowSpan(this.board1, 2);
-            this.board1.Size = new System.Drawing.Size(569, 583);
+            this.board1.Size = new System.Drawing.Size(581, 605);
             this.board1.TabIndex = 3;
             this.board1.TabStop = false;
             // 
@@ -3182,10 +3182,10 @@
         0,
         0};
             this.board2.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.board2.Location = new System.Drawing.Point(578, 3);
+            this.board2.Location = new System.Drawing.Point(590, 3);
             this.board2.Name = "board2";
             this.board2.Pass = false;
-            this.board2.Size = new System.Drawing.Size(292, 288);
+            this.board2.Size = new System.Drawing.Size(298, 299);
             this.board2.TabIndex = 4;
             this.board2.TabStop = false;
             // 
@@ -3281,7 +3281,7 @@
             this.textBox5.Name = "textBox5";
             this.textBox5.Size = new System.Drawing.Size(191, 26);
             this.textBox5.TabIndex = 0;
-            this.textBox5.Text = "0123456789abcdef";
+            this.textBox5.Text = "6e299e0d3f9f40f0";
             this.textBox5.TextChanged += new System.EventHandler(this.GetUrlTextChanged);
             // 
             // button1
@@ -3289,9 +3289,9 @@
             this.button1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.button1.Font = new System.Drawing.Font("MS UI Gothic", 36F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
-            this.button1.Location = new System.Drawing.Point(892, 106);
+            this.button1.Location = new System.Drawing.Point(910, 106);
             this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(90, 497);
+            this.button1.Size = new System.Drawing.Size(90, 519);
             this.button1.TabIndex = 9;
             this.button1.Text = "競技開始";
             this.button1.UseVisualStyleBackColor = true;
@@ -3350,7 +3350,7 @@
             this.textBox8.Name = "textBox8";
             this.textBox8.ReadOnly = true;
             this.textBox8.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.textBox8.Size = new System.Drawing.Size(273, 167);
+            this.textBox8.Size = new System.Drawing.Size(273, 189);
             this.textBox8.TabIndex = 31;
             this.textBox8.TabStop = false;
             // 
@@ -3373,7 +3373,7 @@
             this.groupBox1.Controls.Add(this.textBox9);
             this.groupBox1.Controls.Add(this.textBox5);
             this.groupBox1.Font = new System.Drawing.Font("MS UI Gothic", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
-            this.groupBox1.Location = new System.Drawing.Point(988, 13);
+            this.groupBox1.Location = new System.Drawing.Point(1006, 13);
             this.groupBox1.Name = "groupBox1";
             this.groupBox1.Size = new System.Drawing.Size(290, 87);
             this.groupBox1.TabIndex = 38;
@@ -3397,7 +3397,7 @@
             this.textBox10.Name = "textBox10";
             this.textBox10.Size = new System.Drawing.Size(191, 26);
             this.textBox10.TabIndex = 1;
-            this.textBox10.Text = "testform26.procon-online.net";
+            this.textBox10.Text = "172.16.1.2";
             this.textBox10.TextChanged += new System.EventHandler(this.GetUrlTextChanged);
             // 
             // label4
@@ -3422,7 +3422,7 @@
             this.groupBox3.Controls.Add(this.label5);
             this.groupBox3.Controls.Add(this.textBox2);
             this.groupBox3.Font = new System.Drawing.Font("MS UI Gothic", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
-            this.groupBox3.Location = new System.Drawing.Point(988, 106);
+            this.groupBox3.Location = new System.Drawing.Point(1006, 106);
             this.groupBox3.Name = "groupBox3";
             this.groupBox3.Size = new System.Drawing.Size(290, 119);
             this.groupBox3.TabIndex = 40;
@@ -3487,7 +3487,7 @@
             this.tableLayoutPanel2.RowCount = 2;
             this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
             this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.tableLayoutPanel2.Size = new System.Drawing.Size(873, 589);
+            this.tableLayoutPanel2.Size = new System.Drawing.Size(891, 611);
             this.tableLayoutPanel2.TabIndex = 41;
             // 
             // groupBox4
@@ -3501,9 +3501,9 @@
             this.groupBox4.Controls.Add(this.label13);
             this.groupBox4.Controls.Add(this.textBox8);
             this.groupBox4.Font = new System.Drawing.Font("MS UI Gothic", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
-            this.groupBox4.Location = new System.Drawing.Point(988, 320);
+            this.groupBox4.Location = new System.Drawing.Point(1006, 320);
             this.groupBox4.Name = "groupBox4";
-            this.groupBox4.Size = new System.Drawing.Size(290, 279);
+            this.groupBox4.Size = new System.Drawing.Size(290, 301);
             this.groupBox4.TabIndex = 40;
             this.groupBox4.TabStop = false;
             this.groupBox4.Text = "Information";
@@ -3526,7 +3526,7 @@
             this.groupBox5.Controls.Add(this.label8);
             this.groupBox5.Controls.Add(this.textBox3);
             this.groupBox5.Font = new System.Drawing.Font("MS UI Gothic", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
-            this.groupBox5.Location = new System.Drawing.Point(988, 231);
+            this.groupBox5.Location = new System.Drawing.Point(1006, 231);
             this.groupBox5.Name = "groupBox5";
             this.groupBox5.Size = new System.Drawing.Size(290, 83);
             this.groupBox5.TabIndex = 41;
@@ -3547,7 +3547,7 @@
             // 
             this.button2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.button2.Font = new System.Drawing.Font("MS UI Gothic", 15.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
-            this.button2.Location = new System.Drawing.Point(892, 12);
+            this.button2.Location = new System.Drawing.Point(910, 12);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(90, 88);
             this.button2.TabIndex = 8;
@@ -3559,7 +3559,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1293, 614);
+            this.ClientSize = new System.Drawing.Size(1311, 636);
             this.Controls.Add(this.button2);
             this.Controls.Add(this.button1);
             this.Controls.Add(this.groupBox5);

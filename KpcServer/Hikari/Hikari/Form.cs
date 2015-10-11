@@ -249,17 +249,12 @@ namespace Hikari
             bool flg = true;
             for (int i=0; (flg && i<kpc.Length); i++)
             {
-                //clientEvent((kpc[i] == "") ? "LINE" : kpc[i], i+"");
-
-
                 if (kpc[i] == "")
                     continue;
 
                 string[] tmp = kpc[i].Split(' ');
                 flg = client.Board.place(this.problem.Stones[i], (tmp[0] == "H"), int.Parse(tmp[1]), int.Parse(tmp[2]), int.Parse(tmp[3]));
             }
-
-            //MessageBox.Show("AAAAAAAAAAAAAAAAAAAAA");
 
             if (!flg)
             {
@@ -285,7 +280,7 @@ namespace Hikari
                 this.timer.Stop();
             }
 
-            this.timer.Interval = 500;
+            this.timer.Interval = 2000;
             this.timer.Start();
             //postAnswerAsync(client, kpc);
         }

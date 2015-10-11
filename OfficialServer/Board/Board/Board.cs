@@ -150,9 +150,9 @@ namespace Board
                     int x1 = x + j;
                     int y1 = y + i;
 
-                    if (!(0 <= x1 && x1 <= 32))
+                    if (!(0 <= x1 && x1 < 32))
                         return false;
-                    if (!(0 <= y1 && y1 <= 32))
+                    if (!(0 <= y1 && y1 < 32))
                         return false;
 
                     int dst = y1 * 32 + x1;
@@ -165,7 +165,6 @@ namespace Board
             }
 
             // 本当に受理できるか
-            //return true;
             return this.isAccept();
         }
 
@@ -214,7 +213,7 @@ namespace Board
 
         private void dfs(int[] map, int x, int y)
         {
-            if (!(((0 <= x) && (x <= 32)) && ((0 <= y) && (y <= 32))))
+            if (!(((0 <= x) && (x < 32)) && ((0 <= y) && (y < 32))))
                 return;
 
             int idx = y * 32 + x;
@@ -230,28 +229,33 @@ namespace Board
 
         private bool isAccept()
         {
-            /*
             int x = 0, y = 0;
 
             for (int i = 0; i < 32; i++)
             {
+                int fff = 0;
+
                 for (int j = 0; j < 32; j++)
                 {
-                    int idx = i * 8 + j;
+                    int idx = i * 32 + j;
                     if (this.nowmap[idx] < 2)
                         continue;
 
                     x = j;
                     y = i;
+                    fff = 1;
+                    break;
                 }
+
+                if (fff == 1) break;
             }
-            */
 
             int[] map = new int[1024];
             Array.Copy(this.nowmap, map, 1024);
-            //dfs(map, x, y);
+
+            dfs(map, x, y);
             //return (Array.IndexOf(map, 2) != -1);
-            return true;
+            return (0 > Array.IndexOf(map, 2));
         }
 
         // GitHub Identicons

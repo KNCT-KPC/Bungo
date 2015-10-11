@@ -193,6 +193,7 @@ namespace Hikari
             string[] tmp = new string[3] { "おいやっちまおうぜ！", "やっちゃいますか！？", "やっちゃいましょうよ！" };
             textBox8.AppendText("[Hikari]\t" + tmp[(new Random()).Next(3)] + "\r\n");
             button1.Text = "競技終了";
+            button1.Enabled = false;
             this.stime = DateTime.Now;
 
             foreach (Client client in clients)

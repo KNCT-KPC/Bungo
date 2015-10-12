@@ -1,11 +1,74 @@
 # Bungo
 
-## やること
-
-* Solverの開発
-
 ## ディレクトリ構成
 このリポジトリのディレクトリ構成について示す。
+~~~~
+.
+├── OfficialServer/
+│   ├── Akane/
+│   │   └── (模擬公式サーバ)
+│   ├── Board/
+│   │   └── (敷地情報を扱うユーザコントロール AkaneとHikariで利用)
+│   ├── Problem/
+│   │   └── (問題情報を扱うクラス Akaneで利用)
+
+
+
+
+
+│   ├── Akane/
+│   ├── Akane/
+
+
+
+├── README.md
+├── bower.json
+├── gulpfile.js
+├── package.json
+├── shared
+│   ├── img
+│   │   ├── page
+│   │   ├── site
+│   │   └── sprite
+│   ├── jade
+│   │   ├── inc
+│   │   │   ├── core
+│   │   │   │   ├── _base.jade
+│   │   │   │   ├── _config.jade
+│   │   │   │   └── _mixin.jade
+│   │   │   ├── layout
+│   │   │   │   ├── _footer.jade
+│   │   │   │   └── _header.jade
+│   │   │   └── module
+│   │   ├── index.jade
+│   │   └── setting.json
+│   ├── js
+│   │   └── src
+│   │       └── app.js
+│   └── scss
+│       ├── core
+│       │   └── _mixins.scss
+│       ├── layout
+│       │   ├── _footer.scss
+│       │   ├── _header.scss
+│       │   └── _layout.scss
+│       ├── module
+│       ├── style.scss
+└── styleguide
+    ├── template
+	    │   ├── index.html
+		    │   ├── public
+			    └── styleguide.md
+				~~~~
+
+
+
+
+
+
+
+
+
 
 ### OfficialServer
 

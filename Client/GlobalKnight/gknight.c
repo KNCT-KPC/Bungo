@@ -156,7 +156,7 @@ int solver(int *map, int x1, int y1, int x2, int y2, int *original_stones, int n
 	for (i=0; i<4; i++) {
 		int *p = &global_tmpmap[i << 10];
 		memcpy(p, map, 4096);
-		backTracking(i * 2, p, global_best.score, 1);
+		backTracking(i, p, global_best.score, 1);
 	}
 
 	return EXIT_FAILURE;

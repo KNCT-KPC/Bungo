@@ -15,6 +15,10 @@ FILE *global_fpread = NULL;
 /*------------------------------------*/
 int sendMsg(char *msg)
 {
+#ifdef	LOCAL
+	return 0;
+#endif
+
 	if (msg[0] != '\0') fputs(msg, global_fpwrite);
 	fputc('\n', global_fpwrite);
 	fflush(global_fpwrite);

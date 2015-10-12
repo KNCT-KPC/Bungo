@@ -3,7 +3,7 @@
 IPADDR=$1
 
 ./KanaC/kanac $IPADDR &
-read
+read A
 
 ./UreC/urec $IPADDR &
 read

@@ -27,7 +27,8 @@
 	#define	SERVER_PORT	25252
 #else
 	//#define	INPUT_FILENAME	"../../Problem/light/light-local.txt"
-	#define	INPUT_FILENAME	"../../Problem/27/27-local.txt"
+	//#define	INPUT_FILENAME	"../../Problem/27/27-local.txt"
+	#define	INPUT_FILENAME	"../../Problem/HOnMOno/Battle1/quest3-local.txt"
 	//#define	INPUT_FILENAME	"../../Problem/41/41-local.txt"
 	//#define	INPUT_FILENAME	"../../Problem/pentomino/8x8-local.txt"
 	#define	OUTPUT_FILENAME	"-"

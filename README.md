@@ -34,7 +34,9 @@
 │   └── NewProblem/
 │        └── (OfficialServer/Problemの亜種 Hikariで利用)
 ├── Client/
-│   └── (Hikariと通信して問題を解くソルバ)
+│   ├── (Hikariと通信して問題を解くソルバ)
+│   └── Fail/
+│        └── (つっかえ...)
 └── Problem/
     └── (擬似問題)
 ~~~~

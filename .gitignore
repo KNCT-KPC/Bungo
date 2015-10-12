@@ -18,6 +18,7 @@ ipch/
 Debug/
 Release/
 *.sdf
+*.opensdf
 
 # Binary
 Binary/

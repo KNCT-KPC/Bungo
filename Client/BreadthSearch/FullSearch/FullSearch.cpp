@@ -10,7 +10,7 @@
 int dx1;
 int dy1;
 
-#define ZERO_SOLVE
+//#define ZERO_SOLVE
 //#define DEBUG_CODE
 //#define CHECK_CODE
 #define	STONE(n, x, y)	stones[((n) << 6) + ((y) << 3) + (x)]

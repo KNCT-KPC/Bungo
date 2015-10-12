@@ -3,7 +3,8 @@ XAlgorithm
 
 ## 説明
 
-* 検証中
+* だめです
+* Gitで`YABAIYO.C`や`bak.c`などを上げるヤバさ
 
 ## アルゴリズム
 

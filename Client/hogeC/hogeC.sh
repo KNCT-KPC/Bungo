@@ -1,9 +1,10 @@
 #!/bin/bash
+# Hikariにまとめて接続するよースクリプト
 
 IPADDR=$1
 
 ./KanaC/kanac $IPADDR &
-read A
+read
 
 ./UreC/urec $IPADDR &
 read

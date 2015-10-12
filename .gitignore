@@ -21,8 +21,5 @@ Release/
 *.opensdf
 
 # Binary
-/Binary/*
-!/Binary/Hikari
-/Binary/Hikari/*
-!/Binary/Akane
-/Binary/Akane/*
+Binary/
+

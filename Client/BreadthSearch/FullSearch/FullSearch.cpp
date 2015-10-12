@@ -7,6 +7,12 @@
 #include <queue>
 #include <Windows.h>
 
+int dx1;
+int dy1;
+
+#define ZERO_SOLVE
+//#define DEBUG_CODE
+//#define CHECK_CODE
 #define	STONE(n, x, y)	stones[((n) << 6) + ((y) << 3) + (x)]
 #define MAP(m, x, y) map[(x) + (y)*(width+1)]
 
@@ -512,8 +518,6 @@ int CheckSubArea(const int* map, const int width, const int height, const int fr
 	return maxAreaNum;
 }
 
-static int areaAry[1025];	//下の方でつかいまわしている
-static int subAreaMap[1025];
 int CalcDeadArea(const int* map, const int width, const int height, const int freeSize, const int* shitAry, const int shitNum, int* areaAry, int* needShitNum){
 //int CalcDeadArea(const int* map, const int width, const int height, const int freeSize, const int* shitAry, const int shitNum, int* areaAry){
 	*needShitNum = 0;
@@ -550,6 +554,7 @@ typedef struct {
 	int basePoint;
 } Answer_t;
 
+#ifndef REVERSE_SOLVE
 void SendSolution(std::vector<Answer_t>* aStack, int stonesNum, int** shitDataAry, int width){
 	// Best
 	sendMsg("S");
@@ -562,8 +567,8 @@ void SendSolution(std::vector<Answer_t>* aStack, int stonesNum, int** shitDataAr
 			sendMsg("");
 		}
 
-		int putX = (*aStack)[i].basePoint%width - shitDataAry[(*aStack)[i].shitNumber][(*aStack)[i].state]%8;
-		int putY = (*aStack)[i].basePoint/width - shitDataAry[(*aStack)[i].shitNumber][(*aStack)[i].state]/8;
+		int putX = (*aStack)[i].basePoint%width - shitDataAry[(*aStack)[i].shitNumber][(*aStack)[i].state]%8+dx1;
+		int putY = (*aStack)[i].basePoint/width - shitDataAry[(*aStack)[i].shitNumber][(*aStack)[i].state]/8+dy1;
 
 		char side = 'H';
 		if((*aStack)[i].state >= 4){
@@ -583,6 +588,42 @@ void SendSolution(std::vector<Answer_t>* aStack, int stonesNum, int** shitDataAr
 	}
 	sendMsg("E");
 }
+#else
+void SendSolution(std::vector<Answer_t>* aStack, int stonesNum, int** shitDataAry, int width){
+	// Best
+	sendMsg("S");
+
+	//解答を書く
+	char buf[256];
+	int line = 0;
+	for(int i = 0; i < stonesNum; i++){
+		for(int j = 0; j < aStack->size(); j++){
+			if((*aStack)[j].shitNumber == (stonesNum-1-i)){
+				int putX = (*aStack)[j].basePoint%width - shitDataAry[(*aStack)[j].shitNumber][(*aStack)[j].state]%8;
+				int putY = (*aStack)[j].basePoint/width - shitDataAry[(*aStack)[j].shitNumber][(*aStack)[j].state]/8;
+
+				char side = 'H';
+				if((*aStack)[j].state >= 4){
+					side = 'T';
+				}
+
+				int turn = (*aStack)[j].state%4 * 90;
+
+				sprintf(buf, "%c %d %d %d", side, turn, putX, putY);
+				//printf("%s\n", buf);
+				sendMsg(buf);
+
+				goto NEXT_LINE;
+			}
+		}
+
+		sendMsg("");
+		//printf("\n");
+	NEXT_LINE:;
+	}
+	sendMsg("E");
+}
+#endif
 
 class wdElement{
 public:
@@ -661,93 +702,59 @@ void InsertSort(std::vector<wdElement*>* breadthData, int n){
 }
 //for (j = i; j > 0 && ((*breadthData)[j-1])[2] < temp[2]; j--) ((*breadthData)[j]) = ((*breadthData)[j-1]);
 
-#define DEBUG_CODE
-//#define CHECK_CODE
-
-#define CUTTING_THRESHOLD -1
-//#define CUTTING_THRESHOLD stonesNum/2
-void FullSearch(const int* Map, const int x1, const int y1, const int x2, const int y2, const int* stones, const int stonesNum, char* solution){
-	//-----初期化処理-----//（長い）
-		//短辺、長辺の調査
-	const int width = x2-x1+1;
-	const int height = y2-y1+1;
-
-		//わかりやすくマップ定義
-	int* map = new int[(width+1) * height];	//対象領域だけを考慮したマップ
-	std::vector<int> startNeighbor;
-
-	int freeSize = width*height;
-	const int maxFreeSize = freeSize;
-	for(int h = 0; h < height; h++){
-		for(int w = 0; w < width; w++){
-			int value = Map[(w+x1) + (h+y1)*32];
-
-			//入力では 壁 = 1 になっているが、ここでは 壁 = -1 とする。
-			if(value == 0){
-				MAP(m, w, h) = 0;
-			} else {
-				MAP(m, w, h) = -1;
-				freeSize--;
-			}
-			startNeighbor.push_back(w+h*(width+1));	//置ける地点として記憶
-		}
-	}
-	for(int h = 0; h < height; h++){
-		MAP(m, width, h) = -2;
-	}
-
-#ifdef DEBUG_CODE
-	printf("%d %d\n", width, height); //DEBUG
-	DEBUG_printMap(map, width+1, height);
-
-	printf("free : %d\n", freeSize);
-	DEBUG_waitKey();
-#endif
-
-		//糞（ズク）の再定義
-	int*** shitAry = new int**[stonesNum];	//起点配列表現をした糞（ズク）の配列
-	int** shitDataAry = new int*[stonesNum];
-	int* shitSizeAry = new int[stonesNum];
-	int totalSize = 0;
-	for(int s = 0; s < stonesNum; s++){
-#ifdef DEBUG_CODE
-		printf("\t%c\n", s+1+48);
-#endif
-		shitAry[s] = new int*[8];
-		shitDataAry[s] = new int[8];
-
-		DEBUG_printMapStone(stones, s);
-		Shit_MapToBaseAry(stones, s, width, shitAry[s], shitDataAry[s]);
-
-		shitSizeAry[s] = CountShitSize(shitAry[s][0]);	//サイズを計る
-		totalSize += shitSizeAry[s];
-#ifdef DEBUG_CODE
-		printf("\t size : %d\n", shitSizeAry[s]);
-#endif
-	}
-
-#ifdef DEBUG_CODE
-	printf("total size : %d\n", totalSize);	//DEBUG
-	printf("free :%d\n", freeSize);
-	DEBUG_waitKey();
-	printf("\nStart : \n");	//DEBUG
-#endif
-
-	//-----探索-----//（長い）
-	std::vector<Answer_t> aStack;
-	std::vector<Answer_t> bestAnsStack;
-
-	int putPoints[17];
-	int putAryLength;
-	int minScore = 1025;
-	int minScore_minShitNum = 1025;
-	int putShitNum = 0;
 
 #ifdef DEBUG_CODE
 	LARGE_INTEGER liFreq, start;
-	QueryPerformanceFrequency( &liFreq );
-	QueryPerformanceCounter( &start );
 #endif
+
+std::vector<Answer_t> aStack;
+std::vector<Answer_t> bestAnsStack;
+#ifndef ZERO_SOLVE
+int minScore = 1025;
+#else
+int minScore = 0;
+#endif
+int minScore_minShitNum = 1025;
+
+void Search(std::vector<int> startNeighbor, int*** srcShitAry, int** srcShitDataAry, int* srcShitSizeAry, const int width, const int height, const int stonesNum, const int* srcMap, const int maxFreeSize){
+	int freeSize = maxFreeSize;
+
+	int* map = new int[(width+1) * height];	//対象領域だけを考慮したマップ
+	for(int i = 0; i < (width+1)*height; i++) map[i] = srcMap[i];
+
+	int*** shitAry = new int**[stonesNum];	//起点配列表現をした糞（ズク）の配列
+	int** shitDataAry = new int*[stonesNum];
+	int* shitSizeAry = new int[stonesNum];
+	for(int s = 0; s < stonesNum; s++){
+		//糞（ズク）配列のコピー
+		shitAry[s] = new int*[8];
+		for(int i = 0; i < 8; i++){
+			if(srcShitAry[s][i] == 0) {
+				shitAry[s][i] = 0;
+				continue;
+			}
+
+			shitAry[s][i] = new int[17];
+			for(int j = 0; j < 17; j++){
+				shitAry[s][i][j] = srcShitAry[s][i][j];
+			}
+		}
+
+		//糞（ズク）データ配列のコピー
+		shitDataAry[s] = new int[8];
+		for(int i = 0; i < 8; i++){
+			shitDataAry[s] = srcShitDataAry[s];
+		}
+
+		//サイズ配列のコピー
+		shitSizeAry[s] = srcShitSizeAry[s];
+	}
+
+	int areaAry[1025];	//下の方でつかいまわしている
+	int subAreaMap[2048];
+	int putPoints[17];
+	int putAryLength;
+	int putShitNum = 0;
 
 	int startKn = 0;
 	std::stack<WideData*> bdStack;
@@ -762,8 +769,13 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 			kn = startKn;
 			startFlag = true;
 			startKn++;
+			if(startKn == stonesNum){
+				break;
+			}
 		} else {
+		PUT_PROCESS:
 			kn = bdStack.top()->GetShitNumber();
+
 			int remove = RemoveShit(map, kn, shitSizeAry[kn], width, height);
 			freeSize += remove;
 			if(remove != 0) {
@@ -779,6 +791,15 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 
 			//実配置処理
 			wdElement* data = bdStack.top()->GetNext();
+			while(data->deadArea > minScore || (data->deadArea == minScore && data->needShitNum+putShitNum >= minScore_minShitNum)){
+				if(!bdStack.top()->Exist()){
+					delete bdStack.top();
+					bdStack.pop();
+					goto PUT_PROCESS;
+				}
+				data = bdStack.top()->GetNext();
+			}
+
 			int st = data->st;
 			int placePoint = data->basePoint;
 
@@ -916,8 +937,10 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 				wdElement* elm = breadthData->data()[i];
 #ifdef DEBUG_CODE
 #ifdef CHECK_CODE
+				/*
 				printf("%d %d : %d [%d %d]", elm->st, elm->basePoint, elm->deadArea, elm->fit, elm->fit2);
 				DEBUG_waitKey();
+				*/
 #endif
 #endif
 			}
@@ -954,9 +977,10 @@ TERMINAL:
 			printf("time : %d\n", (end.QuadPart - start.QuadPart)/liFreq.QuadPart);
 #endif
 			bestAnsStack = aStack;
-//			SendSolution(&bestAnsStack, stonesNum, shitDataAry, width+1);
+			SendSolution(&bestAnsStack, stonesNum, shitDataAry, width+1);
 		}
 
+		if(bdStack.size() == 0) break;
 		if(bdStack.top()->GetShitNumber() == stonesNum-1){	//置いた糞（ズク）が最後なら
 			delete bdStack.top();
 			bdStack.pop();
@@ -968,6 +992,91 @@ TERMINAL:
 			aStack.pop_back();
 		}
 	}
+}
+
+
+#define CUTTING_THRESHOLD -1
+//#define CUTTING_THRESHOLD stonesNum/2
+void FullSearch(const int* Map, const int x1, const int y1, const int x2, const int y2, const int* stones, const int stonesNum, char* solution){
+	//-----初期化処理-----//（長い）
+		//短辺、長辺の調査
+	dx1 = x1;
+	dy1 = y1;
+	const int width = x2-x1+1;
+	const int height = y2-y1+1;
+
+		//わかりやすくマップ定義
+	int* map = new int[(width+1) * height];	//対象領域だけを考慮したマップ
+	std::vector<int> startNeighbor;
+
+	int freeSize = width*height;
+	const int maxFreeSize = freeSize;
+	for(int h = 0; h < height; h++){
+		for(int w = 0; w < width; w++){
+			int value = Map[(w+x1) + (h+y1)*32];
+
+			//入力では 壁 = 1 になっているが、ここでは 壁 = -1 とする。
+			if(value == 0){
+				MAP(m, w, h) = 0;
+			} else {
+				MAP(m, w, h) = -1;
+				freeSize--;
+			}
+			startNeighbor.push_back(w+h*(width+1));	//置ける地点として記憶
+		}
+	}
+	for(int h = 0; h < height; h++){
+		MAP(m, width, h) = -2;
+	}
+
+#ifdef DEBUG_CODE
+	printf("%d %d\n", width, height); //DEBUG
+	DEBUG_printMap(map, width+1, height);
+
+	printf("free : %d\n", freeSize);
+	DEBUG_waitKey();
+#endif
+
+		//糞（ズク）の再定義
+	int*** shitAry = new int**[stonesNum];	//起点配列表現をした糞（ズク）の配列
+	int** shitDataAry = new int*[stonesNum];
+	int* shitSizeAry = new int[stonesNum];
+	int totalSize = 0;
+	for(int rs = 0; rs < stonesNum; rs++){
+#ifndef REVERSE_SOLVE
+		int s = rs;
+#else
+		int s = (stonesNum - 1) - rs;
+#endif
+#ifdef DEBUG_CODE
+		printf("\t%c\n", s+1+48);
+#endif
+		shitAry[rs] = new int*[8];
+		shitDataAry[rs] = new int[8];
+
+//		DEBUG_printMapStone(stones, s);
+		Shit_MapToBaseAry(stones, s, width, shitAry[rs], shitDataAry[rs]);
+
+		shitSizeAry[rs] = CountShitSize(shitAry[rs][0]);	//サイズを計る
+		totalSize += shitSizeAry[rs];
+#ifdef DEBUG_CODE
+		printf("\t size : %d\n", shitSizeAry[rs]);
+#endif
+	}
+
+#ifdef DEBUG_CODE
+	printf("total size : %d\n", totalSize);	//DEBUG
+	printf("free :%d\n", freeSize);
+	DEBUG_waitKey();
+	printf("\nStart : \n");	//DEBUG
+
+	QueryPerformanceFrequency( &liFreq );
+	QueryPerformanceCounter( &start );
+#endif
+
+	Search(startNeighbor, shitAry, shitDataAry, shitSizeAry, width, height, stonesNum, map, freeSize);
+	//-----探索-----//（長い）
+
 
 	//ここまで繰り返し
 #ifdef DEBUG_CODE

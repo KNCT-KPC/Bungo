@@ -15,7 +15,7 @@
 #ifndef LOCAL
 	#define LOCAL
 #endif
-//#undef LOCAL
+#undef LOCAL
 
 // Windows or Linux
 #if defined(_WIN32) || defined(_WIN64)
@@ -25,16 +25,17 @@
 /*------------------------------------*/
 /*              Constant              */
 /*------------------------------------*/
-#define	CLIENT_NAME	"Sample"
+#define	CLIENT_NAME	"FullSearch"
 #ifndef	LOCAL
 	#define	SERVER_IPADDR	"127.0.0.1"
 	#define	SERVER_PORT	25252
 #else
 //	#define	INPUT_FILENAME	"../../../Problem/light/light-local.txt"
-//	#define	INPUT_FILENAME	"../../../Problem/27/27-local.txt"
+	#define	INPUT_FILENAME	"../../../Problem/27/27-local.txt"
 //	#define	INPUT_FILENAME	"../../../Problem/pentomino/8x8-local.txt"
 //	#define	INPUT_FILENAME	"../../../Problem/41/41-local.txt"
-	#define INPUT_FILENAME  "../../../Problem/official/quest1-local.txt"
+//	#define INPUT_FILENAME  "../../../Problem/official/quest1-local.txt"
+//	#define INPUT_FILENAME  "../../../Problem/practice/hard3-local.txt"
 	#define	OUTPUT_FILENAME	"-"
 	/* KORE => if (OUTPUT_FILENAME[0] == '-') { global_fpwrite = stdout; } <== */
 #endif
@@ -78,6 +79,10 @@ void FullSearch(const int* map, const int x1, const int y1, const int x2, const 
 /*------------------------------------*/
 int sendMsg(char *msg)
 {
+#ifdef LOCAL
+	return 0;
+#endif
+
 	if (msg[0] != '\0') fputs(msg, global_fpwrite);
 	fputc('\n', global_fpwrite);
 	fflush(global_fpwrite);
@@ -191,7 +196,7 @@ int solver(int *map, int x1, int y1, int x2, int y2, int *stones, int n)
 
 /*------------------------------------*/
 /*                Main                */
-/*------------------------------------*/
+/*------------------------------------*/	
 int main(int argc, char *argv[])
 {
 #ifdef	LOCAL
@@ -216,10 +221,10 @@ int main(int argc, char *argv[])
 	struct sockaddr_in server;
 	server.sin_family = AF_INET;
 	server.sin_port = htons(SERVER_PORT);
-	server.sin_addr.s_addr = inet_addr(SERVER_IPADDR);
+	server.sin_addr.s_addr = inet_addr((argc == 2) ? argv[1] : SERVER_IPADDR);
 			
 	if (connect(sd, (struct sockaddr *)&server, sizeof(server)) != 0) {
-		perror(SERVER_IPADDR);
+		perror("TAISITE JYUUYOU JYANAI");
 		return EXIT_FAILURE;
 	}
 

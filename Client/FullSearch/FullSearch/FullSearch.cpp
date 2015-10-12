@@ -625,7 +625,7 @@ int CheckSubArea(const int* map, const int width, const int height, const int fr
 }
 
 static int areaAry[1025];	//‰º‚Ì•û‚Å‚Â‚©‚¢‚Ü‚í‚µ‚Ä‚¢‚é
-static int subAreaMap[1025];
+static int subAreaMap[2048];
 int CalcDeadArea(const int* map, const int width, const int height, const int freeSize, const int* shitAry, const int shitNum, int* areaAry, int* needShitNum){
 //int CalcDeadArea(const int* map, const int width, const int height, const int freeSize, const int* shitAry, const int shitNum, int* areaAry){
 	*needShitNum = 0;
@@ -882,7 +882,7 @@ void FullSearch(const int* Map, const int x1, const int y1, const int x2, const 
 			int checkArea = freeSize;
 			bool cutting = CUTTING_THRESHOLD < kn;
 			if(cutting){
-				for(int i = 0; i < 1025; i++) subAreaMap[i] = -1;
+				for(int i = 0; i < 2048; i++) subAreaMap[i] = -1;
 				checkArea = CheckSubArea(map, width+1, height, freeSize, areaAry, subAreaMap);
 					//–ß‚è’l‚Í•”•ª—Ìˆæ‚Ì‚¤‚¿Å‘å–ÊÏ
 					//static’è‹`‚³‚ê‚½areaAry‚É‚Í•”•ª—Ìˆæî•ñ‚ª“ü‚Á‚Ä‚¢‚é

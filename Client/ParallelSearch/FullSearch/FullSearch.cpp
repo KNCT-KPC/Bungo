@@ -702,7 +702,7 @@ int minScore_minShitNum = 1025;
 std::vector<Answer_t> bestAnsStack;
 //
 
-#define DEBUG_CODE
+//#define DEBUG_CODE
 #define CUTTING_THRESHOLD -1
 void Search(const int* startNeighbor, int*** srcShitAry, int** srcShitDataAry, int* srcShitSizeAry, const int width, const int height, const int stonesNum, const int* srcMap, const int maxFreeSize){
 	int freeSize = maxFreeSize;

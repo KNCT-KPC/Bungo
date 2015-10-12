@@ -15,7 +15,7 @@
 #ifndef LOCAL
 	#define LOCAL
 #endif
-//#undef LOCAL
+#undef LOCAL
 
 // Windows or Linux
 #if defined(_WIN32) || defined(_WIN64)
@@ -27,7 +27,7 @@
 /*------------------------------------*/
 #define	CLIENT_NAME	"Sample"
 #ifndef	LOCAL
-	#define	SERVER_IPADDR	"127.0.0.1"
+	#define	SERVER_IPADDR	"172.16.2.53"
 	#define	SERVER_PORT	25252
 #else
 //	#define	INPUT_FILENAME	"../../../Problem/light/light-local.txt"

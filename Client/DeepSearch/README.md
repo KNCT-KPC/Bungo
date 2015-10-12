@@ -1,2 +1,6 @@
-# BreadthSearch
-BreadthSearch は「幅優先探索」の意味ですが、幅優先探索では**ありません。**
+# DeepSearch
+DeepSearch は「深い探索」の意味ですが、ソルバは全部幅優先なので特別な意味は　ないです。
+このソルバはBreadthSearchをベースにしているので、詳しいことはBreadthSearchのページを御覧ください。
+BreadthSearchとの違いは、各状態におけるランク１の枝のみを探索する点です。
+**全然Deepじゃないやん**って僕も思います。徹夜しているときの僕は思っていなかったみたいです。
+

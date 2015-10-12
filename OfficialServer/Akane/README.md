@@ -4,7 +4,10 @@
 ## メンテナンスされていません
 
 * 示された仕様に一致していない
+* ダメです
 * https://github.com/KNCT-KPC/Bungo/issues/7
+* 以下記録
+
 
 ## 特徴
 

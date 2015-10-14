@@ -25,7 +25,7 @@
 /*------------------------------------*/
 /*              Constant              */
 /*------------------------------------*/
-#define	CLIENT_NAME	"FocusSearch"
+#define	CLIENT_NAME	"DeepFocusSearch"
 #ifndef	LOCAL
 	#define	SERVER_IPADDR	"192.168.1.117"
 //	#define SERVER_IPADDR	"127.0.0.1"

@@ -15,7 +15,7 @@
 #ifndef LOCAL
 	#define LOCAL
 #endif
-//#undef LOCAL
+#undef LOCAL
 
 // Windows or Linux
 #if defined(_WIN32) || defined(_WIN64)
@@ -23,9 +23,9 @@
 #endif
 
 /*------------------------------------*/
-/*              Constant              */
+/*              Constjant              */
 /*------------------------------------*/
-#define	CLIENT_NAME	"FocusSearch"
+#define	CLIENT_NAME	"OmikujiSearch"
 #ifndef	LOCAL
 	#define	SERVER_IPADDR	"127.0.0.1"
 	#define	SERVER_PORT	25252
@@ -33,10 +33,10 @@
 //	#define	INPUT_FILENAME	"../../../Problem/light/light-local.txt"
 //	#define	INPUT_FILENAME	"../../../Problem/27/27-local.txt"
 //	#define	INPUT_FILENAME	"../../../Problem/pentomino/8x8-local.txt"
-	#define	INPUT_FILENAME	"../../../Problem/41/41-local.txt"
+//	#define	INPUT_FILENAME	"../../../Problem/41/41-local.txt"
 //	#define INPUT_FILENAME	"../../../Problem/buttle1/quest1-local.txt"
 //	#define INPUT_FILENAME	"../../../Problem/buttle1/quest2-local.txt"
-//	#define INPUT_FILENAME	"../../../Problem/buttle1/quest3-local.txt"
+	#define INPUT_FILENAME	"../../../Problem/buttle1/quest3-local.txt"
 //	#define INPUT_FILENAME  "../../../Problem/pre/quest3-local.txt"
 //	#define INPUT_FILENAME  "../../../Problem/official/quest1-local.txt"
 //	#define INPUT_FILENAME  "../../../Problem/practice/hard3-local.txt"
@@ -75,7 +75,7 @@ int sendMsg(char *msg);
 int solver(int *map, int x1, int y1, int x2, int y2, int *stones, int n);
 
 //morishita added
-void FullSearch(const int* map, const int x1, const int y1, const int x2, const int y2, const int* stones, int stonesNum, char* solutions);
+void FullSearch(const int* map, const int x1, const int y1, const int x2, const int y2, const int* stones, int stonesNum, char* solutions, long long int a);
 
 
 /*------------------------------------*/
@@ -112,7 +112,7 @@ int sendMsg(char *msg)
 	#include <unistd.h>
 #endif
 
-int solver(int *map, int x1, int y1, int x2, int y2, int *stones, int n)
+int solver(int *map, int x1, int y1, int x2, int y2, int *stones, int n, long long int time)
 {
 	/*
 	printf("(%d, %d) ~ (%d, %d)\n\n", x1, y1, x2, y2);
@@ -138,7 +138,7 @@ int solver(int *map, int x1, int y1, int x2, int y2, int *stones, int n)
 	*/
 
 	char solution[25600] = {0};
-	FullSearch(map, x1, y1, x2, y2, stones, n, solution);
+	FullSearch(map, x1, y1, x2, y2, stones, n, solution, time);
 
 	return EXIT_FAILURE;
 	//send solution
@@ -203,6 +203,9 @@ int solver(int *map, int x1, int y1, int x2, int y2, int *stones, int n)
 /*------------------------------------*/	
 int main(int argc, char *argv[])
 {
+	LARGE_INTEGER liFreq, start;
+	QueryPerformanceFrequency( &liFreq );
+	QueryPerformanceCounter( &start );
 #ifdef	LOCAL
 	global_fpread = fopen(INPUT_FILENAME, "r");
 	global_fpwrite = (OUTPUT_FILENAME[0] == '-') ? stdout : fopen(OUTPUT_FILENAME, "w");
@@ -225,7 +228,7 @@ int main(int argc, char *argv[])
 	struct sockaddr_in server;
 	server.sin_family = AF_INET;
 	server.sin_port = htons(SERVER_PORT);
-	server.sin_addr.s_addr = inet_addr((argc == 2) ? argv[1] : SERVER_IPADDR);
+	server.sin_addr.s_addr = inet_addr((argc == 3) ? argv[1] : SERVER_IPADDR);
 			
 	if (connect(sd, (struct sockaddr *)&server, sizeof(server)) != 0) {
 		perror("TAISITE JYUUYOU JYANAI");
@@ -289,7 +292,17 @@ int main(int argc, char *argv[])
 			}
 		}
 
-		if (bflg || solver(map, x1, y1, x2, y2, stones, n) == EXIT_FAILURE) break;
+		long long int a;
+#ifndef	LOCAL
+		if(argc >= 2){
+			a = atoi(argv[2]);
+		} else {
+			a = 334;
+		}
+#else
+		a = 334;
+#endif
+		if (bflg || solver(map, x1, y1, x2, y2, stones, n, a) == EXIT_FAILURE) break;
 	}
 
 	fclose(global_fpread);

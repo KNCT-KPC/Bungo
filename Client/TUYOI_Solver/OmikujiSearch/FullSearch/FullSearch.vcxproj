@@ -13,7 +13,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{750F8045-F0BE-4BAA-B05E-6E36135E5F46}</ProjectGuid>
     <RootNamespace>FullSearch</RootNamespace>
-    <ProjectName>HukubikiSearch</ProjectName>
+    <ProjectName>OmikujiSearch</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">

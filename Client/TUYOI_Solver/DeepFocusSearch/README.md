@@ -1,0 +1,11 @@
+# DeepFocusSearch
+DeepFocusSearchは、DeepSearchとFocusSearchの考え方を組み合わせたものです。詳しくはそれぞれのページを御覧ください。
+また、同じ系統のソルバとして、DeepReplaceSearchがあるので、そちらも御覧ください。
+
+DeepFocusSearchはランク１の枝のみに対しFocusSearchを行います。
+DeepReplaceSearchと同じく、DeepSearchとFocusSearchを同時に実行した場合とは結果が異なります。
+
+# 総評
+DeepFocusSearchとFocusSearchの関係は、DeepReplaceSearchとReplaceSearchの関係と同じです。
+つまり、Deepが付く方は最終的な解精度が下がる代わりに、短い時間で良い妥協解が得られる可能性があります。
+こちらも、FocusSearchと比べて一長一短があるので、併用することで保険をかけました。

@@ -1,0 +1,13 @@
+# FocusSearch
+FocusSearchは、ReplaceSearchの改善手法です。詳しくはReplaceSearchのページを御覧ください。
+
+ReplaceSearchの欠点は、枝を打ち切ることで解の精度が低下することでした。
+FocusSearchは「良い解の近くには更に良い解が存在する」という組み合わせ最適化の特徴を考慮した探索です。
+通常時はReplaceSearchを行い、解の改善が発生したときのみ、枝を打ち切るまでの探索数を増加させます。
+こうすることで、良い解が得られる機会を増やすことができます。
+
+# 総評
+FocusSearchは、ReplaceSearchよりも探索速度が若干遅くなりますが、高い解精度を実現します。
+また、BreadthSearchやDeepSearchよりも遥かに高速で、現実的な手法です。
+しかし、この手法でもまだまだ探索に偏りがあり、与えられた問題によっては良い解が得られないことがあります。
+結果として、この後に開発したDeepFocusSearch、OmikujiSearchが大会で活躍することになります。

@@ -1,0 +1,25 @@
+# ゴミ掃除
+.*.sw[opn]
+*.out
+*.o
+*.so
+*.dll
+*.exe
+.DS_Store
+Thumbs.db
+*.bak
+
+# Visual Studio
+bin/
+obj/
+*.user
+*.suo
+ipch/
+Debug/
+Release/
+*.sdf
+*.opensdf
+
+# Binary
+Binary/
+
